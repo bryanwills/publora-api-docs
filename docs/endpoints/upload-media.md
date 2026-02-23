@@ -44,10 +44,25 @@ POST https://api.publora.com/api/v1/get-upload-url
 
 ## Upload Flow
 
+> **Important:** When uploading media, always create the post as a **draft first**, upload media, then schedule. This prevents the scheduler from processing the post before media upload completes.
+
+### Recommended workflow (with media):
+
 ```
-1. POST /api/v1/create-post       → Create post, get postGroupId
-2. POST /api/v1/get-upload-url    → Get pre-signed URL (requires postGroupId)
-3. PUT {uploadUrl}                 → Upload file to S3 (auto-attached via postGroupId)
+1. POST /create-post              → Create draft (no scheduledTime), get postGroupId
+2. POST /get-upload-url           → Get pre-signed URL
+3. PUT {uploadUrl}                → Upload file to S3
+4. PUT /update-post/:postGroupId  → Set status="scheduled" and scheduledTime
+```
+
+### Why this matters
+
+If you create a post with `scheduledTime` set immediately, the scheduler may attempt to publish before your media upload completes — resulting in a failed post or missing media.
+
+### Quick workflow (text-only posts):
+
+```
+1. POST /create-post              → Create with scheduledTime (no media needed)
 ```
 
 ## Supported Formats
@@ -63,36 +78,58 @@ POST https://api.publora.com/api/v1/get-upload-url
 
 ## Examples
 
-### Upload an image
+### Complete workflow: Post with image
 
 #### JavaScript (fetch)
 
 ```javascript
-// Step 1: Get upload URL
-const urlResponse = await fetch('https://api.publora.com/api/v1/get-upload-url', {
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// Step 1: Create draft post (no scheduledTime)
+const postRes = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
-  },
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': API_KEY },
+  body: JSON.stringify({
+    content: 'Check out our new product! 🚀',
+    platforms: ['twitter-123456789', 'linkedin-ABC123']
+    // No scheduledTime = draft
+  })
+});
+const { postGroupId } = await postRes.json();
+
+// Step 2: Get upload URL
+const urlRes = await fetch(`${BASE_URL}/get-upload-url`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': API_KEY },
   body: JSON.stringify({
     fileName: 'product-photo.jpg',
     contentType: 'image/jpeg',
     type: 'image',
-    postGroupId: '507f1f77bcf86cd799439011'
+    postGroupId
   })
 });
-const { uploadUrl, fileUrl, mediaId } = await urlResponse.json();
+const { uploadUrl, fileUrl } = await urlRes.json();
 
-// Step 2: Upload file to S3
+// Step 3: Upload file to S3
 const fileBuffer = await fs.promises.readFile('./product-photo.jpg');
 await fetch(uploadUrl, {
   method: 'PUT',
   headers: { 'Content-Type': 'image/jpeg' },
   body: fileBuffer
 });
-
 console.log(`Uploaded: ${fileUrl}`);
+
+// Step 4: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json', 'x-publora-key': API_KEY },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-01T14:00:00.000Z'
+  })
+});
+console.log('Post scheduled!');
 ```
 
 #### Python (requests)
@@ -100,53 +137,77 @@ console.log(`Uploaded: ${fileUrl}`);
 ```python
 import requests
 
-# Step 1: Get upload URL
-url_response = requests.post(
-    'https://api.publora.com/api/v1/get-upload-url',
-    headers={
-        'Content-Type': 'application/json',
-        'x-publora-key': 'YOUR_API_KEY'
-    },
-    json={
-        'fileName': 'product-photo.jpg',
-        'contentType': 'image/jpeg',
-        'type': 'image',
-        'postGroupId': '507f1f77bcf86cd799439011'
-    }
-)
-data = url_response.json()
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.publora.com/api/v1'
+headers = {'Content-Type': 'application/json', 'x-publora-key': API_KEY}
 
-# Step 2: Upload file to S3
+# Step 1: Create draft post
+post_res = requests.post(f'{BASE_URL}/create-post', headers=headers, json={
+    'content': 'Check out our new product! 🚀',
+    'platforms': ['twitter-123456789', 'linkedin-ABC123']
+})
+post_group_id = post_res.json()['postGroupId']
+
+# Step 2: Get upload URL
+url_res = requests.post(f'{BASE_URL}/get-upload-url', headers=headers, json={
+    'fileName': 'product-photo.jpg',
+    'contentType': 'image/jpeg',
+    'type': 'image',
+    'postGroupId': post_group_id
+})
+data = url_res.json()
+
+# Step 3: Upload file to S3
 with open('product-photo.jpg', 'rb') as f:
-    requests.put(
-        data['uploadUrl'],
-        headers={'Content-Type': 'image/jpeg'},
-        data=f
-    )
-
+    requests.put(data['uploadUrl'], headers={'Content-Type': 'image/jpeg'}, data=f)
 print(f"Uploaded: {data['fileUrl']}")
+
+# Step 4: Schedule the post
+requests.put(f'{BASE_URL}/update-post/{post_group_id}', headers=headers, json={
+    'status': 'scheduled',
+    'scheduledTime': '2026-03-01T14:00:00.000Z'
+})
+print('Post scheduled!')
 ```
 
 #### cURL
 
 ```bash
-# Step 1: Get upload URL
-RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
+API_KEY="YOUR_API_KEY"
+
+# Step 1: Create draft post
+POST_GROUP_ID=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d '{
-    "fileName": "product-photo.jpg",
-    "contentType": "image/jpeg",
-    "type": "image",
-    "postGroupId": "507f1f77bcf86cd799439011"
-  }')
+    "content": "Check out our new product! 🚀",
+    "platforms": ["twitter-123456789", "linkedin-ABC123"]
+  }' | jq -r '.postGroupId')
 
-UPLOAD_URL=$(echo $RESPONSE | jq -r '.uploadUrl')
+# Step 2: Get upload URL
+UPLOAD_URL=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d "{
+    \"fileName\": \"product-photo.jpg\",
+    \"contentType\": \"image/jpeg\",
+    \"type\": \"image\",
+    \"postGroupId\": \"$POST_GROUP_ID\"
+  }" | jq -r '.uploadUrl')
 
-# Step 2: Upload file to S3
+# Step 3: Upload file to S3
 curl -X PUT "$UPLOAD_URL" \
   -H "Content-Type: image/jpeg" \
   --data-binary @product-photo.jpg
+
+# Step 4: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-01T14:00:00.000Z"
+  }'
 ```
 
 ### Upload a video

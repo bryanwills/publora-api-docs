@@ -35,6 +35,19 @@ POST https://api.publora.com/api/v1/create-post
 
 Use the `postGroupId` to track, update, or delete the post.
 
+## Posts with Media
+
+> **Important:** When attaching images or videos, create the post as a **draft** (omit `scheduledTime`), upload media, then schedule via [Update Post](update-post.md).
+
+```
+1. POST /create-post              → Omit scheduledTime (creates draft)
+2. POST /get-upload-url           → Get pre-signed URL for media
+3. PUT {uploadUrl}                → Upload file to S3
+4. PUT /update-post/:postGroupId  → Set scheduledTime to schedule
+```
+
+This ensures media is fully uploaded before the scheduler processes your post. See [Upload Media](upload-media.md) for details.
+
 ## Default Platform Settings
 
 When creating via the API, these defaults are applied automatically:
