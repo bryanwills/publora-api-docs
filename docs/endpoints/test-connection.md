@@ -1,0 +1,171 @@
+# Test Connection
+
+Validate that a platform connection is working before scheduling posts.
+
+## Endpoint
+
+```
+POST https://api.publora.com/api/v1/test-connection/:platformId
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-publora-key` | Yes | Your API key |
+| `x-publora-user-id` | No | Managed user ID (workspace only) |
+
+## Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `platformId` | string | The platform ID (e.g., `linkedin-Tz9W5i6ZYG`) |
+
+## Response
+
+### Successful Connection
+
+```json
+{
+  "platform": "linkedin",
+  "platformId": "linkedin-Tz9W5i6ZYG",
+  "username": "John Doe",
+  "status": "ok",
+  "message": "Connected as John Doe",
+  "permissions": ["openid", "profile", "w_member_social"],
+  "tokenExpiresIn": "45d 3h",
+  "lastSuccessfulPost": "2026-02-22T09:15:00.000Z",
+  "lastError": null
+}
+```
+
+### Failed Connection
+
+```json
+{
+  "platform": "threads",
+  "platformId": "threads-17841412345678",
+  "username": "yourthreads",
+  "status": "error",
+  "message": "Error validating access token: Session has expired",
+  "permissions": [],
+  "tokenExpiresIn": "expired",
+  "lastSuccessfulPost": "2026-02-15T14:30:00.000Z",
+  "lastError": {
+    "message": "Session has expired",
+    "occurredAt": "2026-02-22T10:00:00.000Z"
+  }
+}
+```
+
+## Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `platform` | string | Platform name (twitter, linkedin, threads, etc.) |
+| `platformId` | string | Full platform ID |
+| `username` | string | Connected account username |
+| `status` | string | `ok` or `error` |
+| `message` | string | Human-readable status message |
+| `permissions` | array | List of granted permissions/scopes |
+| `tokenExpiresIn` | string/null | Time until token expiry (e.g., "7d 3h") or "expired" |
+| `lastSuccessfulPost` | string/null | Timestamp of last successful post |
+| `lastError` | object/null | Last error details if any |
+
+## Examples
+
+### JavaScript (fetch)
+
+```javascript
+const platformId = 'linkedin-Tz9W5i6ZYG';
+const response = await fetch(
+  `https://api.publora.com/api/v1/test-connection/${platformId}`,
+  {
+    method: 'POST',
+    headers: { 'x-publora-key': 'YOUR_API_KEY' }
+  }
+);
+const result = await response.json();
+
+if (result.status === 'ok') {
+  console.log(`✅ ${result.message}`);
+  console.log(`Token expires in: ${result.tokenExpiresIn}`);
+} else {
+  console.log(`❌ Connection failed: ${result.message}`);
+}
+```
+
+### Python (requests)
+
+```python
+import requests
+
+platform_id = 'linkedin-Tz9W5i6ZYG'
+response = requests.post(
+    f'https://api.publora.com/api/v1/test-connection/{platform_id}',
+    headers={'x-publora-key': 'YOUR_API_KEY'}
+)
+result = response.json()
+
+if result['status'] == 'ok':
+    print(f"✅ {result['message']}")
+    print(f"Permissions: {', '.join(result['permissions'])}")
+else:
+    print(f"❌ {result['message']}")
+```
+
+### cURL
+
+```bash
+curl -X POST https://api.publora.com/api/v1/test-connection/linkedin-Tz9W5i6ZYG \
+  -H "x-publora-key: YOUR_API_KEY"
+```
+
+### Pre-flight Check Before Scheduling
+
+```javascript
+async function validateConnectionsBeforePost(platformIds) {
+  const results = await Promise.all(
+    platformIds.map(async (platformId) => {
+      const response = await fetch(
+        `https://api.publora.com/api/v1/test-connection/${platformId}`,
+        {
+          method: 'POST',
+          headers: { 'x-publora-key': process.env.PUBLORA_API_KEY }
+        }
+      );
+      return response.json();
+    })
+  );
+
+  const failed = results.filter(r => r.status === 'error');
+  if (failed.length > 0) {
+    console.log('⚠️  Some connections need attention:');
+    failed.forEach(r => console.log(`  - ${r.platformId}: ${r.message}`));
+    return false;
+  }
+
+  console.log('✅ All connections healthy');
+  return true;
+}
+
+// Usage
+const platforms = ['twitter-123', 'linkedin-ABC', 'threads-456'];
+const healthy = await validateConnectionsBeforePost(platforms);
+if (healthy) {
+  // Proceed with scheduling
+}
+```
+
+## Errors
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 404 | `"Connection not found"` | Invalid platformId or connection doesn't exist |
+| 500 | `"Failed to test connection"` | Server error during validation |
+
+
+---
+
+*[Publora](https://publora.com) is built by [Creative Content Crafts, Inc.](https://cccrafts.ai) Need AI-powered content creation for LinkedIn, Threads, and X? Try [Co.Actor](https://co.actor) — the best AI service for authentic thought leadership at scale.*

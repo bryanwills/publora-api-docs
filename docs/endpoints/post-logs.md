@@ -1,0 +1,223 @@
+# Post Logs
+
+Get detailed publish attempt history for a post group. Useful for debugging failed posts and understanding the publish timeline.
+
+## Endpoint
+
+```
+GET https://api.publora.com/api/v1/post-logs/:postGroupId
+```
+
+## Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `x-publora-key` | Yes | Your API key |
+| `x-publora-user-id` | No | Managed user ID (workspace only) |
+
+## Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `postGroupId` | string | The post group ID |
+
+## Response
+
+```json
+{
+  "success": true,
+  "logs": [
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439012",
+      "platform": "linkedin",
+      "event": "processing",
+      "retryCount": 0,
+      "createdAt": "2026-02-22T14:30:00.000Z"
+    },
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d1",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439012",
+      "platform": "linkedin",
+      "event": "publish_attempted",
+      "retryCount": 0,
+      "createdAt": "2026-02-22T14:30:01.000Z"
+    },
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d2",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439012",
+      "platform": "linkedin",
+      "event": "publish_succeeded",
+      "retryCount": 0,
+      "createdAt": "2026-02-22T14:30:03.000Z"
+    },
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d3",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439013",
+      "platform": "threads",
+      "event": "processing",
+      "retryCount": 0,
+      "createdAt": "2026-02-22T14:30:00.000Z"
+    },
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d4",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439013",
+      "platform": "threads",
+      "event": "publish_attempted",
+      "retryCount": 0,
+      "createdAt": "2026-02-22T14:30:01.000Z"
+    },
+    {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d5",
+      "postGroupId": "507f1f77bcf86cd799439011",
+      "postId": "507f1f77bcf86cd799439013",
+      "platform": "threads",
+      "event": "publish_failed",
+      "error": "Error validating access token",
+      "httpStatus": 401,
+      "retryCount": 0,
+      "metadata": {
+        "errorCode": "PLATFORM_AUTH_EXPIRED",
+        "retryable": false
+      },
+      "createdAt": "2026-02-22T14:30:02.000Z"
+    }
+  ]
+}
+```
+
+## Log Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | string | Unique log entry ID |
+| `postGroupId` | string | Parent post group ID |
+| `postId` | string | Individual platform post ID |
+| `platform` | string | Platform name (twitter, linkedin, etc.) |
+| `event` | string | Event type (see table below) |
+| `error` | string/null | Error message (for failed events) |
+| `httpStatus` | number/null | HTTP status code from platform |
+| `retryCount` | number | Number of retry attempts |
+| `metadata` | object/null | Additional event data |
+| `createdAt` | string | Event timestamp |
+
+## Event Types
+
+| Event | Description |
+|-------|-------------|
+| `scheduled` | Post was scheduled |
+| `processing` | Post started processing |
+| `publish_attempted` | Publish request sent to platform |
+| `publish_succeeded` | Successfully published |
+| `publish_failed` | Publishing failed |
+| `status_changed` | Post status changed |
+
+## Examples
+
+### JavaScript (fetch)
+
+```javascript
+const postGroupId = '507f1f77bcf86cd799439011';
+const response = await fetch(
+  `https://api.publora.com/api/v1/post-logs/${postGroupId}`,
+  { headers: { 'x-publora-key': 'YOUR_API_KEY' } }
+);
+const { logs } = await response.json();
+
+// Group logs by platform
+const byPlatform = logs.reduce((acc, log) => {
+  if (!acc[log.platform]) acc[log.platform] = [];
+  acc[log.platform].push(log);
+  return acc;
+}, {});
+
+// Check for failures
+const failures = logs.filter(l => l.event === 'publish_failed');
+if (failures.length > 0) {
+  console.log('Failed platforms:');
+  failures.forEach(f => {
+    console.log(`  ${f.platform}: ${f.error} (HTTP ${f.httpStatus})`);
+  });
+}
+```
+
+### Python (requests)
+
+```python
+import requests
+
+post_group_id = '507f1f77bcf86cd799439011'
+response = requests.get(
+    f'https://api.publora.com/api/v1/post-logs/{post_group_id}',
+    headers={'x-publora-key': 'YOUR_API_KEY'}
+)
+logs = response.json()['logs']
+
+# Find failed publish attempts
+failures = [l for l in logs if l['event'] == 'publish_failed']
+for failure in failures:
+    print(f"❌ {failure['platform']}: {failure['error']}")
+    if failure.get('metadata', {}).get('retryable'):
+        print("   (This error may succeed on retry)")
+```
+
+### cURL
+
+```bash
+curl https://api.publora.com/api/v1/post-logs/507f1f77bcf86cd799439011 \
+  -H "x-publora-key: YOUR_API_KEY"
+```
+
+### Debug Failed Post
+
+```javascript
+async function debugFailedPost(postGroupId) {
+  const [postResponse, logsResponse] = await Promise.all([
+    fetch(`https://api.publora.com/api/v1/get-post/${postGroupId}`, {
+      headers: { 'x-publora-key': process.env.PUBLORA_API_KEY }
+    }),
+    fetch(`https://api.publora.com/api/v1/post-logs/${postGroupId}`, {
+      headers: { 'x-publora-key': process.env.PUBLORA_API_KEY }
+    })
+  ]);
+
+  const postData = await postResponse.json();
+  const logsData = await logsResponse.json();
+
+  console.log('=== Post Status ===');
+  for (const post of postData.posts) {
+    console.log(`${post.platform}: ${post.status}`);
+    if (post.error) {
+      console.log(`  Error: ${post.error.code} - ${post.error.message}`);
+      console.log(`  Retryable: ${post.error.retryable}`);
+    }
+  }
+
+  console.log('\n=== Timeline ===');
+  for (const log of logsData.logs) {
+    const time = new Date(log.createdAt).toISOString();
+    console.log(`[${time}] ${log.platform}: ${log.event}`);
+    if (log.error) {
+      console.log(`  └─ ${log.error}`);
+    }
+  }
+}
+```
+
+## Errors
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 404 | `"Post group not found"` | Invalid ID or post belongs to another user |
+| 500 | `"Failed to get post logs"` | Server error |
+
+
+---
+
+*[Publora](https://publora.com) is built by [Creative Content Crafts, Inc.](https://cccrafts.ai) Need AI-powered content creation for LinkedIn, Threads, and X? Try [Co.Actor](https://co.actor) — the best AI service for authentic thought leadership at scale.*

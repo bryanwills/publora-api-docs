@@ -27,7 +27,11 @@ GET https://api.publora.com/api/v1/platform-connections
       "displayName": "Your Name",
       "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
       "profileUrl": "https://twitter.com/yourhandle",
-      "accessTokenExpiresAt": null
+      "accessTokenExpiresAt": null,
+      "tokenStatus": "unknown",
+      "tokenExpiresIn": null,
+      "lastSuccessfulPost": "2026-02-20T14:30:00.000Z",
+      "lastError": null
     },
     {
       "platformId": "linkedin-Tz9W5i6ZYG",
@@ -35,7 +39,11 @@ GET https://api.publora.com/api/v1/platform-connections
       "displayName": "John Doe",
       "profileImageUrl": "https://media.licdn.com/...",
       "profileUrl": "https://linkedin.com/in/johndoe",
-      "accessTokenExpiresAt": "2026-05-15T10:30:00.000Z"
+      "accessTokenExpiresAt": "2026-05-15T10:30:00.000Z",
+      "tokenStatus": "valid",
+      "tokenExpiresIn": "82d 4h",
+      "lastSuccessfulPost": "2026-02-22T09:15:00.000Z",
+      "lastError": null
     },
     {
       "platformId": "instagram-17841412345678",
@@ -43,7 +51,14 @@ GET https://api.publora.com/api/v1/platform-connections
       "displayName": "Your Brand",
       "profileImageUrl": "https://...",
       "profileUrl": null,
-      "accessTokenExpiresAt": "2026-04-20T08:00:00.000Z"
+      "accessTokenExpiresAt": "2026-02-25T08:00:00.000Z",
+      "tokenStatus": "expiring_soon",
+      "tokenExpiresIn": "2d 12h",
+      "lastSuccessfulPost": null,
+      "lastError": {
+        "message": "Media upload failed: Invalid image format",
+        "occurredAt": "2026-02-21T16:45:00.000Z"
+      }
     }
   ]
 }
@@ -58,7 +73,20 @@ GET https://api.publora.com/api/v1/platform-connections
 | `displayName` | string | Display name on the platform |
 | `profileImageUrl` | string | Profile image URL |
 | `profileUrl` | string/null | URL to the user's profile on the platform. Can be null if not available for the platform. |
-| `accessTokenExpiresAt` | string/null | Token expiration (null = no expiration) |
+| `accessTokenExpiresAt` | string/null | Token expiration timestamp (null = no expiration) |
+| `tokenStatus` | string | Current token health: `valid`, `expiring_soon`, `expired`, or `unknown` |
+| `tokenExpiresIn` | string/null | Human-readable time until expiration (e.g., "7d 3h") |
+| `lastSuccessfulPost` | string/null | Timestamp of last successful post to this platform |
+| `lastError` | object/null | Last error that occurred when posting to this platform |
+
+## Token Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `valid` | Token is valid and won't expire within 7 days |
+| `expiring_soon` | Token expires within 7 days - consider reconnecting |
+| `expired` | Token has expired - reconnect required |
+| `unknown` | Platform doesn't use expiring tokens (e.g., Twitter, Bluesky) |
 
 ## Platform ID Format
 

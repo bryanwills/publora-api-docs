@@ -46,6 +46,33 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
 }
 ```
 
+### Failed Post Response
+
+When a post fails, the response includes detailed error information:
+
+```json
+{
+  "success": true,
+  "postGroupId": "507f1f77bcf86cd799439011",
+  "posts": [
+    {
+      "platform": "threads",
+      "platformId": "17841412345678",
+      "content": "Check out our new feature!",
+      "status": "failed",
+      "error": {
+        "code": "PLATFORM_AUTH_EXPIRED",
+        "message": "Error validating access token",
+        "platformStatusCode": 401,
+        "platformError": "Invalid OAuth access token",
+        "failedAt": "2026-02-22T14:30:00.000Z",
+        "retryable": false
+      }
+    }
+  ]
+}
+```
+
 ## Post Status Values
 
 | Status | Meaning |
@@ -55,7 +82,31 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
 | `pending` | Being processed by scheduler |
 | `processing` | Currently publishing to platform |
 | `published` | Successfully posted |
-| `failed` | Publishing failed |
+| `failed` | Publishing failed (see `error` object for details) |
+
+## Error Codes
+
+When `status` is `failed`, the `error` object contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | string | Error classification code (see table below) |
+| `message` | string | Human-readable error message |
+| `platformStatusCode` | number/null | HTTP status code from the platform API |
+| `platformError` | string/null | Raw error message from the platform |
+| `failedAt` | string | Timestamp when the failure occurred |
+| `retryable` | boolean | Whether the error might succeed on retry |
+
+| Error Code | Description | Retryable |
+|------------|-------------|-----------|
+| `PLATFORM_AUTH_EXPIRED` | Access token expired or revoked | No |
+| `RATE_LIMITED` | Platform rate limit exceeded | Yes |
+| `INVALID_CONTENT` | Content rejected by platform (e.g., too long, banned words) | No |
+| `CONTENT_TOO_LARGE` | Media file exceeds platform limits | No |
+| `PLATFORM_SERVER_ERROR` | Platform API returned 5xx error | Yes |
+| `NETWORK_ERROR` | Could not reach platform API | Yes |
+| `TIMEOUT_ERROR` | Request timed out | Yes |
+| `UNKNOWN_ERROR` | Unclassified error | Maybe |
 
 ## Examples
 
