@@ -52,11 +52,61 @@ X has specific rules for character counting that Publora handles automatically:
 
 ## Threading
 
-When your content exceeds the character limit, Publora automatically splits it into a thread:
+When your content exceeds the character limit, Publora automatically splits it into a thread (multiple connected tweets):
 
-- Content is split at sentence boundaries when possible
-- Each part is numbered with `[1/N]` markers (e.g., `[1/3]`, `[2/3]`, `[3/3]`)
-- You can also manually define thread parts by separating them with `---`
+### How It Works
+
+Publora uses the official X API v2 `reply.in_reply_to_tweet_id` parameter to chain tweets together. Each subsequent tweet is posted as a reply to the previous one, creating a connected thread.
+
+**Technical flow:**
+1. First tweet is published normally via `POST /2/tweets`
+2. Each subsequent tweet is published with `reply.in_reply_to_tweet_id` set to the previous tweet's ID
+3. All tweets share the same `conversation_id` (equals the first tweet's ID)
+
+### Automatic Splitting
+
+When content exceeds the character limit (280 for standard, 25,000 for Premium), Publora automatically:
+
+- Splits at paragraph breaks (`\n\n`) when possible
+- Falls back to sentence boundaries (`. `, `! `, `? `)
+- Falls back to word boundaries if needed
+- Adds `[1/N]` markers at the end of each tweet (e.g., `[1/3]`, `[2/3]`, `[3/3]`)
+- Reserves ~8 characters per tweet for the marker
+
+### Manual Thread Parts
+
+You can manually define where thread breaks should occur using either method:
+
+**Method 1: Triple dash separator**
+```
+This is my first tweet in the thread.
+
+---
+
+This is my second tweet in the thread.
+
+---
+
+And this is my third tweet!
+```
+
+**Method 2: Explicit markers**
+```
+First part of the thread [1/3]
+
+Second part of the thread [2/3]
+
+Third and final part [3/3]
+```
+
+When explicit `[n/m]` markers are detected, Publora preserves them exactly as written and splits at those points.
+
+### Media in Threads
+
+- **Images:** Up to 4 images attached to the first tweet only
+- **Video:** Single video attached to the first tweet only
+- Subsequent tweets in the thread are text-only
+- Images and video cannot be combined in the same tweet
 
 ## Examples
 
@@ -312,7 +362,19 @@ Publora will automatically split this into a numbered thread (e.g., `[1/3]`, `[2
 |-------------|-------|
 | Standard | 280 characters |
 | X Premium | 25,000 characters |
-| Thread tweet (each part) | Same as above, minus `[X/N]` marker space |
+| Thread tweet (each part) | Same as above, minus `[X/N]` marker space (~8 chars) |
+
+## Rate Limits
+
+The underlying X API v2 has the following publishing limits based on your account tier:
+
+| Tier | Monthly Posts | Per 15 Minutes | Per 24 Hours |
+|------|--------------|----------------|--------------|
+| Free | 500 | ~17 | ~500 |
+| Basic ($100/mo) | 10,000 | 100 per user | 10,000 per app |
+| Pro ($5,000/mo) | 1,000,000 | Higher | Higher |
+
+Publora returns the appropriate error from the X API if rate limits are exceeded. Each tweet in a thread counts as a separate post toward these limits.
 
 
 ---

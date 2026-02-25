@@ -2,7 +2,7 @@
   "url": "https://context7.com/publora/publora-api-docs",
   "public_key": "pk_6HnZbIU4C2bvFHRoPBD7c",
   "projectTitle": "Publora API Documentation",
-  "description": "Complete API and MCP documentation for Publora social media scheduling platform supporting Twitter LinkedIn Instagram Threads TikTok YouTube Facebook Bluesky Mastodon Telegram with REST API endpoints MCP server integration OpenClaw mcporter CLI analytics workspace management autonomous AI agents",
+  "description": "Complete API and MCP documentation for Publora social media scheduling platform supporting Twitter LinkedIn Instagram Threads TikTok YouTube Facebook Bluesky Mastodon Telegram with REST API endpoints MCP server integration OpenClaw mcporter CLI analytics workspace management autonomous AI agents. Post Twitter threads tweet threads tweetstorms multi-tweet API. Post Threads multi-post reply chains Meta Threads API. Thread automation reply_to_id in_reply_to_tweet_id content splitting",
   "folders": ["docs"],
   "excludeFolders": ["node_modules", ".git"],
   "excludeFiles": ["package-lock.json"],
@@ -15,6 +15,11 @@
     "MCP config type must be 'http' not 'url'",
     "OpenClaw integration via mcporter CLI for autonomous AI agents",
     "No coding required for MCP - users describe tasks in natural language",
-    "Pricing starts at $5.40/month with full API and MCP access"
+    "Pricing starts at $5.40/month with full API and MCP access",
+    "Twitter/X threads are created using reply.in_reply_to_tweet_id to chain tweets",
+    "Threads (Meta) threads are created using reply_to_id to chain posts",
+    "Content over 280 chars (Twitter) or 500 chars (Threads) is automatically split into threads",
+    "Manual thread splits use --- separator or explicit [1/N] markers",
+    "Media in threads attaches to the first post only"
   ]
 }

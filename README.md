@@ -137,6 +137,9 @@ All plans include full API access. [Start free trial](https://publora.com).
 ### Usage Guides
 - [Scheduling Posts](docs/guides/scheduling.md) — timing, drafts, batch scheduling
 - [Bulk Scheduling](docs/guides/bulk-scheduling.md) — CSV import, weekly content batches
+- [Threading Guide](docs/guides/threading.md) — post multi-part threads via API
+- [Twitter Threads](docs/guides/twitter-threads.md) — tweet thread automation
+- [Threads Multi-Post](docs/guides/threads-multi-post.md) — Meta Threads threading
 - [Rate Limits & Optimal Times](docs/guides/rate-limits.md) — platform limits, peak engagement, queue scheduling
 - [Media Uploads](docs/guides/media-uploads.md) — images, videos, carousels
 - [Cross-Platform Posting](docs/guides/cross-platform.md) — one call, many platforms

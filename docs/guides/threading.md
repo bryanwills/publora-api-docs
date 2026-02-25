@@ -1,0 +1,283 @@
+# Threading Guide - Post Multi-Part Threads via API
+
+Learn how to post threads (multiple connected posts) to Twitter/X and Threads using the Publora API. This guide covers automatic thread splitting, manual thread creation, and best practices.
+
+## What is a Thread?
+
+A thread is a series of connected posts that appear as a single conversation. On X/Twitter, these are called "tweet threads" or "tweetstorms." On Threads (by Meta), they appear as connected replies to your own posts.
+
+### Keywords: post thread API, Twitter thread API, Threads multi-post API, tweet thread programmatically, create thread API, multi-tweet API, thread posting automation, social media thread API
+
+## Quick Start
+
+Post a thread by simply providing content that exceeds the platform's character limit:
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: `This is a long post that will be automatically split into multiple parts.
+
+When your content exceeds the character limit (280 for X/Twitter, 500 for Threads), Publora automatically creates a thread.
+
+Each part is posted as a reply to the previous one, creating a connected conversation that your followers can read through.`,
+    platforms: ['twitter-123', 'threads-456']
+  })
+});
+```
+
+Publora will:
+1. Detect content exceeds the limit
+2. Split at natural break points (paragraphs, sentences)
+3. Post each part as a reply to the previous
+4. Return the head post ID
+
+## How Threading Works
+
+### Automatic Thread Creation
+
+When your content exceeds platform limits, Publora automatically:
+
+1. **Splits content intelligently:**
+   - First tries paragraph breaks (`\n\n`)
+   - Falls back to sentence endings (`. `, `! `, `? `)
+   - Falls back to word boundaries
+   - Hard splits only as last resort
+
+2. **Posts sequentially:**
+   - First post published normally
+   - Each subsequent post replies to the previous
+   - Uses `reply_to_id` (Threads) or `in_reply_to_tweet_id` (X)
+
+3. **Adds numbering (X/Twitter only):**
+   - Appends `[1/N]`, `[2/N]`, etc. to each tweet
+   - Reserves ~8 characters for the marker
+
+### Platform Limits
+
+| Platform | Character Limit | Thread Numbering |
+|----------|----------------|------------------|
+| X/Twitter (Standard) | 280 | Yes `[1/N]` |
+| X/Twitter (Premium) | 25,000 | Yes `[1/N]` |
+| Threads | 500 | No (optional) |
+
+## Manual Thread Control
+
+### Method 1: Triple Dash Separator
+
+Use `---` to explicitly define where thread breaks should occur:
+
+```javascript
+const content = `First part of my thread - the hook that grabs attention.
+
+---
+
+Second part with the main content and details.
+
+---
+
+Final part with the call to action!`;
+
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content,
+    platforms: ['twitter-123']
+  })
+});
+```
+
+### Method 2: Explicit Markers
+
+Use `[n/m]` markers to define parts:
+
+```javascript
+const content = `The hook that grabs attention [1/3]
+
+The main content with all the details you want to share [2/3]
+
+The conclusion with a call to action! [3/3]`;
+
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content,
+    platforms: ['twitter-123', 'threads-456']
+  })
+});
+```
+
+When explicit markers are detected:
+- Publora preserves them exactly as written
+- Content is split at marker positions
+- No additional numbering is added
+
+## Media in Threads
+
+Media (images, videos) are attached to the **first post only**:
+
+```javascript
+// Step 1: Create the post
+const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: `Check out these results from our latest experiment!
+
+---
+
+The methodology was straightforward but the results surprised us.
+
+---
+
+What do you think? Drop your thoughts below!`,
+    platforms: ['twitter-123']
+  })
+});
+
+const { postGroupId } = await postResponse.json();
+
+// Step 2: Upload media (attaches to first post)
+const formData = new FormData();
+formData.append('file', imageFile);
+formData.append('postGroupId', postGroupId);
+
+await fetch('https://api.publora.com/api/v1/upload-media', {
+  method: 'POST',
+  headers: { 'x-publora-key': 'YOUR_API_KEY' },
+  body: formData
+});
+```
+
+### Media Limits per Platform
+
+| Platform | Images | Video | Notes |
+|----------|--------|-------|-------|
+| X/Twitter | Up to 4 | 1 | Cannot mix images and video |
+| Threads | Up to 10 (carousel) | 1 | WebP auto-converted |
+
+## Cross-Platform Threading
+
+Post the same thread to multiple platforms simultaneously:
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: `A long piece of content that will become a thread...`,
+    platforms: ['twitter-123', 'threads-456']
+  })
+});
+```
+
+Publora handles platform differences:
+- X/Twitter: 280 char limit, adds `[1/N]` markers
+- Threads: 500 char limit, no markers by default
+
+## Scheduling Threads
+
+Schedule a thread for future publication:
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: `Your long-form thread content here...`,
+    platforms: ['twitter-123'],
+    scheduledTime: '2026-03-15T14:30:00.000Z'
+  })
+});
+```
+
+## Error Handling
+
+### Partial Thread Failures
+
+If a thread partially publishes (some posts succeed, others fail):
+
+```json
+{
+  "status": "partially_published",
+  "error": "Thread partially published: 2/5 tweets. Error: Rate limit exceeded",
+  "publishedIds": ["123", "456"],
+  "failedParts": [3, 4, 5]
+}
+```
+
+The successfully posted parts remain live. You may need to:
+1. Wait for rate limits to reset
+2. Manually post remaining content as replies
+
+### Rate Limits
+
+| Platform | Limit | Notes |
+|----------|-------|-------|
+| X/Twitter (Free) | 500/month | Each tweet in thread counts |
+| X/Twitter (Basic) | 10,000/month | 100 per 15 min per user |
+| Threads | 250/day | ~25/hour |
+
+## Best Practices
+
+1. **Keep threads focused** - Each thread should have one main topic
+2. **Hook in first post** - The first post should grab attention
+3. **Natural breaks** - Use paragraphs to help automatic splitting
+4. **Preview before posting** - Long threads are hard to edit once live
+5. **Consider your audience** - Some followers prefer single posts over threads
+
+## API Response
+
+Successful thread creation returns:
+
+```json
+{
+  "success": true,
+  "postGroupId": "pg_abc123",
+  "posts": [
+    {
+      "platform": "twitter-123",
+      "status": "published",
+      "isThread": true,
+      "postedId": "1234567890",
+      "threadParts": [
+        { "content": "First part [1/3]", "publishedId": "1234567890", "status": "published" },
+        { "content": "Second part [2/3]", "publishedId": "1234567891", "status": "published" },
+        { "content": "Third part [3/3]", "publishedId": "1234567892", "status": "published" }
+      ]
+    }
+  ]
+}
+```
+
+## Related Guides
+
+- [X/Twitter Platform Guide](../platforms/x-twitter.md)
+- [Threads Platform Guide](../platforms/threads.md)
+- [Scheduling Posts](./scheduling.md)
+- [Media Uploads](./media-uploads.md)
+
+---
+
+*[Publora](https://publora.com) - Post threads to X/Twitter and Threads via a simple REST API.*

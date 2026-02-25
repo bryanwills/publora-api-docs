@@ -44,12 +44,59 @@ Where `{accountId}` is your Threads account ID assigned during connection via Me
 
 ## Threading
 
-When your content exceeds the 500-character limit, Publora automatically splits it into a thread:
+When your content exceeds the 500-character limit, Publora automatically splits it into a thread (multiple connected posts):
 
-- Content is split at sentence boundaries when possible
+### How It Works
+
+Publora uses the official Threads API `reply_to_id` parameter to chain posts together. Each subsequent post is posted as a reply to the previous one, creating a connected thread visible on Threads.
+
+**Technical flow:**
+1. First post is published normally
+2. Each subsequent post is published with `reply_to_id` set to the previous post's ID
+3. All posts appear as a connected thread on Threads
+
+### Automatic Splitting
+
+When content exceeds 500 characters, Publora automatically splits it:
+
+- Content is split at paragraph breaks (`\n\n`) when possible
+- Falls back to sentence boundaries (`. `, `! `, `? `)
+- Falls back to word boundaries if needed
 - Each part respects the 500-character limit
-- You can also manually define thread parts by separating them with `---`
-- Unlike X/Twitter, Threads does not use `[1/N]` markers by default, but you can include them manually
+
+### Manual Thread Parts
+
+You can manually define where thread breaks should occur using either method:
+
+**Method 1: Triple dash separator**
+```
+This is my first post in the thread.
+
+---
+
+This is my second post in the thread.
+
+---
+
+And this is my third post!
+```
+
+**Method 2: Explicit markers**
+```
+First part of the thread [1/3]
+
+Second part of the thread [2/3]
+
+Third and final part [3/3]
+```
+
+When explicit `[n/m]` markers are detected, Publora preserves them exactly as written and splits at those points.
+
+### Media in Threads
+
+- **Carousel/Images:** Attached to the first post only
+- **Video:** Attached to the first post only
+- Subsequent posts in the thread are text-only
 
 ## Examples
 
@@ -305,6 +352,17 @@ Publora will automatically split this into multiple thread posts, each staying w
 | Post body | 500 characters |
 | Hashtags | 1 per post |
 | Thread parts | No fixed limit on number of parts |
+
+## Rate Limits
+
+The underlying Threads API has the following publishing limits:
+
+| Limit Type | Value |
+|------------|-------|
+| Posts per 24 hours | 250 |
+| Posts per hour | ~25 (varies) |
+
+Publora handles rate limiting automatically and will return appropriate errors if limits are exceeded.
 
 
 ---
