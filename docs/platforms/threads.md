@@ -37,8 +37,9 @@ Where `{accountId}` is your Threads account ID assigned during connection via Me
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 500 characters |
-| Images | Yes | Carousel supported, WebP auto-converted |
-| Videos | Yes | MP4 format |
+| Images | Yes | Up to 20 per carousel, WebP auto-converted |
+| Videos | Yes | MP4 format, up to 20 per carousel |
+| Carousels | Yes | 2-20 images, videos, or mixed media |
 | Threads | Yes | Auto-split for long content |
 | Hashtags | Yes | Maximum 1 hashtag per post |
 
@@ -174,23 +175,74 @@ console.log(response.data);
 
 ### Post with an Image Carousel
 
+Carousels require 2-20 images or videos. The workflow is: create a draft post, upload images, then schedule.
+
 **JavaScript (fetch)**
 
 ```javascript
-const response = await fetch('https://api.publora.com/api/v1/create-post', {
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// Step 1: Create a draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     content: 'Our product evolution over the past year. #buildinpublic',
     platforms: ['threads-55667788']
+    // No scheduledTime = draft
   })
 });
 
-const data = await response.json();
-console.log(data);
+const { postGroupId } = await postResponse.json();
+
+// Step 2: Upload each image (2-20 images supported)
+const images = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
+
+for (const fileName of images) {
+  // Get upload URL
+  const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-publora-key': API_KEY
+    },
+    body: JSON.stringify({
+      fileName,
+      contentType: 'image/jpeg',
+      type: 'image',
+      postGroupId
+    })
+  });
+
+  const { uploadUrl } = await uploadUrlResponse.json();
+
+  // Upload to S3
+  const fileBuffer = await fs.promises.readFile(`./${fileName}`);
+  await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/jpeg' },
+    body: fileBuffer
+  });
+}
+
+// Step 3: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-15T14:00:00.000Z'
+  })
+});
+
+console.log('Carousel scheduled!');
 ```
 
 **Python (requests)**
@@ -198,53 +250,107 @@ console.log(data);
 ```python
 import requests
 
-response = requests.post(
-    'https://api.publora.com/api/v1/create-post',
-    headers={
-        'Content-Type': 'application/json',
-        'x-publora-key': 'YOUR_API_KEY'
-    },
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.publora.com/api/v1'
+HEADERS = {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+}
+
+# Step 1: Create a draft post (no scheduledTime)
+post_response = requests.post(
+    f'{BASE_URL}/create-post',
+    headers=HEADERS,
     json={
         'content': 'Our product evolution over the past year. #buildinpublic',
         'platforms': ['threads-55667788']
+        # No scheduledTime = draft
     }
 )
 
-data = response.json()
-print(data)
+post_group_id = post_response.json()['postGroupId']
+
+# Step 2: Upload each image (2-20 images supported)
+images = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg']
+
+for file_name in images:
+    # Get upload URL
+    upload_response = requests.post(
+        f'{BASE_URL}/get-upload-url',
+        headers=HEADERS,
+        json={
+            'fileName': file_name,
+            'contentType': 'image/jpeg',
+            'type': 'image',
+            'postGroupId': post_group_id
+        }
+    )
+
+    upload_url = upload_response.json()['uploadUrl']
+
+    # Upload to S3
+    with open(f'./{file_name}', 'rb') as f:
+        requests.put(upload_url, headers={'Content-Type': 'image/jpeg'}, data=f.read())
+
+# Step 3: Schedule the post
+requests.put(
+    f'{BASE_URL}/update-post/{post_group_id}',
+    headers=HEADERS,
+    json={
+        'status': 'scheduled',
+        'scheduledTime': '2026-03-15T14:00:00.000Z'
+    }
+)
+
+print('Carousel scheduled!')
 ```
 
 **cURL**
 
 ```bash
-curl -X POST https://api.publora.com/api/v1/create-post \
+API_KEY="YOUR_API_KEY"
+
+# Step 1: Create a draft post (no scheduledTime)
+POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d '{
     "content": "Our product evolution over the past year. #buildinpublic",
     "platforms": ["threads-55667788"]
+  }')
+
+POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
+
+# Step 2: Upload each image (2-20 images supported)
+for FILE in photo1.jpg photo2.jpg photo3.jpg; do
+  UPLOAD_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
+    -H "Content-Type: application/json" \
+    -H "x-publora-key: $API_KEY" \
+    -d "{
+      \"fileName\": \"$FILE\",
+      \"contentType\": \"image/jpeg\",
+      \"type\": \"image\",
+      \"postGroupId\": \"$POST_GROUP_ID\"
+    }")
+
+  UPLOAD_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.uploadUrl')
+
+  curl -s -X PUT "$UPLOAD_URL" \
+    -H "Content-Type: image/jpeg" \
+    --data-binary @"./$FILE"
+done
+
+# Step 3: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-15T14:00:00.000Z"
   }'
 ```
 
-**Node.js (axios)**
-
-```javascript
-const axios = require('axios');
-
-const response = await axios.post('https://api.publora.com/api/v1/create-post', {
-  content: 'Our product evolution over the past year. #buildinpublic',
-  platforms: ['threads-55667788']
-}, {
-  headers: {
-    'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
-  }
-});
-
-console.log(response.data);
-```
-
-> **Note:** To attach media to a Threads post, first create the post, then upload media using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
+> **Note:** For immediate publishing, set `scheduledTime` to the current time or a few seconds in the future. For more details, see the [media upload workflow](../guides/media-uploads.md).
 
 ### Post a Thread (Long Content)
 
@@ -351,6 +457,7 @@ Publora will automatically split this into multiple thread posts, each staying w
 |---------|-------|
 | Post body | 500 characters |
 | Hashtags | 1 per post |
+| Carousel items | 2-20 images or videos |
 | Thread parts | No fixed limit on number of parts |
 
 ## Rate Limits

@@ -27,6 +27,8 @@ Media is automatically attached to the post group via the `postGroupId` you prov
 
 - **Maximum file size:** 512 MB per file
 - **Per post:** Up to **4 images** OR **1 video** (not both)
+- **Instagram carousels:** Up to **10 images** (exception to the 4-image limit)
+- **Threads carousels:** Up to **20 images or videos** (mixed media supported)
 
 ### Automatic Processing
 
@@ -37,31 +39,36 @@ Media is automatically attached to the post group via the `postGroupId` you prov
 
 ### Upload an Image and Create a Post
 
+> **Important:** Create the post as a **draft** (omit `scheduledTime`), upload media, then schedule via update-post. This ensures media is fully uploaded before the scheduler processes your post.
+
 **JavaScript (fetch)**
 
 ```javascript
-// Step 1: Create a draft post first to get a postGroupId
-const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// Step 1: Create a draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     content: 'Check out our latest product!',
-    platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-    scheduledTime: '2026-03-15T14:30:00.000Z'
+    platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456']
+    // No scheduledTime = draft
   })
 });
 
 const { postGroupId } = await postResponse.json();
 
 // Step 2: Get a pre-signed upload URL
-const uploadUrlResponse = await fetch('https://api.publora.com/api/v1/get-upload-url', {
+const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     fileName: 'product-photo.jpg',
@@ -81,7 +88,22 @@ await fetch(uploadUrl, {
   body: fileBuffer
 });
 
-console.log('Image uploaded and attached to post:', fileUrl);
+console.log('Image uploaded:', fileUrl);
+
+// Step 4: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-15T14:30:00.000Z'
+  })
+});
+
+console.log('Post scheduled!');
 ```
 
 **Python (requests)**
@@ -95,14 +117,14 @@ HEADERS = {
     'x-publora-key': 'YOUR_API_KEY'
 }
 
-# Step 1: Create a post to get a postGroupId
+# Step 1: Create a draft post (no scheduledTime)
 post_response = requests.post(
     f'{API_URL}/create-post',
     headers=HEADERS,
     json={
         'content': 'Check out our latest product!',
-        'platforms': ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-        'scheduledTime': '2026-03-15T14:30:00.000Z'
+        'platforms': ['twitter-123', 'linkedin-ABC', 'instagram-456']
+        # No scheduledTime = draft
     }
 )
 
@@ -131,19 +153,32 @@ with open('./product-photo.jpg', 'rb') as f:
     )
 
 print(f"Image uploaded: {upload_data['fileUrl']}")
+
+# Step 4: Schedule the post
+requests.put(
+    f'{API_URL}/update-post/{post_group_id}',
+    headers=HEADERS,
+    json={
+        'status': 'scheduled',
+        'scheduledTime': '2026-03-15T14:30:00.000Z'
+    }
+)
+
+print('Post scheduled!')
 ```
 
 **cURL**
 
 ```bash
-# Step 1: Create a post to get a postGroupId
+API_KEY="YOUR_API_KEY"
+
+# Step 1: Create a draft post (no scheduledTime)
 POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d '{
     "content": "Check out our latest product!",
-    "platforms": ["twitter-123", "linkedin-ABC", "instagram-456"],
-    "scheduledTime": "2026-03-15T14:30:00.000Z"
+    "platforms": ["twitter-123", "linkedin-ABC", "instagram-456"]
   }')
 
 POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
@@ -151,7 +186,7 @@ POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
 # Step 2: Get a pre-signed upload URL
 UPLOAD_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d "{
     \"fileName\": \"product-photo.jpg\",
     \"contentType\": \"image/jpeg\",
@@ -165,6 +200,15 @@ UPLOAD_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.uploadUrl')
 curl -X PUT "$UPLOAD_URL" \
   -H "Content-Type: image/jpeg" \
   --data-binary @./product-photo.jpg
+
+# Step 4: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-15T14:30:00.000Z"
+  }'
 ```
 
 **Node.js (axios)**
@@ -181,11 +225,11 @@ const api = axios.create({
   }
 });
 
-// Step 1: Create a post to get a postGroupId
+// Step 1: Create a draft post (no scheduledTime)
 const { data: postData } = await api.post('/create-post', {
   content: 'Check out our latest product!',
-  platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-  scheduledTime: '2026-03-15T14:30:00.000Z'
+  platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456']
+  // No scheduledTime = draft
 });
 
 // Step 2: Get a pre-signed upload URL
@@ -203,39 +247,51 @@ await axios.put(uploadData.uploadUrl, fileBuffer, {
 });
 
 console.log('Image uploaded:', uploadData.fileUrl);
+
+// Step 4: Schedule the post
+await api.put(`/update-post/${postData.postGroupId}`, {
+  status: 'scheduled',
+  scheduledTime: '2026-03-15T14:30:00.000Z'
+});
+
+console.log('Post scheduled!');
 ```
 
 ---
 
 ### Upload a Video and Create a Post
 
+> **Important:** Create the post as a **draft** first, upload the video, then schedule.
+
 **JavaScript (fetch)**
 
 ```javascript
 const fs = require('fs');
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
 
-// Step 1: Create a post first
-const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
+// Step 1: Create a draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     content: 'Watch our latest promo video!',
-    platforms: ['twitter-123', 'tiktok-789', 'youtube-012'],
-    scheduledTime: '2026-03-15T16:00:00.000Z'
+    platforms: ['twitter-123', 'tiktok-789', 'youtube-012']
+    // No scheduledTime = draft
   })
 });
 
 const { postGroupId } = await postResponse.json();
 
 // Step 2: Get a pre-signed upload URL for the video
-const uploadUrlResponse = await fetch('https://api.publora.com/api/v1/get-upload-url', {
+const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     fileName: 'promo-video.mp4',
@@ -248,8 +304,6 @@ const uploadUrlResponse = await fetch('https://api.publora.com/api/v1/get-upload
 const { uploadUrl } = await uploadUrlResponse.json();
 
 // Step 3: Upload the video to S3
-// Video metadata (resolution, codec, fps, bitrate, duration, aspect ratio)
-// is extracted automatically by Publora after upload.
 const videoBuffer = await fs.promises.readFile('./promo-video.mp4');
 await fetch(uploadUrl, {
   method: 'PUT',
@@ -257,7 +311,22 @@ await fetch(uploadUrl, {
   body: videoBuffer
 });
 
-console.log('Video uploaded and attached to post:', postGroupId);
+console.log('Video uploaded:', postGroupId);
+
+// Step 4: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-15T16:00:00.000Z'
+  })
+});
+
+console.log('Post scheduled!');
 ```
 
 **Python (requests)**
@@ -271,14 +340,14 @@ HEADERS = {
     'x-publora-key': 'YOUR_API_KEY'
 }
 
-# Step 1: Create a post first
+# Step 1: Create a draft post (no scheduledTime)
 post_response = requests.post(
     f'{API_URL}/create-post',
     headers=HEADERS,
     json={
         'content': 'Watch our latest promo video!',
-        'platforms': ['twitter-123', 'tiktok-789', 'youtube-012'],
-        'scheduledTime': '2026-03-15T16:00:00.000Z'
+        'platforms': ['twitter-123', 'tiktok-789', 'youtube-012']
+        # No scheduledTime = draft
     }
 )
 
@@ -302,20 +371,33 @@ upload_url = upload_response.json()['uploadUrl']
 with open('./promo-video.mp4', 'rb') as f:
     requests.put(upload_url, headers={'Content-Type': 'video/mp4'}, data=f.read())
 
-print(f"Video uploaded for post: {post_group_id}")
+print(f"Video uploaded: {post_group_id}")
+
+# Step 4: Schedule the post
+requests.put(
+    f'{API_URL}/update-post/{post_group_id}',
+    headers=HEADERS,
+    json={
+        'status': 'scheduled',
+        'scheduledTime': '2026-03-15T16:00:00.000Z'
+    }
+)
+
+print('Post scheduled!')
 ```
 
 **cURL**
 
 ```bash
-# Step 1: Create a post
+API_KEY="YOUR_API_KEY"
+
+# Step 1: Create a draft post (no scheduledTime)
 POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d '{
     "content": "Watch our latest promo video!",
-    "platforms": ["twitter-123", "tiktok-789", "youtube-012"],
-    "scheduledTime": "2026-03-15T16:00:00.000Z"
+    "platforms": ["twitter-123", "tiktok-789", "youtube-012"]
   }')
 
 POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
@@ -323,7 +405,7 @@ POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
 # Step 2: Get upload URL
 UPLOAD_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d "{
     \"fileName\": \"promo-video.mp4\",
     \"contentType\": \"video/mp4\",
@@ -337,6 +419,15 @@ UPLOAD_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.uploadUrl')
 curl -X PUT "$UPLOAD_URL" \
   -H "Content-Type: video/mp4" \
   --data-binary @./promo-video.mp4
+
+# Step 4: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-15T16:00:00.000Z"
+  }'
 ```
 
 **Node.js (axios)**
@@ -353,11 +444,11 @@ const api = axios.create({
   }
 });
 
-// Step 1: Create a post
+// Step 1: Create a draft post (no scheduledTime)
 const { data: postData } = await api.post('/create-post', {
   content: 'Watch our latest promo video!',
-  platforms: ['twitter-123', 'tiktok-789', 'youtube-012'],
-  scheduledTime: '2026-03-15T16:00:00.000Z'
+  platforms: ['twitter-123', 'tiktok-789', 'youtube-012']
+  // No scheduledTime = draft
 });
 
 // Step 2: Get upload URL
@@ -376,31 +467,43 @@ await axios.put(uploadData.uploadUrl, videoBuffer, {
   maxBodyLength: 512 * 1024 * 1024
 });
 
-console.log('Video uploaded for post:', postData.postGroupId);
+console.log('Video uploaded:', postData.postGroupId);
+
+// Step 4: Schedule the post
+await api.put(`/update-post/${postData.postGroupId}`, {
+  status: 'scheduled',
+  scheduledTime: '2026-03-15T16:00:00.000Z'
+});
+
+console.log('Post scheduled!');
 ```
 
 ---
 
 ### Upload Multiple Images for a Carousel Post
 
-You can attach up to 4 images to a single post. Each image requires its own upload URL.
+You can attach up to 4 images to a single post (or up to 10 for Instagram carousels). Each image requires its own upload URL.
+
+> **Important:** Create the post as a **draft** first, upload all images, then schedule.
 
 **JavaScript (fetch)**
 
 ```javascript
 const fs = require('fs');
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
 
-// Step 1: Create the post first
-const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
+// Step 1: Create a draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     content: 'Our product lineup for 2026 -- swipe to see all!',
-    platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-    scheduledTime: '2026-03-15T12:00:00.000Z'
+    platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456']
+    // No scheduledTime = draft
   })
 });
 
@@ -416,11 +519,11 @@ const images = [
 
 for (const image of images) {
   // Get upload URL for each image
-  const uploadUrlResponse = await fetch('https://api.publora.com/api/v1/get-upload-url', {
+  const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-publora-key': 'YOUR_API_KEY'
+      'x-publora-key': API_KEY
     },
     body: JSON.stringify({
       fileName: image.name,
@@ -443,7 +546,20 @@ for (const image of images) {
   console.log(`Uploaded ${image.name}`);
 }
 
-console.log('All images attached to post:', postGroupId);
+// Step 3: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-15T12:00:00.000Z'
+  })
+});
+
+console.log('Carousel post scheduled!');
 ```
 
 **Python (requests)**
@@ -457,14 +573,14 @@ HEADERS = {
     'x-publora-key': 'YOUR_API_KEY'
 }
 
-# Step 1: Create the post first
+# Step 1: Create a draft post (no scheduledTime)
 post_response = requests.post(
     f'{API_URL}/create-post',
     headers=HEADERS,
     json={
         'content': 'Our product lineup for 2026 -- swipe to see all!',
-        'platforms': ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-        'scheduledTime': '2026-03-15T12:00:00.000Z'
+        'platforms': ['twitter-123', 'linkedin-ABC', 'instagram-456']
+        # No scheduledTime = draft
     }
 )
 
@@ -503,7 +619,17 @@ for image in images:
 
     print(f"Uploaded {image['name']}")
 
-print(f"All images attached to post: {post_group_id}")
+# Step 3: Schedule the post
+requests.put(
+    f'{API_URL}/update-post/{post_group_id}',
+    headers=HEADERS,
+    json={
+        'status': 'scheduled',
+        'scheduledTime': '2026-03-15T12:00:00.000Z'
+    }
+)
+
+print('Carousel post scheduled!')
 ```
 
 **cURL**
@@ -511,14 +637,13 @@ print(f"All images attached to post: {post_group_id}")
 ```bash
 API_KEY="YOUR_API_KEY"
 
-# Step 1: Create the post
+# Step 1: Create a draft post (no scheduledTime)
 POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
   -H "x-publora-key: $API_KEY" \
   -d '{
     "content": "Our product lineup for 2026 -- swipe to see all!",
-    "platforms": ["twitter-123", "linkedin-ABC", "instagram-456"],
-    "scheduledTime": "2026-03-15T12:00:00.000Z"
+    "platforms": ["twitter-123", "linkedin-ABC", "instagram-456"]
   }')
 
 POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
@@ -548,6 +673,15 @@ for FILE in slide1.jpg slide2.png slide3.jpg slide4.jpg; do
 
   echo "Uploaded $FILE"
 done
+
+# Step 3: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-15T12:00:00.000Z"
+  }'
 ```
 
 **Node.js (axios)**
@@ -564,11 +698,11 @@ const api = axios.create({
   }
 });
 
-// Step 1: Create the post
+// Step 1: Create a draft post (no scheduledTime)
 const { data: postData } = await api.post('/create-post', {
   content: 'Our product lineup for 2026 -- swipe to see all!',
-  platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456'],
-  scheduledTime: '2026-03-15T12:00:00.000Z'
+  platforms: ['twitter-123', 'linkedin-ABC', 'instagram-456']
+  // No scheduledTime = draft
 });
 
 // Step 2: Upload each image
@@ -595,7 +729,13 @@ for (const image of images) {
   console.log(`Uploaded ${image.name}`);
 }
 
-console.log('All images attached to post:', postData.postGroupId);
+// Step 3: Schedule the post
+await api.put(`/update-post/${postData.postGroupId}`, {
+  status: 'scheduled',
+  scheduledTime: '2026-03-15T12:00:00.000Z'
+});
+
+console.log('Carousel post scheduled!');
 ```
 
 ## Best Practices

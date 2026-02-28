@@ -126,15 +126,18 @@ When explicit markers are detected:
 
 ## Media in Threads
 
-Media (images, videos) are attached to the **first post only**:
+Media (images, videos) are attached to the **first post only**. Use the standard upload workflow: create draft, upload media, then schedule.
 
 ```javascript
-// Step 1: Create the post
-const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// Step 1: Create draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
     content: `Check out these results from our latest experiment!
@@ -147,20 +150,48 @@ The methodology was straightforward but the results surprised us.
 
 What do you think? Drop your thoughts below!`,
     platforms: ['twitter-123']
+    // No scheduledTime = draft
   })
 });
 
 const { postGroupId } = await postResponse.json();
 
-// Step 2: Upload media (attaches to first post)
-const formData = new FormData();
-formData.append('file', imageFile);
-formData.append('postGroupId', postGroupId);
-
-await fetch('https://api.publora.com/api/v1/upload-media', {
+// Step 2: Get pre-signed upload URL
+const urlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
   method: 'POST',
-  headers: { 'x-publora-key': 'YOUR_API_KEY' },
-  body: formData
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    fileName: 'experiment-results.jpg',
+    contentType: 'image/jpeg',
+    type: 'image',
+    postGroupId
+  })
+});
+const { uploadUrl, fileUrl } = await urlResponse.json();
+
+// Step 3: Upload file to S3
+const fileBuffer = await fs.promises.readFile('./experiment-results.jpg');
+await fetch(uploadUrl, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'image/jpeg' },
+  body: fileBuffer
+});
+console.log(`Uploaded: ${fileUrl}`);
+
+// Step 4: Schedule the thread
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-01T14:00:00.000Z'
+  })
 });
 ```
 

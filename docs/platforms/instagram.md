@@ -140,23 +140,74 @@ console.log(response.data);
 
 ### Post a Carousel
 
+Carousels require 2-10 images. The workflow is: create a draft post, upload images, then schedule.
+
 **JavaScript (fetch)**
 
 ```javascript
-const response = await fetch('https://api.publora.com/api/v1/create-post', {
+const API_KEY = 'YOUR_API_KEY';
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// Step 1: Create a draft post (no scheduledTime)
+const postResponse = await fetch(`${BASE_URL}/create-post`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
+    'x-publora-key': API_KEY
   },
   body: JSON.stringify({
-    content: '10 tips for better code reviews. Swipe through to learn them all! #coding #devtips',
+    content: '10 tips for better code reviews. Swipe through! #coding #devtips',
     platforms: ['instagram-11223344']
+    // No scheduledTime = draft
   })
 });
 
-const data = await response.json();
-console.log(data);
+const { postGroupId } = await postResponse.json();
+
+// Step 2: Upload each image (2-10 images for Instagram carousels)
+const images = ['tip1.jpg', 'tip2.jpg', 'tip3.jpg'];
+
+for (const fileName of images) {
+  // Get upload URL
+  const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-publora-key': API_KEY
+    },
+    body: JSON.stringify({
+      fileName,
+      contentType: 'image/jpeg',
+      type: 'image',
+      postGroupId
+    })
+  });
+
+  const { uploadUrl } = await uploadUrlResponse.json();
+
+  // Upload to S3
+  const fileBuffer = await fs.promises.readFile(`./${fileName}`);
+  await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/jpeg' },
+    body: fileBuffer
+  });
+}
+
+// Step 3: Schedule the post
+await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+  },
+  body: JSON.stringify({
+    status: 'scheduled',
+    scheduledTime: '2026-03-15T14:00:00.000Z'
+  })
+});
+
+console.log('Carousel scheduled!');
 ```
 
 **Python (requests)**
@@ -164,51 +215,107 @@ console.log(data);
 ```python
 import requests
 
-response = requests.post(
-    'https://api.publora.com/api/v1/create-post',
-    headers={
-        'Content-Type': 'application/json',
-        'x-publora-key': 'YOUR_API_KEY'
-    },
+API_KEY = 'YOUR_API_KEY'
+BASE_URL = 'https://api.publora.com/api/v1'
+HEADERS = {
+    'Content-Type': 'application/json',
+    'x-publora-key': API_KEY
+}
+
+# Step 1: Create a draft post (no scheduledTime)
+post_response = requests.post(
+    f'{BASE_URL}/create-post',
+    headers=HEADERS,
     json={
-        'content': '10 tips for better code reviews. Swipe through to learn them all! #coding #devtips',
+        'content': '10 tips for better code reviews. Swipe through! #coding #devtips',
         'platforms': ['instagram-11223344']
+        # No scheduledTime = draft
     }
 )
 
-data = response.json()
-print(data)
+post_group_id = post_response.json()['postGroupId']
+
+# Step 2: Upload each image (2-10 images for Instagram carousels)
+images = ['tip1.jpg', 'tip2.jpg', 'tip3.jpg']
+
+for file_name in images:
+    # Get upload URL
+    upload_response = requests.post(
+        f'{BASE_URL}/get-upload-url',
+        headers=HEADERS,
+        json={
+            'fileName': file_name,
+            'contentType': 'image/jpeg',
+            'type': 'image',
+            'postGroupId': post_group_id
+        }
+    )
+
+    upload_url = upload_response.json()['uploadUrl']
+
+    # Upload to S3
+    with open(f'./{file_name}', 'rb') as f:
+        requests.put(upload_url, headers={'Content-Type': 'image/jpeg'}, data=f.read())
+
+# Step 3: Schedule the post
+requests.put(
+    f'{BASE_URL}/update-post/{post_group_id}',
+    headers=HEADERS,
+    json={
+        'status': 'scheduled',
+        'scheduledTime': '2026-03-15T14:00:00.000Z'
+    }
+)
+
+print('Carousel scheduled!')
 ```
 
 **cURL**
 
 ```bash
-curl -X POST https://api.publora.com/api/v1/create-post \
+API_KEY="YOUR_API_KEY"
+
+# Step 1: Create a draft post (no scheduledTime)
+POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
-  -H "x-publora-key: YOUR_API_KEY" \
+  -H "x-publora-key: $API_KEY" \
   -d '{
-    "content": "10 tips for better code reviews. Swipe through to learn them all! #coding #devtips",
+    "content": "10 tips for better code reviews. Swipe through! #coding #devtips",
     "platforms": ["instagram-11223344"]
+  }')
+
+POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
+
+# Step 2: Upload each image (2-10 images for Instagram carousels)
+for FILE in tip1.jpg tip2.jpg tip3.jpg; do
+  UPLOAD_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
+    -H "Content-Type: application/json" \
+    -H "x-publora-key: $API_KEY" \
+    -d "{
+      \"fileName\": \"$FILE\",
+      \"contentType\": \"image/jpeg\",
+      \"type\": \"image\",
+      \"postGroupId\": \"$POST_GROUP_ID\"
+    }")
+
+  UPLOAD_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.uploadUrl')
+
+  curl -s -X PUT "$UPLOAD_URL" \
+    -H "Content-Type: image/jpeg" \
+    --data-binary @"./$FILE"
+done
+
+# Step 3: Schedule the post
+curl -X PUT "https://api.publora.com/api/v1/update-post/$POST_GROUP_ID" \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: $API_KEY" \
+  -d '{
+    "status": "scheduled",
+    "scheduledTime": "2026-03-15T14:00:00.000Z"
   }'
 ```
 
-**Node.js (axios)**
-
-```javascript
-const axios = require('axios');
-
-const response = await axios.post('https://api.publora.com/api/v1/create-post', {
-  content: '10 tips for better code reviews. Swipe through to learn them all! #coding #devtips',
-  platforms: ['instagram-11223344']
-}, {
-  headers: {
-    'Content-Type': 'application/json',
-    'x-publora-key': 'YOUR_API_KEY'
-  }
-});
-
-console.log(response.data);
-```
+> **Note:** For immediate publishing, set `scheduledTime` to the current time. For more details, see the [media upload workflow](../guides/media-uploads.md).
 
 ### Post a Reel
 
