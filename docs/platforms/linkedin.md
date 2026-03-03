@@ -41,6 +41,73 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Videos | Yes | MP4 format |
 | Analytics | Yes | IMPRESSION, MEMBERS_REACHED, RESHARE, REACTION, COMMENT |
 | Reactions | Yes | LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION, ENTERTAINMENT |
+| Mentions | Yes | @mention people and organizations |
+
+## Mentioning People and Organizations
+
+Publora supports @mentioning LinkedIn members and organizations in your posts. When the post is published, the mention becomes a clickable link and the mentioned person/organization receives a notification.
+
+### Mention Syntax
+
+Use the following format in your post content:
+
+```
+@{urn:li:person:MEMBER_ID|Display Name}       # Mention a person
+@{urn:li:organization:ORG_ID|Company Name}    # Mention an organization
+```
+
+### Example
+
+**Post content:**
+```
+Great insights from @{urn:li:person:4986615|Serge Bulaev} on building APIs!
+```
+
+**Result on LinkedIn:**
+```
+Great insights from @Serge Bulaev on building APIs!
+```
+
+The mention will be rendered as a clickable link to the person's profile.
+
+### How to Find LinkedIn URNs
+
+- **Person URN**: Available in the LinkedIn API or from the profile URL. For example, if the profile URL is `linkedin.com/in/username`, you can use LinkedIn's API to retrieve the member URN.
+- **Organization URN**: Found in the company page URL or via LinkedIn's API.
+
+### Code Example
+
+**JavaScript**
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: 'Excited to collaborate with @{urn:li:person:4986615|Serge Bulaev} on this project!',
+    platforms: ['linkedin-987654321']
+  })
+});
+```
+
+**Python**
+```python
+import requests
+
+response = requests.post(
+    'https://api.publora.com/api/v1/create-post',
+    headers={
+        'Content-Type': 'application/json',
+        'x-publora-key': 'YOUR_API_KEY'
+    },
+    json={
+        'content': 'Excited to collaborate with @{urn:li:person:4986615|Serge Bulaev} on this project!',
+        'platforms': ['linkedin-987654321']
+    }
+)
+```
 
 ## Analytics
 
