@@ -56,26 +56,42 @@ Use the following format in your post content:
 @{urn:li:organization:ORG_ID|Company Name}    # Mention an organization
 ```
 
-### Example
+### Examples
 
-**Post content:**
+**Mentioning a person:**
 ```
 Great insights from @{urn:li:person:4986615|Serge Bulaev} on building APIs!
 ```
+Result: `Great insights from @Serge Bulaev on building APIs!`
 
-**Result on LinkedIn:**
+**Mentioning a company:**
 ```
-Great insights from @Serge Bulaev on building APIs!
+Excited to work with @{urn:li:organization:107107343|Creative Content Crafts Inc}!
 ```
+Result: `Excited to work with @Creative Content Crafts Inc!`
 
-The mention will be rendered as a clickable link to the person's profile.
+Both mentions will be rendered as clickable links on LinkedIn.
 
 ### How to Find LinkedIn URNs
 
 - **Person URN**: The numeric ID from LinkedIn's API. You can find this via LinkedIn's API or third-party tools. The format is `urn:li:person:{numeric_id}`.
 - **Organization URN**: Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`.
 
-> **Note:** Publora automatically converts the URN format for LinkedIn's API compatibility. You always use `urn:li:person:` in your requests.
+> **Note:** Publora automatically converts the person URN format for LinkedIn's API compatibility.
+
+### Important: Name Matching Requirements
+
+**The display name must exactly match the name on LinkedIn** (case-sensitive):
+
+- For **people**: Use their exact name as shown on their LinkedIn profile
+- For **organizations**: Use the **exact registered company name** including suffixes like "Inc", "LLC", etc.
+
+| Correct | Incorrect |
+|---------|-----------|
+| `@{urn:li:organization:123\|Acme Corp Inc}` | `@{urn:li:organization:123\|Acme Corp}` |
+| `@{urn:li:person:456\|John Smith}` | `@{urn:li:person:456\|john smith}` |
+
+If the name doesn't match exactly, the mention will appear as plain text instead of a clickable link.
 
 ### Code Example
 
