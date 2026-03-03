@@ -41,6 +41,7 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Videos | Yes | MP4 format |
 | Analytics | Yes | IMPRESSION, MEMBERS_REACHED, RESHARE, REACTION, COMMENT |
 | Reactions | Yes | LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION, ENTERTAINMENT |
+| Comments | Yes | Create, delete, reply (1,250 characters max) |
 | Mentions | Yes | @mention people and organizations |
 
 ## Mentioning People and Organizations
@@ -151,6 +152,123 @@ LinkedIn supports a richer set of reactions than a simple "like":
 | `INTEREST` | Thoughtful / insightful |
 | `APPRECIATION` | Supportive |
 | `ENTERTAINMENT` | Funny / laughing |
+
+## Comments
+
+Publora supports creating and deleting comments on LinkedIn posts programmatically.
+
+### Create a Comment
+
+**Endpoint:** `POST /api/v1/linkedin-comments`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123` or `urn:li:ugcPost:123`) |
+| `message` | string | Yes | Comment text (max 1,250 characters) |
+| `platformId` | string | Yes | Your LinkedIn platform ID (e.g., `linkedin-ABC123`) |
+| `parentComment` | string | No | Comment URN for nested replies |
+
+**JavaScript**
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    message: 'Great post! Thanks for sharing.',
+    platformId: 'linkedin-987654321'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+// {
+//   success: true,
+//   comment: {
+//     id: "7434695495614312448",
+//     commentUrn: "urn:li:comment:(urn:li:activity:xxx,7434695495614312448)",
+//     message: { text: "Great post! Thanks for sharing." },
+//     ...
+//   }
+// }
+```
+
+**cURL**
+```bash
+curl -X POST https://api.publora.com/api/v1/linkedin-comments \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: YOUR_API_KEY" \
+  -d '{
+    "postedId": "urn:li:share:7434685316856377344",
+    "message": "Great post! Thanks for sharing.",
+    "platformId": "linkedin-987654321"
+  }'
+```
+
+### Delete a Comment
+
+**Endpoint:** `DELETE /api/v1/linkedin-comments`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN the comment belongs to |
+| `commentId` | string | Yes | Comment URN to delete |
+| `platformId` | string | Yes | Your LinkedIn platform ID |
+
+**JavaScript**
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'DELETE',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    commentId: 'urn:li:comment:(urn:li:activity:xxx,7434695495614312448)',
+    platformId: 'linkedin-987654321'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+// { success: true, deleted: "urn:li:comment:(...)" }
+```
+
+**cURL**
+```bash
+curl -X DELETE https://api.publora.com/api/v1/linkedin-comments \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: YOUR_API_KEY" \
+  -d '{
+    "postedId": "urn:li:share:7434685316856377344",
+    "commentId": "urn:li:comment:(urn:li:activity:xxx,7434695495614312448)",
+    "platformId": "linkedin-987654321"
+  }'
+```
+
+### Replying to a Comment
+
+To reply to an existing comment (nested comment), include the `parentComment` parameter:
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    message: 'I agree with this point!',
+    platformId: 'linkedin-987654321',
+    parentComment: 'urn:li:comment:(urn:li:activity:xxx,7434695495614312448)'
+  })
+});
+```
 
 ## Examples
 
