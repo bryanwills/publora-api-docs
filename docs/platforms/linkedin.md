@@ -72,8 +72,10 @@ The mention will be rendered as a clickable link to the person's profile.
 
 ### How to Find LinkedIn URNs
 
-- **Person URN**: Available in the LinkedIn API or from the profile URL. For example, if the profile URL is `linkedin.com/in/username`, you can use LinkedIn's API to retrieve the member URN.
-- **Organization URN**: Found in the company page URL or via LinkedIn's API.
+- **Person URN**: The numeric ID from LinkedIn's API. You can find this via LinkedIn's API or third-party tools. The format is `urn:li:person:{numeric_id}`.
+- **Organization URN**: Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`.
+
+> **Note:** Publora automatically converts the URN format for LinkedIn's API compatibility. You always use `urn:li:person:` in your requests.
 
 ### Code Example
 
