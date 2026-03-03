@@ -146,12 +146,81 @@ LinkedIn supports a richer set of reactions than a simple "like":
 
 | Reaction | Description |
 |----------|-------------|
-| `LIKE` | Standard like |
+| `LIKE` | Standard like (thumbs up) |
 | `PRAISE` | Clapping hands / applause |
 | `EMPATHY` | Heart / love |
-| `INTEREST` | Thoughtful / insightful |
+| `INTEREST` | Lightbulb / insightful |
 | `APPRECIATION` | Supportive |
 | `ENTERTAINMENT` | Funny / laughing |
+
+### Create a Reaction
+
+**Endpoint:** `POST /api/v1/linkedin-reactions`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123` or `urn:li:ugcPost:123`) |
+| `reactionType` | string | Yes | One of: `LIKE`, `PRAISE`, `EMPATHY`, `INTEREST`, `APPRECIATION`, `ENTERTAINMENT` |
+| `platformId` | string | Yes | Your LinkedIn platform ID (e.g., `linkedin-ABC123`) |
+
+**JavaScript**
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-reactions', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:ugcPost:7429953213384187904',
+    reactionType: 'INTEREST',
+    platformId: 'linkedin-987654321'
+  })
+});
+
+const data = await response.json();
+console.log(data);
+// {
+//   success: true,
+//   reaction: {
+//     id: "urn:li:reaction:(urn:li:person:xxx,urn:li:ugcPost:xxx)",
+//     reactionType: "INTEREST",
+//     ...
+//   }
+// }
+```
+
+**cURL**
+```bash
+curl -X POST https://api.publora.com/api/v1/linkedin-reactions \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: YOUR_API_KEY" \
+  -d '{
+    "postedId": "urn:li:ugcPost:7429953213384187904",
+    "reactionType": "INTEREST",
+    "platformId": "linkedin-987654321"
+  }'
+```
+
+### Delete a Reaction
+
+**Endpoint:** `DELETE /api/v1/linkedin-reactions`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN |
+| `platformId` | string | Yes | Your LinkedIn platform ID |
+
+**cURL**
+```bash
+curl -X DELETE https://api.publora.com/api/v1/linkedin-reactions \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: YOUR_API_KEY" \
+  -d '{
+    "postedId": "urn:li:ugcPost:7429953213384187904",
+    "platformId": "linkedin-987654321"
+  }'
+```
 
 ## Comments
 
@@ -490,12 +559,14 @@ console.log(response.data);
 
 ## Platform Quirks
 
+- **URN formats differ**: LinkedIn URLs use `urn:li:activity:xxx` but the API requires `urn:li:share:xxx` or `urn:li:ugcPost:xxx`. For posts created via Publora, use the `postedId` from the `get-post` endpoint. For external posts, you may need to look up the correct URN format.
 - **WebP auto-conversion**: If you provide a WebP image URL, Publora automatically converts it to JPEG before uploading to LinkedIn. No action needed on your part.
 - **3,000-character limit**: LinkedIn enforces a strict 3,000-character limit for post text. Publora will return an error if your content exceeds this.
 - **Multiple images**: LinkedIn supports posting multiple images at once. They will appear as a carousel or multi-image post depending on the count.
 - **Rich text not supported via API**: LinkedIn's API does not support bold, italic, or other rich text formatting. Use plain text or Unicode characters for emphasis.
 - **Analytics delay**: LinkedIn analytics may take up to 24 hours to fully populate. Querying immediately after posting will return partial data.
 - **Hashtags**: LinkedIn hashtags are supported in the content body. They are treated as plain text but become clickable on the platform.
+- **Reactions on external posts**: You can only react to posts visible in your LinkedIn network. Ensure your account is connected to the post author.
 
 ## Character Limits
 
