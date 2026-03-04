@@ -105,7 +105,7 @@ Start a new conversation and ask:
 "What MCP tools do you have available?"
 ```
 
-Claude should list the 16 Publora tools.
+Claude should list the 18 Publora tools.
 
 ---
 
@@ -547,6 +547,6 @@ Some clients support environment variable interpolation:
 
 ## Next Steps
 
-- [Tools Reference](./tools-reference.md) — All 16 tools with parameters
+- [Tools Reference](./tools-reference.md) — All 18 tools with parameters
 - [Examples](./examples.md) — Real-world conversation examples
 - [Troubleshooting](./troubleshooting.md) — Common issues and solutions

@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 16 Publora MCP tools with parameters, examples, and code snippets.
+Complete reference for all 18 Publora MCP tools with parameters, examples, and code snippets.
 
 ## Posts Tools
 
@@ -619,6 +619,99 @@ Remove a reaction from a LinkedIn post.
 ```text
 "Remove my reaction from this post"
 "Unlike the LinkedIn post"
+```
+
+---
+
+### linkedin_create_comment
+
+Post a comment on a LinkedIn post.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123456` or `urn:li:ugcPost:123456`) |
+| `platformId` | string | Yes | Platform connection ID |
+| `message` | string | Yes | Comment text (max 1,250 characters) |
+| `parentComment` | string | No | Parent comment URN for nested replies |
+
+**Example prompts:**
+
+```text
+"Comment 'Great insights!' on this LinkedIn post"
+"Post a comment on my latest LinkedIn update"
+"Reply to this comment with 'Thanks for sharing!'"
+```
+
+**Python example:**
+
+```python
+async def comment_on_post():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_create_comment", {
+                "postedId": "urn:li:ugcPost:7429953213384187904",
+                "platformId": "linkedin-abc123",
+                "message": "Great insights! Thanks for sharing."
+            })
+            print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "comment": {
+    "id": "7434695495614312448",
+    "commentUrn": "urn:li:comment:(urn:li:ugcPost:xxx,7434695495614312448)",
+    "message": { "text": "Great insights! Thanks for sharing." }
+  }
+}
+```
+
+---
+
+### linkedin_delete_comment
+
+Delete a comment from a LinkedIn post.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN the comment belongs to |
+| `commentId` | string | Yes | Comment URN to delete |
+| `platformId` | string | Yes | Platform connection ID |
+
+**Example prompts:**
+
+```text
+"Delete my comment from this post"
+"Remove the comment I just posted"
+```
+
+**Python example:**
+
+```python
+async def delete_comment():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_delete_comment", {
+                "postedId": "urn:li:ugcPost:7429953213384187904",
+                "commentId": "urn:li:comment:(urn:li:ugcPost:xxx,7434695495614312448)",
+                "platformId": "linkedin-abc123"
+            })
+            print(result.content[0].text)
 ```
 
 ---

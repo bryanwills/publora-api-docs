@@ -296,6 +296,61 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ---
 
+## LinkedIn Engagement
+
+### Comment on a Post
+
+> **You:** Comment "Great insights!" on this LinkedIn post urn:li:ugcPost:7429953213384187904
+
+> **Claude:** Done! I've posted your comment:
+>
+> **Post:** Product announcement by Tech Company
+> **Your comment:** "Great insights!"
+> **Comment ID:** 7434695495614312448
+
+### Reply to a Comment
+
+> **You:** Reply to that comment with "Thanks for the detailed response!"
+
+> **Claude:** Done! Your reply has been posted:
+>
+> **Parent comment:** Great insights!
+> **Your reply:** "Thanks for the detailed response!"
+
+### React to a Post
+
+> **You:** Like this LinkedIn post urn:li:share:7123456789
+
+> **Claude:** Done! I've added a LIKE reaction to the post.
+
+### Add an Insightful Reaction
+
+> **You:** React with "insightful" to my colleague's LinkedIn post
+
+> **Claude:** Done! I've added an INTEREST (lightbulb) reaction to the post.
+>
+> Available reaction types:
+> - LIKE (thumbs up)
+> - PRAISE (clapping hands)
+> - EMPATHY (heart)
+> - INTEREST (lightbulb) ← used
+> - APPRECIATION (hands together)
+> - ENTERTAINMENT (laughing)
+
+### Remove a Reaction
+
+> **You:** Unlike that post
+
+> **Claude:** Done! I've removed your reaction from the post.
+
+### Delete a Comment
+
+> **You:** Delete my comment from that post
+
+> **Claude:** Comment deleted successfully.
+
+---
+
 ## Advanced Workflows
 
 ### Content Repurposing
