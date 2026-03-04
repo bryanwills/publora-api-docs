@@ -380,9 +380,9 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ---
 
-## LinkedIn Feed Retrieval
+## LinkedIn Feed Retrieval (Coming Soon)
 
-> **Note:** These features require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval.
+> **Status: NOT YET AVAILABLE** - These features require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora.
 
 ### View Your Recent Posts
 

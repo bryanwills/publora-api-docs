@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 21 Publora MCP tools with parameters, examples, and code snippets.
+Complete reference for all 18 Publora MCP tools with parameters, examples, and code snippets.
 
 ## Posts Tools
 
@@ -732,9 +732,9 @@ async def delete_comment():
 
 ---
 
-## LinkedIn Feed Retrieval Tools
+## LinkedIn Feed Retrieval Tools (Coming Soon)
 
-> **Note:** These tools require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. Contact LinkedIn Partner Support to request access for your application.
+> **Status: DISABLED** - These tools are not yet available. They require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora.
 
 ### linkedin_posts
 

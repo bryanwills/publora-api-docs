@@ -1,8 +1,8 @@
-# LinkedIn Feed Retrieval API
+# LinkedIn Feed Retrieval API (Coming Soon)
 
 Retrieve your LinkedIn posts, comments, and reactions via the Publora API.
 
-> **Important:** These endpoints require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. Contact LinkedIn Partner Support to request access.
+> **Status: NOT YET AVAILABLE** - These endpoints require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora. Contact LinkedIn Partner Support to request access.
 
 ## Endpoints
 
