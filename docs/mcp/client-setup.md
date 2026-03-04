@@ -105,7 +105,7 @@ Start a new conversation and ask:
 "What MCP tools do you have available?"
 ```
 
-Claude should list the 18 Publora tools.
+Claude should list the 21 Publora tools.
 
 ---
 

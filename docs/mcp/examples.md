@@ -380,6 +380,76 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ---
 
+## LinkedIn Feed Retrieval
+
+> **Note:** These features require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval.
+
+### View Your Recent Posts
+
+> **You:** Show my recent LinkedIn posts
+
+> **Claude:** Here are your last 10 LinkedIn posts:
+>
+> 1. **Feb 28** - "Excited to announce our new feature!" (1,250 impressions)
+> 2. **Feb 25** - "Behind the scenes at our office..." (890 impressions)
+> 3. **Feb 22** - "Product roadmap update for Q1..." (2,100 impressions)
+> 4. **Feb 20** - "Meet our newest team member..." (1,450 impressions)
+> 5. **Feb 18** - "Weekly tips for content creators..." (780 impressions)
+>
+> Would you like details on any specific post?
+
+### View Comments on a Post
+
+> **You:** Show comments on my latest LinkedIn post
+
+> **Claude:** Your post "Excited to announce our new feature!" has 12 comments:
+>
+> 1. **John Smith:** "This is amazing! Can't wait to try it out."
+> 2. **Sarah Johnson:** "Great work team! When is the beta available?"
+> 3. **Tech Company:** "Congratulations on the launch!"
+> 4. **Mike Williams:** "How does this compare to the competition?"
+> 5. *...and 8 more comments*
+>
+> Would you like me to reply to any of these?
+
+### View Reactions on a Post
+
+> **You:** Who reacted to my LinkedIn announcement?
+
+> **Claude:** Your post has 156 reactions:
+>
+> **By type:**
+> - 89 LIKE (👍)
+> - 45 PRAISE (👏)
+> - 15 INTEREST (💡)
+> - 5 EMPATHY (❤️)
+> - 2 APPRECIATION (🙏)
+>
+> **Recent reactors:**
+> - Jane Doe (LIKE)
+> - Acme Corp (PRAISE)
+> - Tech Startup Inc (INTEREST)
+> - *...and 153 more*
+
+### Analyze Post Engagement
+
+> **You:** Analyze the engagement on my last 5 LinkedIn posts
+
+> **Claude:** Here's your engagement analysis:
+>
+> | Post | Date | Impressions | Reactions | Comments | Rate |
+> |------|------|-------------|-----------|----------|------|
+> | "New feature..." | Feb 28 | 1,250 | 28 | 12 | 3.2% |
+> | "Behind scenes..." | Feb 25 | 890 | 45 | 8 | 6.0% |
+> | "Roadmap update..." | Feb 22 | 2,100 | 62 | 23 | 4.0% |
+> | "New team member..." | Feb 20 | 1,450 | 89 | 15 | 7.2% |
+> | "Weekly tips..." | Feb 18 | 780 | 23 | 5 | 3.6% |
+>
+> **Best performer:** "Meet our newest team member" with 7.2% engagement.
+> **Insight:** Personal/team content gets 2x more reactions than product updates.
+
+---
+
 ## Advanced Workflows
 
 ### Content Repurposing

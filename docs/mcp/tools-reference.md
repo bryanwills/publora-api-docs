@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 18 Publora MCP tools with parameters, examples, and code snippets.
+Complete reference for all 21 Publora MCP tools with parameters, examples, and code snippets.
 
 ## Posts Tools
 
@@ -729,6 +729,223 @@ async def delete_comment():
             })
             print(result.content[0].text)
 ```
+
+---
+
+## LinkedIn Feed Retrieval Tools
+
+> **Note:** These tools require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. Contact LinkedIn Partner Support to request access for your application.
+
+### linkedin_posts
+
+Retrieve posts authored by a LinkedIn account.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `platformId` | string | Yes | Platform connection ID (e.g., `linkedin-XxxYyy`) |
+| `start` | number | No | Starting index for pagination (default: 0) |
+| `count` | number | No | Number of posts to retrieve (default: 10, max: 100) |
+| `sortBy` | string | No | Sort order: `LAST_MODIFIED` or `CREATED` (default: LAST_MODIFIED) |
+
+**Example prompts:**
+
+```text
+"Show my recent LinkedIn posts"
+"Get my last 10 LinkedIn posts"
+"What have I posted on LinkedIn this month?"
+"List my LinkedIn content"
+```
+
+**Python example:**
+
+```python
+async def get_my_linkedin_posts():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_posts", {
+                "platformId": "linkedin-abc123",
+                "count": 20,
+                "sortBy": "LAST_MODIFIED"
+            })
+            print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "posts": [
+    {
+      "id": "urn:li:share:7123456789",
+      "commentary": "Excited to share our latest product update!",
+      "publishedAt": 1709294400000,
+      "visibility": "PUBLIC",
+      "lifecycleState": "PUBLISHED"
+    }
+  ],
+  "pagination": {
+    "start": 0,
+    "count": 10,
+    "total": 45
+  },
+  "cached": false
+}
+```
+
+---
+
+### linkedin_post_comments
+
+Retrieve comments on a specific LinkedIn post.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123456` or `urn:li:ugcPost:123456`) |
+| `platformId` | string | Yes | Platform connection ID |
+| `start` | number | No | Starting index for pagination (default: 0) |
+| `count` | number | No | Number of comments to retrieve (default: 20, max: 100) |
+
+**Example prompts:**
+
+```text
+"Show comments on my last LinkedIn post"
+"Get all comments on this LinkedIn post"
+"What are people saying about my post?"
+"List comments on post urn:li:share:123456"
+```
+
+**Python example:**
+
+```python
+async def get_post_comments():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_post_comments", {
+                "postedId": "urn:li:ugcPost:7429953213384187904",
+                "platformId": "linkedin-abc123",
+                "count": 50
+            })
+            print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "comments": [
+    {
+      "id": "6636062862760562688",
+      "commentUrn": "urn:li:comment:(urn:li:activity:123,6636062862760562688)",
+      "actor": "urn:li:person:xxx",
+      "message": { "text": "Great insights! Thanks for sharing." },
+      "created": { "time": 1582160678569 },
+      "likesSummary": { "totalLikes": 5 },
+      "commentsCount": 2
+    }
+  ],
+  "pagination": {
+    "start": 0,
+    "count": 20,
+    "total": 89
+  },
+  "cached": false
+}
+```
+
+---
+
+### linkedin_post_reactions
+
+Retrieve reactions on a specific LinkedIn post.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123456` or `urn:li:ugcPost:123456`) |
+| `platformId` | string | Yes | Platform connection ID |
+| `start` | number | No | Starting index for pagination (default: 0) |
+| `count` | number | No | Number of reactions to retrieve (default: 50, max: 100) |
+
+**Example prompts:**
+
+```text
+"Who liked my LinkedIn post?"
+"Show reactions on this post"
+"Get all reactions on my announcement"
+"List people who reacted to my post"
+```
+
+**Python example:**
+
+```python
+async def get_post_reactions():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_post_reactions", {
+                "postedId": "urn:li:ugcPost:7429953213384187904",
+                "platformId": "linkedin-abc123",
+                "count": 100
+            })
+            print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "reactions": [
+    {
+      "id": "urn:li:reaction:(urn:li:person:xxx,urn:li:activity:123)",
+      "reactionType": "LIKE",
+      "actor": "urn:li:person:xxx",
+      "created": { "time": 1686183251857 }
+    },
+    {
+      "id": "urn:li:reaction:(urn:li:person:yyy,urn:li:activity:123)",
+      "reactionType": "PRAISE",
+      "actor": "urn:li:person:yyy",
+      "created": { "time": 1686183300000 }
+    }
+  ],
+  "pagination": {
+    "start": 0,
+    "count": 50,
+    "total": 456
+  },
+  "cached": false
+}
+```
+
+**Reaction types returned:**
+
+| Type | Description |
+|------|-------------|
+| `LIKE` | Standard thumbs up |
+| `PRAISE` | Clapping hands |
+| `EMPATHY` | Heart/love |
+| `INTEREST` | Lightbulb (insightful) |
+| `APPRECIATION` | Thank you |
+| `ENTERTAINMENT` | Funny/laughing |
 
 ---
 
