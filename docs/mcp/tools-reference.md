@@ -130,11 +130,27 @@ async def schedule_post():
 asyncio.run(schedule_post())
 ```
 
+**LinkedIn Mentions:**
+
+You can @mention people and companies in LinkedIn posts using this syntax in your content:
+
+```text
+@{urn:li:person:4986615|Serge Bulaev}           # Mention a person
+@{urn:li:organization:107107343|Acme Corp Inc}  # Mention a company
+```
+
+**Example:**
+```text
+"Great insights from @{urn:li:person:4986615|Serge Bulaev} at @{urn:li:organization:107107343|Creative Content Crafts Inc}!"
+```
+
+**Important:** The display name must exactly match the LinkedIn profile name (case-sensitive), including company suffixes like "Inc", "LLC", etc.
+
 **Platform limits:**
 
 | Platform | Characters | Images | Video | Special Features |
 |----------|------------|--------|-------|------------------|
-| LinkedIn | 3,000 | 20 | 200MB | Documents, carousels |
+| LinkedIn | 3,000 | 20 | 200MB | Documents, carousels, @mentions |
 | X/Twitter | 280 (25K premium) | 4 | 140s | Auto-threading |
 | Instagram | 2,200 | 10 | 90s | Reels supported |
 | Threads | 500 | 10 | 5min | Auto-threading |

@@ -349,6 +349,35 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 > **Claude:** Comment deleted successfully.
 
+### Mention a Person in a Post
+
+> **You:** Schedule a LinkedIn post for tomorrow at 9am thanking John Smith (urn:li:person:123456) for his help
+
+> **Claude:** Done! I've scheduled the post with the mention:
+>
+> **Content:** "Thanks to @John Smith for the amazing collaboration on this project!"
+> **Scheduled:** Tomorrow at 9:00 AM
+>
+> The mention will appear as a clickable link to John's profile, and he'll receive a notification.
+
+### Mention a Company in a Post
+
+> **You:** Create a LinkedIn post announcing our partnership with Acme Corp (urn:li:organization:789012)
+
+> **Claude:** Done! Post created with the company mention:
+>
+> **Content:** "Excited to announce our partnership with @Acme Corp Inc! Together we're building the future of..."
+>
+> **Note:** I used the exact company name "Acme Corp Inc" to ensure the mention renders correctly.
+
+### Multiple Mentions
+
+> **You:** Post to LinkedIn: "Shoutout to @{urn:li:person:123|Jane Doe} and the team at @{urn:li:organization:456|Tech Startup Inc} for the collaboration!"
+
+> **Claude:** Posted! Both mentions will appear as clickable links:
+> - Jane Doe → links to her profile
+> - Tech Startup Inc → links to their company page
+
 ---
 
 ## Advanced Workflows
