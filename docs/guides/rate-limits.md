@@ -697,6 +697,974 @@ const results = await scheduler.scheduleOptimally(posts);
 console.log(`Scheduled ${results.filter(r => r.success).length} of ${results.length} posts`);
 ```
 
+## Complete Queue-Based Scheduling System
+
+This section provides a production-ready implementation that combines all the concepts: rate limiting, optimal scheduling, error handling, retry logic, and failed post recovery.
+
+### Architecture Overview
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Content Queue  │───►│  Rate Limiter    │───►│  Publora API    │
+│  (your posts)   │    │  + Scheduler     │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                              │                        │
+                              ▼                        ▼
+                       ┌──────────────────┐    ┌─────────────────┐
+                       │  Retry Queue     │    │  Status Checker │
+                       │  (failed posts)  │    │  (polling)      │
+                       └──────────────────┘    └─────────────────┘
+```
+
+### JavaScript - Production Queue Scheduler
+
+```javascript
+const axios = require('axios');
+
+/**
+ * Production-ready queue-based scheduler for Publora API
+ * Features:
+ * - Platform-specific rate limiting
+ * - Peak engagement time optimization
+ * - Exponential backoff retry logic
+ * - Failed post recovery
+ * - Comprehensive error handling
+ */
+class PubloraQueueScheduler {
+  constructor(apiKey, options = {}) {
+    this.apiKey = apiKey;
+    this.baseUrl = options.baseUrl || 'https://api.publora.com/api/v1';
+    this.maxRetries = options.maxRetries || 3;
+    this.retryDelay = options.retryDelay || 1000;
+
+    // API rate limit tracking
+    this.rateLimitRemaining = Infinity;
+    this.rateLimitReset = 0;
+
+    // Platform-specific limits (posts per hour / per day)
+    this.platformLimits = {
+      twitter:   { perHour: 10, perDay: 50 },
+      linkedin:  { perHour: 5,  perDay: 20 },
+      instagram: { perHour: 3,  perDay: 10 },
+      threads:   { perHour: 10, perDay: 50 },
+      tiktok:    { perHour: 2,  perDay: 10 },
+      facebook:  { perHour: 5,  perDay: 25 },
+      bluesky:   { perHour: 10, perDay: 100 },
+    };
+
+    // Peak engagement hours (UTC)
+    this.peakHours = {
+      twitter:   [13, 14, 15, 16],
+      linkedin:  [10, 11, 12],
+      instagram: [11, 12, 13, 14, 19, 20, 21],
+      threads:   [12, 13, 14, 15],
+      tiktok:    [15, 16, 17, 18, 19, 20, 21],
+      facebook:  [13, 14, 15, 16],
+      bluesky:   [14, 15, 16, 17],
+    };
+
+    // Track scheduled posts per platform
+    this.postCounts = { hourly: {}, daily: {} };
+
+    // Failed posts queue for retry
+    this.failedQueue = [];
+
+    // Results tracking
+    this.results = [];
+  }
+
+  /**
+   * Make an API request with rate limit handling and retries
+   */
+  async request(method, endpoint, data = null) {
+    // Wait if API rate limited
+    await this.waitForRateLimit();
+
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        const config = {
+          method,
+          url: `${this.baseUrl}${endpoint}`,
+          headers: {
+            'Content-Type': 'application/json',
+            'x-publora-key': this.apiKey
+          }
+        };
+
+        if (data) config.data = data;
+
+        const response = await axios(config);
+
+        // Update rate limit tracking from headers
+        this.updateRateLimits(response.headers);
+
+        return { success: true, data: response.data };
+
+      } catch (error) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+        const message = errorData?.error || errorData?.message || error.message;
+
+        // Handle rate limit (429)
+        if (status === 429) {
+          const retryAfter = errorData?.retryAfter || 60;
+          console.log(`Rate limited. Waiting ${retryAfter}s...`);
+          await this.sleep(retryAfter * 1000);
+          continue;
+        }
+
+        // Don't retry client errors (4xx) except 429
+        if (status >= 400 && status < 500) {
+          return {
+            success: false,
+            error: message,
+            status,
+            retryable: false
+          };
+        }
+
+        // Retry server errors (5xx) and network errors
+        if (attempt < this.maxRetries) {
+          const delay = this.retryDelay * Math.pow(2, attempt);
+          console.log(`Error (attempt ${attempt + 1}/${this.maxRetries + 1}). Retrying in ${delay}ms...`);
+          await this.sleep(delay);
+          continue;
+        }
+
+        return {
+          success: false,
+          error: message,
+          status: status || 0,
+          retryable: true
+        };
+      }
+    }
+  }
+
+  /**
+   * Wait if we've hit the API rate limit
+   */
+  async waitForRateLimit() {
+    if (this.rateLimitRemaining <= 1) {
+      const waitTime = (this.rateLimitReset * 1000) - Date.now();
+      if (waitTime > 0) {
+        console.log(`API rate limit reached. Waiting ${Math.ceil(waitTime / 1000)}s...`);
+        await this.sleep(waitTime + 100);
+      }
+    }
+  }
+
+  /**
+   * Update rate limit tracking from response headers
+   */
+  updateRateLimits(headers) {
+    const remaining = headers['x-ratelimit-remaining'];
+    const reset = headers['x-ratelimit-reset'];
+
+    if (remaining !== undefined) {
+      this.rateLimitRemaining = parseInt(remaining);
+    }
+    if (reset !== undefined) {
+      this.rateLimitReset = parseInt(reset);
+    }
+  }
+
+  /**
+   * Get platform name from platform ID (e.g., "twitter-123" -> "twitter")
+   */
+  getPlatformName(platformId) {
+    return platformId.split('-')[0];
+  }
+
+  /**
+   * Check if a platform can accept a post at the given time
+   */
+  canPostAt(platform, date) {
+    const limits = this.platformLimits[platform];
+    if (!limits) return true;
+
+    const hourKey = `${platform}-${date.toISOString().slice(0, 13)}`;
+    const dayKey = `${platform}-${date.toISOString().slice(0, 10)}`;
+
+    const hourlyCount = this.postCounts.hourly[hourKey] || 0;
+    const dailyCount = this.postCounts.daily[dayKey] || 0;
+
+    return hourlyCount < limits.perHour && dailyCount < limits.perDay;
+  }
+
+  /**
+   * Record a scheduled post for rate limiting
+   */
+  recordPost(platform, date) {
+    const hourKey = `${platform}-${date.toISOString().slice(0, 13)}`;
+    const dayKey = `${platform}-${date.toISOString().slice(0, 10)}`;
+
+    this.postCounts.hourly[hourKey] = (this.postCounts.hourly[hourKey] || 0) + 1;
+    this.postCounts.daily[dayKey] = (this.postCounts.daily[dayKey] || 0) + 1;
+  }
+
+  /**
+   * Check if the given time is a peak engagement hour
+   */
+  isPeakTime(platform, date) {
+    const hours = this.peakHours[platform];
+    return hours ? hours.includes(date.getUTCHours()) : true;
+  }
+
+  /**
+   * Find the next optimal time slot considering all platforms
+   */
+  findNextOptimalSlot(platforms, after) {
+    let candidate = new Date(after);
+    candidate.setUTCMinutes(0, 0, 0);
+
+    // Search up to 1 week ahead
+    for (let i = 0; i < 168; i++) {
+      candidate = new Date(candidate.getTime() + 3600000); // +1 hour
+
+      // Check if all platforms can post at this time
+      const allCanPost = platforms.every(p =>
+        this.canPostAt(this.getPlatformName(p), candidate)
+      );
+
+      if (!allCanPost) continue;
+
+      // Prefer peak times
+      const anyPeak = platforms.some(p =>
+        this.isPeakTime(this.getPlatformName(p), candidate)
+      );
+
+      if (anyPeak) {
+        return candidate;
+      }
+    }
+
+    // Fallback: return next hour
+    return new Date(after.getTime() + 3600000);
+  }
+
+  /**
+   * Schedule a batch of posts optimally
+   */
+  async scheduleBatch(posts, options = {}) {
+    const startAfter = options.startAfter || new Date();
+    const results = [];
+    let lastTime = startAfter;
+
+    console.log(`\nScheduling ${posts.length} posts...`);
+
+    for (let i = 0; i < posts.length; i++) {
+      const post = posts[i];
+      const scheduledTime = this.findNextOptimalSlot(post.platforms, lastTime);
+
+      // Record for platform rate limiting
+      post.platforms.forEach(p => {
+        this.recordPost(this.getPlatformName(p), scheduledTime);
+      });
+
+      const payload = {
+        content: post.content,
+        platforms: post.platforms,
+        scheduledTime: scheduledTime.toISOString()
+      };
+
+      if (post.mediaUrls) payload.mediaUrls = post.mediaUrls;
+      if (post.platformSettings) payload.platformSettings = post.platformSettings;
+
+      const response = await this.request('POST', '/create-post', payload);
+
+      const result = {
+        index: i,
+        content: post.content.slice(0, 50),
+        platforms: post.platforms,
+        scheduledTime: scheduledTime.toISOString(),
+        success: response.success
+      };
+
+      if (response.success) {
+        result.postGroupId = response.data.postGroupId;
+        console.log(`[${i + 1}/${posts.length}] ✓ Scheduled: ${result.content}...`);
+      } else {
+        result.error = response.error;
+        result.retryable = response.retryable;
+        console.log(`[${i + 1}/${posts.length}] ✗ Failed: ${response.error}`);
+
+        if (response.retryable) {
+          this.failedQueue.push({ ...post, originalIndex: i });
+        }
+      }
+
+      results.push(result);
+      lastTime = scheduledTime;
+
+      // Small delay between API calls
+      await this.sleep(100);
+    }
+
+    this.results = results;
+    return results;
+  }
+
+  /**
+   * Retry failed posts from the queue
+   */
+  async retryFailed() {
+    if (this.failedQueue.length === 0) {
+      console.log('No failed posts to retry.');
+      return [];
+    }
+
+    console.log(`\nRetrying ${this.failedQueue.length} failed posts...`);
+
+    const toRetry = [...this.failedQueue];
+    this.failedQueue = [];
+
+    const results = await this.scheduleBatch(toRetry);
+
+    return results;
+  }
+
+  /**
+   * Check status of scheduled posts and handle failures
+   */
+  async checkPostStatuses(postGroupIds) {
+    const statuses = [];
+
+    for (const postGroupId of postGroupIds) {
+      const response = await this.request('GET', `/get-post/${postGroupId}`);
+
+      if (!response.success) {
+        statuses.push({
+          postGroupId,
+          status: 'error',
+          error: response.error
+        });
+        continue;
+      }
+
+      const postGroup = response.data;
+      const status = {
+        postGroupId,
+        status: postGroup.status,
+        posts: []
+      };
+
+      // Check each platform's status
+      for (const post of postGroup.posts || []) {
+        const postStatus = {
+          platform: post.platform,
+          platformId: post.platformId,
+          status: post.status
+        };
+
+        if (post.status === 'published') {
+          postStatus.publishedUrl = post.publishedUrl;
+        } else if (post.status === 'failed') {
+          postStatus.error = post.error;
+        }
+
+        status.posts.push(postStatus);
+      }
+
+      statuses.push(status);
+    }
+
+    return statuses;
+  }
+
+  /**
+   * Get summary of scheduling results
+   */
+  getSummary() {
+    const successful = this.results.filter(r => r.success).length;
+    const failed = this.results.filter(r => !r.success).length;
+    const retryable = this.results.filter(r => !r.success && r.retryable).length;
+
+    return {
+      total: this.results.length,
+      successful,
+      failed,
+      retryable,
+      failedQueueSize: this.failedQueue.length
+    };
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+// ============================================
+// USAGE EXAMPLE
+// ============================================
+
+async function main() {
+  const scheduler = new PubloraQueueScheduler('YOUR_API_KEY');
+
+  // Define posts to schedule
+  const posts = [
+    {
+      content: 'Morning motivation! Start your week with intention. #MondayMotivation',
+      platforms: ['twitter-123456', 'linkedin-ABC123']
+    },
+    {
+      content: 'Product update: We just shipped a major new feature...',
+      platforms: ['twitter-123456', 'linkedin-ABC123', 'threads-789012']
+    },
+    {
+      content: 'Behind the scenes of our latest photoshoot',
+      platforms: ['instagram-DEF456', 'tiktok-GHI789']
+    },
+    {
+      content: 'Weekly tips thread: 5 things I learned this week...',
+      platforms: ['twitter-123456', 'threads-789012']
+    },
+    {
+      content: 'Customer success story: How Company X grew 300%',
+      platforms: ['linkedin-ABC123']
+    }
+  ];
+
+  // Schedule all posts
+  const results = await scheduler.scheduleBatch(posts, {
+    startAfter: new Date() // Start from now
+  });
+
+  // Get summary
+  const summary = scheduler.getSummary();
+  console.log('\n=== SCHEDULING SUMMARY ===');
+  console.log(`Total: ${summary.total}`);
+  console.log(`Successful: ${summary.successful}`);
+  console.log(`Failed: ${summary.failed}`);
+  console.log(`Retryable: ${summary.retryable}`);
+
+  // Retry any failed posts
+  if (summary.retryable > 0) {
+    console.log('\nRetrying failed posts...');
+    await scheduler.retryFailed();
+  }
+
+  // Later: Check publishing status
+  const successfulIds = results
+    .filter(r => r.success)
+    .map(r => r.postGroupId);
+
+  if (successfulIds.length > 0) {
+    console.log('\n=== POST STATUSES ===');
+    // Note: Only check after scheduled time has passed
+    const statuses = await scheduler.checkPostStatuses(successfulIds);
+
+    for (const status of statuses) {
+      console.log(`\nPost ${status.postGroupId}: ${status.status}`);
+
+      if (status.posts) {
+        for (const post of status.posts) {
+          if (post.status === 'published') {
+            console.log(`  ✓ ${post.platform}: ${post.publishedUrl}`);
+          } else if (post.status === 'failed') {
+            console.log(`  ✗ ${post.platform}: ${post.error}`);
+          } else {
+            console.log(`  ○ ${post.platform}: ${post.status}`);
+          }
+        }
+      }
+    }
+  }
+}
+
+main().catch(console.error);
+```
+
+### Python - Production Queue Scheduler
+
+```python
+import requests
+import time
+from datetime import datetime, timedelta, timezone
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, field
+from collections import defaultdict
+
+
+@dataclass
+class ScheduleResult:
+    """Result of a scheduling attempt"""
+    index: int
+    content: str
+    platforms: List[str]
+    scheduled_time: str
+    success: bool
+    post_group_id: Optional[str] = None
+    error: Optional[str] = None
+    retryable: bool = False
+
+
+class PubloraQueueScheduler:
+    """
+    Production-ready queue-based scheduler for Publora API
+
+    Features:
+    - Platform-specific rate limiting
+    - Peak engagement time optimization
+    - Exponential backoff retry logic
+    - Failed post recovery
+    - Comprehensive error handling
+    """
+
+    def __init__(self, api_key: str, **options):
+        self.api_key = api_key
+        self.base_url = options.get('base_url', 'https://api.publora.com/api/v1')
+        self.max_retries = options.get('max_retries', 3)
+        self.retry_delay = options.get('retry_delay', 1.0)
+
+        # API rate limit tracking
+        self.rate_limit_remaining = float('inf')
+        self.rate_limit_reset = 0
+
+        # Platform-specific limits (posts per hour / per day)
+        self.platform_limits = {
+            'twitter':   {'per_hour': 10, 'per_day': 50},
+            'linkedin':  {'per_hour': 5,  'per_day': 20},
+            'instagram': {'per_hour': 3,  'per_day': 10},
+            'threads':   {'per_hour': 10, 'per_day': 50},
+            'tiktok':    {'per_hour': 2,  'per_day': 10},
+            'facebook':  {'per_hour': 5,  'per_day': 25},
+            'bluesky':   {'per_hour': 10, 'per_day': 100},
+        }
+
+        # Peak engagement hours (UTC)
+        self.peak_hours = {
+            'twitter':   [13, 14, 15, 16],
+            'linkedin':  [10, 11, 12],
+            'instagram': [11, 12, 13, 14, 19, 20, 21],
+            'threads':   [12, 13, 14, 15],
+            'tiktok':    [15, 16, 17, 18, 19, 20, 21],
+            'facebook':  [13, 14, 15, 16],
+            'bluesky':   [14, 15, 16, 17],
+        }
+
+        # Track scheduled posts per platform
+        self.post_counts: Dict[str, Dict[str, int]] = {
+            'hourly': defaultdict(int),
+            'daily': defaultdict(int)
+        }
+
+        # Failed posts queue for retry
+        self.failed_queue: List[Dict] = []
+
+        # Results tracking
+        self.results: List[ScheduleResult] = []
+
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[Dict] = None
+    ) -> Dict[str, Any]:
+        """Make an API request with rate limit handling and retries"""
+
+        # Wait if API rate limited
+        self._wait_for_rate_limit()
+
+        headers = {
+            'Content-Type': 'application/json',
+            'x-publora-key': self.api_key
+        }
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = requests.request(
+                    method,
+                    f'{self.base_url}{endpoint}',
+                    headers=headers,
+                    json=data,
+                    timeout=30
+                )
+
+                # Update rate limit tracking
+                self._update_rate_limits(response.headers)
+
+                if response.ok:
+                    return {'success': True, 'data': response.json()}
+
+                error_data = response.json() if response.text else {}
+                message = error_data.get('error') or error_data.get('message') or 'Unknown error'
+
+                # Handle rate limit (429)
+                if response.status_code == 429:
+                    retry_after = error_data.get('retryAfter', 60)
+                    print(f'Rate limited. Waiting {retry_after}s...')
+                    time.sleep(retry_after)
+                    continue
+
+                # Don't retry client errors (4xx) except 429
+                if 400 <= response.status_code < 500:
+                    return {
+                        'success': False,
+                        'error': message,
+                        'status': response.status_code,
+                        'retryable': False
+                    }
+
+                # Retry server errors (5xx)
+                if attempt < self.max_retries:
+                    delay = self.retry_delay * (2 ** attempt)
+                    print(f'Error (attempt {attempt + 1}/{self.max_retries + 1}). Retrying in {delay}s...')
+                    time.sleep(delay)
+                    continue
+
+                return {
+                    'success': False,
+                    'error': message,
+                    'status': response.status_code,
+                    'retryable': True
+                }
+
+            except requests.exceptions.RequestException as e:
+                if attempt < self.max_retries:
+                    delay = self.retry_delay * (2 ** attempt)
+                    print(f'Network error. Retrying in {delay}s...')
+                    time.sleep(delay)
+                    continue
+
+                return {
+                    'success': False,
+                    'error': str(e),
+                    'status': 0,
+                    'retryable': True
+                }
+
+        return {'success': False, 'error': 'Max retries exceeded', 'retryable': True}
+
+    def _wait_for_rate_limit(self):
+        """Wait if we've hit the API rate limit"""
+        if self.rate_limit_remaining <= 1:
+            wait_time = self.rate_limit_reset - time.time()
+            if wait_time > 0:
+                print(f'API rate limit reached. Waiting {wait_time:.1f}s...')
+                time.sleep(wait_time + 0.1)
+
+    def _update_rate_limits(self, headers: Dict):
+        """Update rate limit tracking from response headers"""
+        remaining = headers.get('X-RateLimit-Remaining')
+        reset = headers.get('X-RateLimit-Reset')
+
+        if remaining is not None:
+            self.rate_limit_remaining = int(remaining)
+        if reset is not None:
+            self.rate_limit_reset = int(reset)
+
+    def _get_platform_name(self, platform_id: str) -> str:
+        """Get platform name from platform ID (e.g., 'twitter-123' -> 'twitter')"""
+        return platform_id.split('-')[0]
+
+    def _can_post_at(self, platform: str, dt: datetime) -> bool:
+        """Check if a platform can accept a post at the given time"""
+        limits = self.platform_limits.get(platform)
+        if not limits:
+            return True
+
+        hour_key = f"{platform}-{dt.strftime('%Y-%m-%dT%H')}"
+        day_key = f"{platform}-{dt.strftime('%Y-%m-%d')}"
+
+        hourly_count = self.post_counts['hourly'][hour_key]
+        daily_count = self.post_counts['daily'][day_key]
+
+        return hourly_count < limits['per_hour'] and daily_count < limits['per_day']
+
+    def _record_post(self, platform: str, dt: datetime):
+        """Record a scheduled post for rate limiting"""
+        hour_key = f"{platform}-{dt.strftime('%Y-%m-%dT%H')}"
+        day_key = f"{platform}-{dt.strftime('%Y-%m-%d')}"
+
+        self.post_counts['hourly'][hour_key] += 1
+        self.post_counts['daily'][day_key] += 1
+
+    def _is_peak_time(self, platform: str, dt: datetime) -> bool:
+        """Check if the given time is a peak engagement hour"""
+        hours = self.peak_hours.get(platform)
+        return hours is None or dt.hour in hours
+
+    def _find_next_optimal_slot(
+        self,
+        platforms: List[str],
+        after: datetime
+    ) -> datetime:
+        """Find the next optimal time slot considering all platforms"""
+        candidate = after.replace(minute=0, second=0, microsecond=0)
+
+        # Search up to 1 week ahead
+        for _ in range(168):
+            candidate += timedelta(hours=1)
+
+            # Check if all platforms can post at this time
+            all_can_post = all(
+                self._can_post_at(self._get_platform_name(p), candidate)
+                for p in platforms
+            )
+
+            if not all_can_post:
+                continue
+
+            # Prefer peak times
+            any_peak = any(
+                self._is_peak_time(self._get_platform_name(p), candidate)
+                for p in platforms
+            )
+
+            if any_peak:
+                return candidate
+
+        # Fallback: return next hour
+        return after + timedelta(hours=1)
+
+    def schedule_batch(
+        self,
+        posts: List[Dict],
+        start_after: Optional[datetime] = None
+    ) -> List[ScheduleResult]:
+        """Schedule a batch of posts optimally"""
+
+        if start_after is None:
+            start_after = datetime.now(timezone.utc)
+
+        results = []
+        last_time = start_after
+
+        print(f'\nScheduling {len(posts)} posts...')
+
+        for i, post in enumerate(posts):
+            scheduled_time = self._find_next_optimal_slot(post['platforms'], last_time)
+
+            # Record for platform rate limiting
+            for p in post['platforms']:
+                self._record_post(self._get_platform_name(p), scheduled_time)
+
+            payload = {
+                'content': post['content'],
+                'platforms': post['platforms'],
+                'scheduledTime': scheduled_time.isoformat()
+            }
+
+            if 'mediaUrls' in post:
+                payload['mediaUrls'] = post['mediaUrls']
+            if 'platformSettings' in post:
+                payload['platformSettings'] = post['platformSettings']
+
+            response = self._request('POST', '/create-post', payload)
+
+            result = ScheduleResult(
+                index=i,
+                content=post['content'][:50],
+                platforms=post['platforms'],
+                scheduled_time=scheduled_time.isoformat(),
+                success=response['success']
+            )
+
+            if response['success']:
+                result.post_group_id = response['data']['postGroupId']
+                print(f"[{i + 1}/{len(posts)}] ✓ Scheduled: {result.content}...")
+            else:
+                result.error = response.get('error')
+                result.retryable = response.get('retryable', False)
+                print(f"[{i + 1}/{len(posts)}] ✗ Failed: {result.error}")
+
+                if result.retryable:
+                    self.failed_queue.append({**post, 'original_index': i})
+
+            results.append(result)
+            last_time = scheduled_time
+
+            # Small delay between API calls
+            time.sleep(0.1)
+
+        self.results = results
+        return results
+
+    def retry_failed(self) -> List[ScheduleResult]:
+        """Retry failed posts from the queue"""
+        if not self.failed_queue:
+            print('No failed posts to retry.')
+            return []
+
+        print(f'\nRetrying {len(self.failed_queue)} failed posts...')
+
+        to_retry = self.failed_queue.copy()
+        self.failed_queue = []
+
+        return self.schedule_batch(to_retry)
+
+    def check_post_statuses(self, post_group_ids: List[str]) -> List[Dict]:
+        """Check status of scheduled posts and handle failures"""
+        statuses = []
+
+        for post_group_id in post_group_ids:
+            response = self._request('GET', f'/get-post/{post_group_id}')
+
+            if not response['success']:
+                statuses.append({
+                    'post_group_id': post_group_id,
+                    'status': 'error',
+                    'error': response.get('error')
+                })
+                continue
+
+            post_group = response['data']
+            status = {
+                'post_group_id': post_group_id,
+                'status': post_group.get('status'),
+                'posts': []
+            }
+
+            for post in post_group.get('posts', []):
+                post_status = {
+                    'platform': post.get('platform'),
+                    'platform_id': post.get('platformId'),
+                    'status': post.get('status')
+                }
+
+                if post.get('status') == 'published':
+                    post_status['published_url'] = post.get('publishedUrl')
+                elif post.get('status') == 'failed':
+                    post_status['error'] = post.get('error')
+
+                status['posts'].append(post_status)
+
+            statuses.append(status)
+
+        return statuses
+
+    def get_summary(self) -> Dict[str, int]:
+        """Get summary of scheduling results"""
+        successful = sum(1 for r in self.results if r.success)
+        failed = sum(1 for r in self.results if not r.success)
+        retryable = sum(1 for r in self.results if not r.success and r.retryable)
+
+        return {
+            'total': len(self.results),
+            'successful': successful,
+            'failed': failed,
+            'retryable': retryable,
+            'failed_queue_size': len(self.failed_queue)
+        }
+
+
+# ============================================
+# USAGE EXAMPLE
+# ============================================
+
+if __name__ == '__main__':
+    scheduler = PubloraQueueScheduler('YOUR_API_KEY')
+
+    # Define posts to schedule
+    posts = [
+        {
+            'content': 'Morning motivation! Start your week with intention. #MondayMotivation',
+            'platforms': ['twitter-123456', 'linkedin-ABC123']
+        },
+        {
+            'content': 'Product update: We just shipped a major new feature...',
+            'platforms': ['twitter-123456', 'linkedin-ABC123', 'threads-789012']
+        },
+        {
+            'content': 'Behind the scenes of our latest photoshoot',
+            'platforms': ['instagram-DEF456', 'tiktok-GHI789']
+        },
+        {
+            'content': 'Weekly tips thread: 5 things I learned this week...',
+            'platforms': ['twitter-123456', 'threads-789012']
+        },
+        {
+            'content': 'Customer success story: How Company X grew 300%',
+            'platforms': ['linkedin-ABC123']
+        }
+    ]
+
+    # Schedule all posts
+    results = scheduler.schedule_batch(posts)
+
+    # Get summary
+    summary = scheduler.get_summary()
+    print('\n=== SCHEDULING SUMMARY ===')
+    print(f"Total: {summary['total']}")
+    print(f"Successful: {summary['successful']}")
+    print(f"Failed: {summary['failed']}")
+    print(f"Retryable: {summary['retryable']}")
+
+    # Retry any failed posts
+    if summary['retryable'] > 0:
+        print('\nRetrying failed posts...')
+        scheduler.retry_failed()
+
+    # Later: Check publishing status
+    successful_ids = [r.post_group_id for r in results if r.success and r.post_group_id]
+
+    if successful_ids:
+        print('\n=== POST STATUSES ===')
+        # Note: Only check after scheduled time has passed
+        statuses = scheduler.check_post_statuses(successful_ids)
+
+        for status in statuses:
+            print(f"\nPost {status['post_group_id']}: {status['status']}")
+
+            for post in status.get('posts', []):
+                if post['status'] == 'published':
+                    print(f"  ✓ {post['platform']}: {post.get('published_url', 'N/A')}")
+                elif post['status'] == 'failed':
+                    print(f"  ✗ {post['platform']}: {post.get('error', 'Unknown error')}")
+                else:
+                    print(f"  ○ {post['platform']}: {post['status']}")
+```
+
+### Handling Common Edge Cases
+
+| Scenario | Handling Strategy |
+|----------|-------------------|
+| **API rate limit (429)** | Wait for `retryAfter` seconds, then retry |
+| **Server error (5xx)** | Exponential backoff retry (1s, 2s, 4s) |
+| **Network timeout** | Retry up to 3 times with backoff |
+| **Invalid API key (401)** | Stop immediately, don't retry |
+| **Plan limit reached (403)** | Stop immediately, notify user |
+| **Invalid content (400)** | Skip post, log error, continue |
+| **Partial publish failure** | Poll status, retry failed platforms |
+| **Platform rate limit** | Queue and schedule for later time slot |
+
+### Monitoring Published Posts
+
+After scheduling, poll for status to detect and handle failures:
+
+```javascript
+async function monitorScheduledPosts(scheduler, postGroupIds, pollInterval = 60000) {
+  const pending = new Set(postGroupIds);
+  const results = { published: [], failed: [], partial: [] };
+
+  while (pending.size > 0) {
+    const statuses = await scheduler.checkPostStatuses([...pending]);
+
+    for (const status of statuses) {
+      if (status.status === 'published') {
+        results.published.push(status);
+        pending.delete(status.postGroupId);
+      } else if (status.status === 'failed') {
+        results.failed.push(status);
+        pending.delete(status.postGroupId);
+      } else if (status.status === 'partially_published') {
+        results.partial.push(status);
+        pending.delete(status.postGroupId);
+      }
+      // 'scheduled' and 'processing' remain in pending
+    }
+
+    if (pending.size > 0) {
+      console.log(`Waiting for ${pending.size} posts...`);
+      await new Promise(r => setTimeout(r, pollInterval));
+    }
+  }
+
+  return results;
+}
+```
+
 ## Best Practices
 
 1. **Implement exponential backoff** when rate limited. Don't hammer the API.
@@ -712,6 +1680,12 @@ console.log(`Scheduled ${results.filter(r => r.success).length} of ${results.len
 6. **Cache rate limit state** if making requests from multiple processes.
 
 7. **Handle partial failures** gracefully when posting to multiple platforms.
+
+8. **Queue retryable failures** for automatic retry instead of failing permanently.
+
+9. **Poll post status after scheduled time** to detect platform-level failures that occur during publishing.
+
+10. **Log all API responses** including error details for debugging and monitoring.
 
 
 ---
