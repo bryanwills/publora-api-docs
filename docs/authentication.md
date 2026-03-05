@@ -22,6 +22,30 @@ Publora uses **API keys** for authentication. API keys are long-lived credential
 3. Click **Generate API Key**
 4. **Copy immediately** — the full key is shown only once
 
+### Why No Programmatic Key Generation?
+
+Unlike OAuth providers that offer token exchange APIs, Publora API keys are **only created through the dashboard** for security reasons:
+
+| Concern | Why Dashboard-Only |
+|---------|-------------------|
+| **Key theft prevention** | No API endpoint means compromised code can't generate new keys |
+| **Human verification** | Dashboard login ensures a human authorized the key |
+| **Audit trail** | All key generation is logged with user/IP information |
+| **Accidental exposure** | Prevents automated systems from creating excess keys |
+
+**For automation and CI/CD:** Store your API key in environment variables or secrets managers (AWS Secrets Manager, HashiCorp Vault, GitHub Secrets). The key never expires, so you only need to set it up once.
+
+```bash
+# GitHub Actions secret
+gh secret set PUBLORA_API_KEY
+
+# AWS Secrets Manager
+aws secretsmanager create-secret --name publora-api-key --secret-string "sk_..."
+
+# Kubernetes secret
+kubectl create secret generic publora --from-literal=api-key="sk_..."
+```
+
 ### Key Format
 
 ```
