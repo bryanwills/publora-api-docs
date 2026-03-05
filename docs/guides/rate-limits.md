@@ -2,6 +2,153 @@
 
 This guide covers platform-specific rate limits, Publora API rate limits, and strategies for scheduling posts at optimal engagement times.
 
+## Quick Start: High-Volume Multi-Platform Scheduling
+
+For scheduling hundreds of posts across all 10 platforms simultaneously, use this production-ready approach:
+
+### Installation
+
+```bash
+# JavaScript/Node.js
+npm install axios
+
+# Python
+pip install requests
+```
+
+### Environment Setup
+
+```bash
+# Set your API key (get it from publora.com → Settings → API Keys)
+export PUBLORA_API_KEY="sk_your_api_key_here"
+```
+
+### Minimal Working Example
+
+**JavaScript (Node.js):**
+
+```javascript
+// high-volume-scheduler.js
+// Run: PUBLORA_API_KEY=sk_xxx node high-volume-scheduler.js
+
+const axios = require('axios');
+
+const API_KEY = process.env.PUBLORA_API_KEY;
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+// All 10 supported platforms with rate limits
+const PLATFORM_LIMITS = {
+  twitter:   { perHour: 10, perDay: 50 },
+  linkedin:  { perHour: 5,  perDay: 20 },
+  instagram: { perHour: 3,  perDay: 10 },
+  threads:   { perHour: 10, perDay: 50 },
+  tiktok:    { perHour: 2,  perDay: 10 },
+  facebook:  { perHour: 5,  perDay: 25 },
+  youtube:   { perHour: 2,  perDay: 10 },
+  bluesky:   { perHour: 10, perDay: 100 },
+  mastodon:  { perHour: 5,  perDay: 50 },
+  telegram:  { perHour: 20, perDay: 300 },
+};
+
+async function schedulePost(content, platforms, scheduledTime) {
+  const response = await axios.post(`${BASE_URL}/create-post`, {
+    content,
+    platforms,
+    scheduledTime
+  }, {
+    headers: {
+      'x-publora-key': API_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  return response.data;
+}
+
+async function main() {
+  // Your platform connection IDs (from /platform-connections endpoint)
+  const platforms = ['twitter-123456', 'linkedin-ABC123', 'threads-789012'];
+
+  // Schedule 10 posts, 1 hour apart
+  const now = new Date();
+  for (let i = 0; i < 10; i++) {
+    const scheduledTime = new Date(now.getTime() + (i + 1) * 3600000);
+    const result = await schedulePost(
+      `Post ${i + 1}: Your content here`,
+      platforms,
+      scheduledTime.toISOString()
+    );
+    console.log(`Scheduled post ${i + 1}: ${result.postGroupId}`);
+  }
+}
+
+main().catch(console.error);
+```
+
+**Python:**
+
+```python
+#!/usr/bin/env python3
+# high_volume_scheduler.py
+# Run: PUBLORA_API_KEY=sk_xxx python high_volume_scheduler.py
+
+import os
+import requests
+from datetime import datetime, timedelta, timezone
+
+API_KEY = os.environ['PUBLORA_API_KEY']
+BASE_URL = 'https://api.publora.com/api/v1'
+
+# All 10 supported platforms with rate limits
+PLATFORM_LIMITS = {
+    'twitter':   {'per_hour': 10, 'per_day': 50},
+    'linkedin':  {'per_hour': 5,  'per_day': 20},
+    'instagram': {'per_hour': 3,  'per_day': 10},
+    'threads':   {'per_hour': 10, 'per_day': 50},
+    'tiktok':    {'per_hour': 2,  'per_day': 10},
+    'facebook':  {'per_hour': 5,  'per_day': 25},
+    'youtube':   {'per_hour': 2,  'per_day': 10},
+    'bluesky':   {'per_hour': 10, 'per_day': 100},
+    'mastodon':  {'per_hour': 5,  'per_day': 50},
+    'telegram':  {'per_hour': 20, 'per_day': 300},
+}
+
+def schedule_post(content: str, platforms: list, scheduled_time: str) -> dict:
+    response = requests.post(
+        f'{BASE_URL}/create-post',
+        json={
+            'content': content,
+            'platforms': platforms,
+            'scheduledTime': scheduled_time
+        },
+        headers={
+            'x-publora-key': API_KEY,
+            'Content-Type': 'application/json'
+        }
+    )
+    response.raise_for_status()
+    return response.json()
+
+def main():
+    # Your platform connection IDs (from /platform-connections endpoint)
+    platforms = ['twitter-123456', 'linkedin-ABC123', 'threads-789012']
+
+    # Schedule 10 posts, 1 hour apart
+    now = datetime.now(timezone.utc)
+    for i in range(10):
+        scheduled_time = now + timedelta(hours=i + 1)
+        result = schedule_post(
+            f'Post {i + 1}: Your content here',
+            platforms,
+            scheduled_time.isoformat()
+        )
+        print(f"Scheduled post {i + 1}: {result['postGroupId']}")
+
+if __name__ == '__main__':
+    main()
+```
+
+---
+
 ## Publora API Rate Limits
 
 | Plan | Requests/Minute | Requests/Hour | Concurrent Posts |
@@ -45,24 +192,117 @@ When you exceed the rate limit, you'll receive:
 
 Each social media platform has its own posting limits. Publora handles these automatically, but understanding them helps you design better scheduling strategies.
 
-| Platform | Posts/Day | Posts/Hour | Notes |
-|----------|-----------|------------|-------|
-| **X/Twitter** | 2,400 tweets | 300 tweets | Per account; threading counts as multiple |
-| **LinkedIn** | 100 posts | 25 posts | Per organization page |
-| **Instagram** | 25 posts | 10 posts | Feed posts only; Stories unlimited |
-| **Threads** | 250 posts | 50 posts | Meta's Thread-specific limits |
-| **TikTok** | 50 videos | 10 videos | Video uploads only |
-| **YouTube** | 50 videos | 10 videos | Per channel |
-| **Facebook** | 50 posts | 25 posts | Per page |
-| **Bluesky** | 1,666 posts | 100 posts | Per account |
-| **Mastodon** | 300 posts | 30 posts | Instance-dependent |
-| **Telegram** | Unlimited | 20 messages/sec | Channel/group dependent |
+### All 10 Supported Platforms
+
+| Platform | Posts/Day | Posts/Hour | Publora Recommended | Notes |
+|----------|-----------|------------|---------------------|-------|
+| **X/Twitter** | 2,400 tweets | 300 tweets | 50/day, 10/hour | Threading counts as multiple posts |
+| **LinkedIn** | 100 posts | 25 posts | 20/day, 5/hour | Personal + organization pages |
+| **Instagram** | 25 posts | 10 posts | 10/day, 3/hour | Feed posts only; Stories separate |
+| **Threads** | 250 posts | 50 posts | 50/day, 10/hour | Threading supported |
+| **TikTok** | 50 videos | 10 videos | 10/day, 2/hour | Video uploads only |
+| **YouTube** | 50 videos | 10 videos | 10/day, 2/hour | Per channel |
+| **Facebook** | 50 posts | 25 posts | 25/day, 5/hour | Per page |
+| **Bluesky** | 1,666 posts | 100 posts | 100/day, 10/hour | Per account |
+| **Mastodon** | 300 posts | 30 posts | 50/day, 5/hour | Instance-dependent |
+| **Telegram** | Unlimited | 20 msg/sec | 300/day, 20/hour | Channel/group dependent |
+
+**"Publora Recommended"** limits are conservative defaults built into the scheduler examples below to ensure reliable publishing without hitting platform limits.
 
 ### How Publora Handles Platform Limits
 
 1. **Automatic Queuing** - If a platform rate limit is hit, Publora queues the post and retries automatically
 2. **Smart Distribution** - When scheduling many posts, Publora distributes them to avoid hitting limits
 3. **Error Reporting** - If a post fails due to platform limits, status shows `failed` with the reason
+
+## API Reference for Scheduling
+
+The scheduler examples use these Publora API endpoints:
+
+### Create Post
+
+```http
+POST https://api.publora.com/api/v1/create-post
+Content-Type: application/json
+x-publora-key: sk_your_api_key
+
+{
+  "content": "Your post content",
+  "platforms": ["twitter-123456", "linkedin-ABC123"],
+  "scheduledTime": "2024-03-15T14:00:00.000Z",
+  "mediaUrls": ["https://..."],              // optional
+  "platformSettings": {                       // optional
+    "twitter-123456": { "threadSeparator": "---" }
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "postGroupId": "pg_abc123",
+  "scheduledPosts": [
+    { "postId": "p_1", "platform": "twitter", "platformId": "twitter-123456", "status": "scheduled" },
+    { "postId": "p_2", "platform": "linkedin", "platformId": "linkedin-ABC123", "status": "scheduled" }
+  ]
+}
+```
+
+### Get Post Status
+
+```http
+GET https://api.publora.com/api/v1/get-post/{postGroupId}
+x-publora-key: sk_your_api_key
+```
+
+**Response:**
+
+```json
+{
+  "postGroupId": "pg_abc123",
+  "status": "published",
+  "content": "Your post content",
+  "posts": [
+    {
+      "postId": "p_1",
+      "platform": "twitter",
+      "platformId": "twitter-123456",
+      "status": "published",
+      "publishedUrl": "https://twitter.com/user/status/123456"
+    },
+    {
+      "postId": "p_2",
+      "platform": "linkedin",
+      "platformId": "linkedin-ABC123",
+      "status": "published",
+      "publishedUrl": "https://linkedin.com/posts/..."
+    }
+  ]
+}
+```
+
+### Get Platform Connections
+
+```http
+GET https://api.publora.com/api/v1/platform-connections
+x-publora-key: sk_your_api_key
+```
+
+**Response:**
+
+```json
+{
+  "connections": [
+    { "id": "twitter-123456", "platform": "twitter", "username": "myaccount", "status": "active" },
+    { "id": "linkedin-ABC123", "platform": "linkedin", "username": "My Company", "status": "active" },
+    { "id": "threads-789012", "platform": "threads", "username": "mythreads", "status": "active" }
+  ]
+}
+```
+
+Use the `id` field from connections as the platform identifier when creating posts.
 
 ## Examples
 
@@ -741,7 +981,7 @@ class PubloraQueueScheduler {
     this.rateLimitRemaining = Infinity;
     this.rateLimitReset = 0;
 
-    // Platform-specific limits (posts per hour / per day)
+    // Platform-specific limits (posts per hour / per day) - all 10 platforms
     this.platformLimits = {
       twitter:   { perHour: 10, perDay: 50 },
       linkedin:  { perHour: 5,  perDay: 20 },
@@ -749,10 +989,13 @@ class PubloraQueueScheduler {
       threads:   { perHour: 10, perDay: 50 },
       tiktok:    { perHour: 2,  perDay: 10 },
       facebook:  { perHour: 5,  perDay: 25 },
+      youtube:   { perHour: 2,  perDay: 10 },
       bluesky:   { perHour: 10, perDay: 100 },
+      mastodon:  { perHour: 5,  perDay: 50 },
+      telegram:  { perHour: 20, perDay: 300 },
     };
 
-    // Peak engagement hours (UTC)
+    // Peak engagement hours (UTC) - all 10 platforms
     this.peakHours = {
       twitter:   [13, 14, 15, 16],
       linkedin:  [10, 11, 12],
@@ -760,7 +1003,10 @@ class PubloraQueueScheduler {
       threads:   [12, 13, 14, 15],
       tiktok:    [15, 16, 17, 18, 19, 20, 21],
       facebook:  [13, 14, 15, 16],
+      youtube:   [14, 15, 16, 17, 18],
       bluesky:   [14, 15, 16, 17],
+      mastodon:  [14, 15, 16, 17],
+      telegram:  [9, 10, 11, 12, 18, 19, 20],
     };
 
     // Track scheduled posts per platform
@@ -1221,7 +1467,7 @@ class PubloraQueueScheduler:
         self.rate_limit_remaining = float('inf')
         self.rate_limit_reset = 0
 
-        # Platform-specific limits (posts per hour / per day)
+        # Platform-specific limits (posts per hour / per day) - all 10 platforms
         self.platform_limits = {
             'twitter':   {'per_hour': 10, 'per_day': 50},
             'linkedin':  {'per_hour': 5,  'per_day': 20},
@@ -1229,10 +1475,13 @@ class PubloraQueueScheduler:
             'threads':   {'per_hour': 10, 'per_day': 50},
             'tiktok':    {'per_hour': 2,  'per_day': 10},
             'facebook':  {'per_hour': 5,  'per_day': 25},
+            'youtube':   {'per_hour': 2,  'per_day': 10},
             'bluesky':   {'per_hour': 10, 'per_day': 100},
+            'mastodon':  {'per_hour': 5,  'per_day': 50},
+            'telegram':  {'per_hour': 20, 'per_day': 300},
         }
 
-        # Peak engagement hours (UTC)
+        # Peak engagement hours (UTC) - all 10 platforms
         self.peak_hours = {
             'twitter':   [13, 14, 15, 16],
             'linkedin':  [10, 11, 12],
@@ -1240,7 +1489,10 @@ class PubloraQueueScheduler:
             'threads':   [12, 13, 14, 15],
             'tiktok':    [15, 16, 17, 18, 19, 20, 21],
             'facebook':  [13, 14, 15, 16],
+            'youtube':   [14, 15, 16, 17, 18],
             'bluesky':   [14, 15, 16, 17],
+            'mastodon':  [14, 15, 16, 17],
+            'telegram':  [9, 10, 11, 12, 18, 19, 20],
         }
 
         # Track scheduled posts per platform
@@ -1628,6 +1880,159 @@ if __name__ == '__main__':
 | **Invalid content (400)** | Skip post, log error, continue |
 | **Partial publish failure** | Poll status, retry failed platforms |
 | **Platform rate limit** | Queue and schedule for later time slot |
+
+### Complete 10-Platform Simultaneous Scheduling Example
+
+This example demonstrates scheduling 100 posts across all 10 platforms simultaneously:
+
+```javascript
+// all-platforms-scheduler.js
+// Usage: PUBLORA_API_KEY=sk_xxx node all-platforms-scheduler.js
+
+const axios = require('axios');
+
+const API_KEY = process.env.PUBLORA_API_KEY;
+const BASE_URL = 'https://api.publora.com/api/v1';
+
+if (!API_KEY || !API_KEY.startsWith('sk_')) {
+  console.error('Error: Set PUBLORA_API_KEY environment variable');
+  console.error('Get your key at: https://publora.com → Settings → API Keys');
+  process.exit(1);
+}
+
+// Step 1: Get all connected platform IDs
+async function getConnectedPlatforms() {
+  const response = await axios.get(`${BASE_URL}/platform-connections`, {
+    headers: { 'x-publora-key': API_KEY }
+  });
+  return response.data.connections
+    .filter(c => c.status === 'active')
+    .map(c => c.id);
+}
+
+// Step 2: Create rate-limited scheduler
+class MultiPlatformScheduler {
+  constructor() {
+    this.postCounts = { hourly: {}, daily: {} };
+    this.limits = {
+      twitter:   { perHour: 10, perDay: 50 },
+      linkedin:  { perHour: 5,  perDay: 20 },
+      instagram: { perHour: 3,  perDay: 10 },
+      threads:   { perHour: 10, perDay: 50 },
+      tiktok:    { perHour: 2,  perDay: 10 },
+      facebook:  { perHour: 5,  perDay: 25 },
+      youtube:   { perHour: 2,  perDay: 10 },
+      bluesky:   { perHour: 10, perDay: 100 },
+      mastodon:  { perHour: 5,  perDay: 50 },
+      telegram:  { perHour: 20, perDay: 300 },
+    };
+  }
+
+  getPlatform(id) { return id.split('-')[0]; }
+  getHourKey(d) { return d.toISOString().slice(0, 13); }
+  getDayKey(d) { return d.toISOString().slice(0, 10); }
+
+  canPost(platformId, date) {
+    const platform = this.getPlatform(platformId);
+    const limits = this.limits[platform];
+    if (!limits) return true;
+
+    const hKey = `${platform}-${this.getHourKey(date)}`;
+    const dKey = `${platform}-${this.getDayKey(date)}`;
+
+    return (this.postCounts.hourly[hKey] || 0) < limits.perHour &&
+           (this.postCounts.daily[dKey] || 0) < limits.perDay;
+  }
+
+  recordPost(platformId, date) {
+    const platform = this.getPlatform(platformId);
+    const hKey = `${platform}-${this.getHourKey(date)}`;
+    const dKey = `${platform}-${this.getDayKey(date)}`;
+    this.postCounts.hourly[hKey] = (this.postCounts.hourly[hKey] || 0) + 1;
+    this.postCounts.daily[dKey] = (this.postCounts.daily[dKey] || 0) + 1;
+  }
+
+  findSlot(platforms, after) {
+    let candidate = new Date(after);
+    candidate.setUTCMinutes(0, 0, 0);
+
+    for (let i = 0; i < 168; i++) {
+      candidate = new Date(candidate.getTime() + 3600000);
+      if (platforms.every(p => this.canPost(p, candidate))) {
+        return candidate;
+      }
+    }
+    return new Date(after.getTime() + 3600000);
+  }
+
+  async scheduleAll(posts, platforms) {
+    let lastTime = new Date();
+    const results = [];
+
+    for (let i = 0; i < posts.length; i++) {
+      const slot = this.findSlot(platforms, lastTime);
+      platforms.forEach(p => this.recordPost(p, slot));
+
+      try {
+        const { data } = await axios.post(`${BASE_URL}/create-post`, {
+          content: posts[i],
+          platforms: platforms,
+          scheduledTime: slot.toISOString()
+        }, {
+          headers: { 'x-publora-key': API_KEY, 'Content-Type': 'application/json' }
+        });
+
+        results.push({ success: true, postGroupId: data.postGroupId, time: slot });
+        console.log(`[${i + 1}/${posts.length}] ✓ Scheduled for ${slot.toISOString()}`);
+      } catch (error) {
+        const msg = error.response?.data?.error || error.message;
+        results.push({ success: false, error: msg });
+        console.log(`[${i + 1}/${posts.length}] ✗ Failed: ${msg}`);
+
+        // Handle rate limit
+        if (error.response?.status === 429) {
+          const wait = error.response.data.retryAfter || 60;
+          console.log(`Rate limited. Waiting ${wait}s...`);
+          await new Promise(r => setTimeout(r, wait * 1000));
+          i--; // Retry this post
+        }
+      }
+
+      lastTime = slot;
+      await new Promise(r => setTimeout(r, 100)); // Small delay
+    }
+
+    return results;
+  }
+}
+
+// Step 3: Run it
+async function main() {
+  console.log('Fetching connected platforms...');
+  const platforms = await getConnectedPlatforms();
+  console.log(`Found ${platforms.length} active platforms: ${platforms.join(', ')}`);
+
+  if (platforms.length === 0) {
+    console.error('No active platform connections. Connect platforms at publora.com');
+    process.exit(1);
+  }
+
+  // Generate 100 posts
+  const posts = Array.from({ length: 100 }, (_, i) =>
+    `Post ${i + 1}: Scheduled content across all platforms! #automation`
+  );
+
+  console.log(`\nScheduling ${posts.length} posts across ${platforms.length} platforms...`);
+  const scheduler = new MultiPlatformScheduler();
+  const results = await scheduler.scheduleAll(posts, platforms);
+
+  const successful = results.filter(r => r.success).length;
+  console.log(`\n=== COMPLETE ===`);
+  console.log(`Scheduled: ${successful}/${results.length} posts`);
+}
+
+main().catch(console.error);
+```
 
 ### Monitoring Published Posts
 
