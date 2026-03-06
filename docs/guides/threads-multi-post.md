@@ -2,6 +2,8 @@
 
 Post multi-part threads (connected posts) to Meta's Threads platform programmatically using the Publora REST API. Create threaded conversations without managing the Threads API complexity.
 
+> **⚠️ Temporary Restriction:** Multi-threaded nested posts are temporarily unavailable due to Threads app reconnection status. This guide documents the feature for when it returns. Single posts, carousel posts, and standalone threads continue to work. Contact support@publora.com for updates.
+
 ## Threads Multi-Post API Overview
 
 On Threads (by Meta), you can create connected posts that appear as a conversation thread. This requires:

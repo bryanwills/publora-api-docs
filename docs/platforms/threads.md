@@ -2,6 +2,8 @@
 
 Post to Threads (by Meta) programmatically using the Publora REST API. A simpler alternative to the official Threads API or Meta Graph API for Threads.
 
+> **⚠️ Temporary Restriction:** Multi-threaded nested posts (content >500 characters that would be split into multiple connected replies) are temporarily unavailable due to Threads app reconnection status. Single posts, carousel posts, and standalone threads continue to work normally. Contact support@publora.com for updates on when this feature will be restored.
+
 ## Threads API Overview
 
 Publora provides a unified REST API for publishing text posts, images, videos, carousels, and automatic thread splitting for long-form content on Threads. No need to manage Meta OAuth flows, handle the Threads Publishing API complexity, or wait for Threads API access approval.

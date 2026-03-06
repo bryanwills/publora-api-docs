@@ -48,6 +48,14 @@ or
 | `404` | `"Post group not found"` | The post group ID does not exist or does not belong to your account | Verify the ID and ensure you are using the correct API key |
 | `400` | `"Cannot update published or failed posts"` | Attempting to modify a post that has already been published or has failed | Only `draft` and `scheduled` posts can be updated |
 
+### Threads-Specific Errors
+
+| Error Code | Error Message | Cause | Resolution |
+|---|---|---|---|
+| `THREADS_NESTED_POSTING_DISABLED` | `"Multi-threaded nested posts on Threads are temporarily unavailable..."` | Multi-part threaded posts (content >500 chars or with `---` separators) are temporarily disabled due to Threads app reconnection status | Use single posts, carousel posts, or standalone threads instead. Contact support@publora.com for updates on when this feature will be restored. |
+
+**Note:** Single posts, carousel posts, and standalone threads on Threads continue to work normally. Only multi-part nested threads (where content is automatically split into multiple connected replies) are temporarily restricted.
+
 ### Post-Level Errors (Partial Failures)
 
 A post group can target multiple platforms. Even if some platforms succeed, others may fail. This results in a `partially_published` status on the post group.
@@ -713,6 +721,7 @@ if result['failed']:
 | Post group shows `partially_published` | Some platforms failed while others succeeded | Inspect individual platform post statuses for error details |
 | TikTok post fails with FPS error | Video frame rate below TikTok's minimum requirement | Re-encode the video with at least 24 FPS before uploading |
 | `500` intermittent errors | Temporary server issues | Implement retry logic with exponential backoff |
+| Threads post fails with `THREADS_NESTED_POSTING_DISABLED` | Multi-part nested threads are temporarily disabled | Keep content under 500 characters or use carousel posts. Contact support@publora.com for updates. |
 
 
 ---
