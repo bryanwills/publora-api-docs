@@ -48,8 +48,10 @@ Retrieve your connected accounts and their platform IDs from the `GET /api/v1/pl
 When your content exceeds a platform's character limit, Publora adapts it automatically:
 
 - **Twitter / X:** Long text is split into a **thread** (multiple tweets chained together).
-- **Threads:** Long text is split into a **thread** (multiple posts chained together).
+- **Threads:** Long text is split into a **thread** (multiple posts chained together). ⚠️ *Temporarily unavailable - see note below.*
 - **Other platforms:** Content is truncated to fit the platform's limit, with an effort to break at natural word boundaries.
+
+> **⚠️ Threads Notice:** Multi-part thread splitting on Threads is temporarily unavailable due to API access requirements. Keep Threads content under 500 characters or it will fail. Single posts and carousels work normally. Contact support@publora.com for updates.
 
 ### Platform-Specific Defaults
 

@@ -2,6 +2,8 @@
 
 Learn how to post threads (multiple connected posts) to Twitter/X and Threads using the Publora API. This guide covers automatic thread splitting, manual thread creation, and best practices.
 
+> **⚠️ Threads Platform Notice:** Multi-part nested threads on Threads are temporarily unavailable due to API access requirements. Twitter/X threading works normally. Single posts and carousels on Threads continue to work. Contact support@publora.com for updates.
+
 ## What is a Thread?
 
 A thread is a series of connected posts that appear as a single conversation. On X/Twitter, these are called "tweet threads" or "tweetstorms." On Threads (by Meta), they appear as connected replies to your own posts.

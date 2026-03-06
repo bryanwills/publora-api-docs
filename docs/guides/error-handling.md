@@ -52,9 +52,9 @@ or
 
 | Error Code | Error Message | Cause | Resolution |
 |---|---|---|---|
-| `THREADS_NESTED_POSTING_DISABLED` | `"Multi-threaded nested posts on Threads are temporarily unavailable..."` | Multi-part threaded posts (content >500 chars or with `---` separators) are temporarily disabled due to Threads app reconnection status | Use single posts, carousel posts, or standalone threads instead. Contact support@publora.com for updates on when this feature will be restored. |
+| `THREADS_NESTED_POSTING_DISABLED` | `"Multi-threaded nested posts on Threads are temporarily unavailable..."` | Multi-part threads (content >500 chars or with `---` separators) are temporarily disabled due to Threads API access requirements | Keep content under 500 characters without `---` separators. Use carousel posts for multiple images. Contact support@publora.com for updates. |
 
-**Note:** Single posts, carousel posts, and standalone threads on Threads continue to work normally. Only multi-part nested threads (where content is automatically split into multiple connected replies) are temporarily restricted.
+**Note:** Single posts (under 500 characters) and carousel posts on Threads continue to work normally. Only multi-part threads (where content is automatically split into multiple connected replies) are temporarily restricted.
 
 ### Post-Level Errors (Partial Failures)
 
