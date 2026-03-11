@@ -1,0 +1,524 @@
+# Post Validation
+
+This guide covers how Publora validates posts before scheduling to prevent publish failures, including what gets validated, the validation response format, error codes, and best practices for avoiding validation errors.
+
+## Overview
+
+Posts are validated before scheduling to catch issues that would cause publishing failures on target platforms. Each social media platform has unique requirements for content length, media types, file sizes, and video durations. Publora validates your posts against these platform-specific limits and returns detailed error information so you can fix issues before scheduling.
+
+Validation happens automatically -- you do not need to call a separate endpoint. When you create or update a post, the API validates it and returns any errors or warnings in the response.
+
+## When Validation Occurs
+
+Validation runs automatically on these API calls:
+
+| Endpoint | Trigger |
+|---|---|
+| `POST /api/v1/create-post` | When creating a new post (draft or scheduled) |
+| `PUT /api/v1/update-post/:id` | When updating content, platforms, or media |
+
+If validation fails with blocking errors, the API returns a `400` status code with details about what needs to be fixed. Warnings are returned but do not block the operation.
+
+## What Gets Validated
+
+### Content Length
+
+Each platform has a maximum character limit. Some platforms also have minimum requirements.
+
+| Platform | Max Characters | Notes |
+|---|---|---|
+| **Twitter/X** | 280 (standard) / 25,000 (Premium) | Threading supported for long content |
+| **Instagram** | 2,200 | First 125 chars visible before "more" |
+| **Threads** | 500 (10,000 with text attachment) | Max 5 links per post |
+| **TikTok** | 2,200 (API) | Native app allows 4,000 |
+| **LinkedIn** | 3,000 | First 210 chars visible before "see more" |
+| **YouTube** | 100 (title) / 5,000 (description) | First 150 chars of description visible |
+| **Facebook** | 63,206 | Posts under 80 chars get higher engagement |
+| **Mastodon** | 500 | Instance-configurable (some allow 5,000+) |
+| **Bluesky** | 300 | Links do not count toward limit |
+| **Telegram** | 4,096 (users) / 1,024 (bot captions) | Bots limited to 1,024 for captions |
+| **Pinterest** | 100 (title) / 800 (description) | Optimal description: 220-232 chars |
+
+### Media Requirements
+
+Some platforms require media, while others support text-only posts.
+
+| Platform | Requires Media | Requires Video | Supports Text-Only |
+|---|---|---|---|
+| **Twitter/X** | No | No | Yes |
+| **Instagram** | Yes | No | No |
+| **Threads** | No | No | Yes |
+| **TikTok** | Yes | Yes | No |
+| **LinkedIn** | No | No | Yes |
+| **YouTube** | Yes | Yes | No |
+| **Facebook** | No | No | Yes |
+| **Mastodon** | No | No | Yes |
+| **Bluesky** | No | No | Yes |
+| **Telegram** | No | No | Yes |
+| **Pinterest** | Yes | No | No |
+
+### Media File Sizes
+
+| Platform | Max Image Size | Max Video Size | Max Media Count |
+|---|---|---|---|
+| **Twitter/X** | 5 MB | 512 MB | 4 images OR 1 video |
+| **Instagram** | 8 MB | 300 MB | 10 (API carousel) |
+| **Threads** | 8 MB | 500 MB | 20 |
+| **TikTok** | - | 4 GB | 1 video only |
+| **LinkedIn** | 5 MB | 500 MB | 20 images OR 1 video |
+| **YouTube** | - | 256 GB | 1 video only |
+| **Facebook** | 10 MB | 2 GB (API) | 10 images OR 1 video |
+| **Mastodon** | 16 MB | ~99 MB | 4 |
+| **Bluesky** | 1 MB | 100 MB | 4 |
+| **Telegram** | 10 MB | 50 MB (Bot API) | 10 |
+| **Pinterest** | 20 MB | 1 GB | 5 (carousel) |
+
+### Media Formats
+
+| Platform | Supported Image Formats | Supported Video Formats |
+|---|---|---|
+| **Twitter/X** | JPEG, PNG, GIF, WebP | MP4, MOV |
+| **Instagram** | **JPEG only (API)** | MP4, MOV |
+| **Threads** | JPEG, PNG | MP4, MOV |
+| **TikTok** | - | MP4, MOV, WebM |
+| **LinkedIn** | JPEG, PNG, GIF | MP4 |
+| **YouTube** | - | MP4, MOV, AVI, WebM |
+| **Facebook** | JPEG, PNG, GIF, BMP, TIFF | MP4, MOV |
+| **Mastodon** | JPEG, PNG, GIF, WebP | MP4, MOV, WebM |
+| **Bluesky** | JPEG, PNG, WebP (max 2000x2000 px) | MP4 |
+| **Telegram** | JPEG, PNG, GIF, WebP, BMP | MP4, MOV, AVI, MKV, WebM |
+| **Pinterest** | JPEG, PNG, TIFF, BMP, GIF, WebP | MP4, MOV |
+
+> **Critical:** Instagram API only accepts JPEG images. PNG and GIF will fail validation.
+
+### Video Duration Limits
+
+| Platform | Min Duration | Max Duration (API) | Notes |
+|---|---|---|---|
+| **Twitter/X** | - | 2 min (120s) | Native allows 2:20 |
+| **Instagram Reels** | - | 90 seconds | Native allows 15-20 min |
+| **Instagram Carousel** | - | 60s per video | - |
+| **Threads** | - | 5 min | - |
+| **TikTok** | 3 seconds | 10 min | Native allows 60 min |
+| **LinkedIn** | - | 30 min | - |
+| **YouTube** | - | 12 hours | - |
+| **Facebook** | - | 45 min | Native allows 240 min |
+| **Facebook Reels** | 3 seconds | 90 seconds | - |
+| **Mastodon** | - | No limit* | *Limited by file size |
+| **Bluesky** | - | 3 min | Daily limit: 25 videos OR 10 GB |
+| **Telegram** | - | No limit | Limited by 50 MB file size |
+| **Pinterest** | - | 15 min | - |
+
+## Validation Response Format
+
+When validation errors occur, the API returns a `400` status code with a structured response:
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "instagram",
+        "platformId": "instagram-456",
+        "code": "MEDIA_REQUIRED",
+        "message": "Instagram requires at least one image or video",
+        "field": "media"
+      },
+      {
+        "platform": "tiktok",
+        "platformId": "tiktok-789",
+        "code": "VIDEO_REQUIRED",
+        "message": "TikTok requires a video",
+        "field": "media"
+      }
+    ],
+    "warnings": [
+      {
+        "platform": "twitter",
+        "platformId": "twitter-123",
+        "code": "CONTENT_TRUNCATION_WARNING",
+        "message": "Content exceeds 280 characters. Consider using threading.",
+        "field": "content"
+      }
+    ],
+    "summary": {
+      "totalPlatforms": 3,
+      "validPlatforms": 1,
+      "invalidPlatforms": 2,
+      "errorCount": 2,
+      "warningCount": 1
+    }
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `valid` | boolean | `true` if all platforms pass validation, `false` otherwise |
+| `errors` | array | Blocking errors that must be fixed before scheduling |
+| `warnings` | array | Non-blocking issues that may affect publishing |
+| `summary.totalPlatforms` | number | Number of platforms in the post |
+| `summary.validPlatforms` | number | Platforms that passed validation |
+| `summary.invalidPlatforms` | number | Platforms that failed validation |
+| `summary.errorCount` | number | Total number of errors |
+| `summary.warningCount` | number | Total number of warnings |
+
+### Error/Warning Object Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `platform` | string | Platform name (e.g., "twitter", "instagram") |
+| `platformId` | string | The full platform ID from your request |
+| `code` | string | Machine-readable error code |
+| `message` | string | Human-readable error description |
+| `field` | string | The field that caused the error ("content", "media", "settings") |
+
+## Error Codes Reference
+
+### Content Errors
+
+| Code | Description | Resolution |
+|---|---|---|
+| `CONTENT_TOO_LONG` | Content exceeds the platform's character limit | Shorten the content or use threading where supported |
+| `CONTENT_TOO_SHORT` | Content is below the minimum required length | Add more content |
+| `CONTENT_REQUIRED` | Text content is required but missing | Add text content to the post |
+| `CONTENT_OR_MEDIA_REQUIRED` | Either text or media is needed | Add content or attach media |
+
+### Media Errors
+
+| Code | Description | Resolution |
+|---|---|---|
+| `MEDIA_REQUIRED` | Platform requires at least one media file | Attach an image or video |
+| `MEDIA_SIZE_EXCEEDED` | File exceeds the platform's size limit | Compress or resize the file |
+| `MEDIA_COUNT_EXCEEDED` | Too many media files attached | Reduce the number of files |
+| `MEDIA_TYPE_NOT_SUPPORTED` | File format not supported by the platform | Convert to a supported format |
+| `MEDIA_DIMENSIONS_INVALID` | Image dimensions outside allowed range | Resize the image |
+| `IMAGES_NOT_SUPPORTED` | Platform is video-only (TikTok, YouTube) | Use a video instead |
+
+### Video Errors
+
+| Code | Description | Resolution |
+|---|---|---|
+| `VIDEO_REQUIRED` | Platform requires a video (TikTok, YouTube) | Attach a video file |
+| `VIDEO_DURATION_EXCEEDED` | Video is longer than the platform allows | Trim the video to meet the limit |
+| `VIDEO_DURATION_TOO_SHORT` | Video is shorter than the minimum required | Use a longer video (min 3s for TikTok/FB Reels) |
+| `VIDEO_NOT_SUPPORTED` | Platform does not support video | Remove the video or change target platforms |
+
+### Platform Errors
+
+| Code | Description | Resolution |
+|---|---|---|
+| `PLATFORM_NOT_SUPPORTED` | Unknown or unsupported platform | Check the platform ID format |
+| `PLATFORM_SETTING_REQUIRED` | A required platform-specific setting is missing | Provide the required setting |
+| `PLATFORM_SETTING_INVALID` | A platform-specific setting has an invalid value | Correct the setting value |
+
+## Examples
+
+### Validation Error: Missing Media for Instagram
+
+When posting to Instagram without media:
+
+**Request:**
+
+```json
+{
+  "content": "Check out our latest update!",
+  "platforms": ["twitter-123", "instagram-456"]
+}
+```
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "instagram",
+        "platformId": "instagram-456",
+        "code": "MEDIA_REQUIRED",
+        "message": "Instagram requires at least one image or video",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 2,
+      "validPlatforms": 1,
+      "invalidPlatforms": 1,
+      "errorCount": 1,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Validation Error: Video Required for TikTok
+
+When posting an image to TikTok (video-only platform):
+
+**Request:**
+
+```json
+{
+  "content": "New product announcement!",
+  "platforms": ["tiktok-789"],
+  "media": [{ "type": "image", "url": "https://..." }]
+}
+```
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "tiktok",
+        "platformId": "tiktok-789",
+        "code": "VIDEO_REQUIRED",
+        "message": "TikTok requires a video. Images are not supported.",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 1,
+      "validPlatforms": 0,
+      "invalidPlatforms": 1,
+      "errorCount": 1,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Validation Error: Content Too Long
+
+When content exceeds Twitter's 280 character limit:
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "twitter",
+        "platformId": "twitter-123",
+        "code": "CONTENT_TOO_LONG",
+        "message": "Content is 450 characters. Twitter allows a maximum of 280 characters.",
+        "field": "content"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 1,
+      "validPlatforms": 0,
+      "invalidPlatforms": 1,
+      "errorCount": 1,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Validation Error: Image Format Not Supported
+
+When uploading a PNG to Instagram (JPEG only via API):
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "instagram",
+        "platformId": "instagram-456",
+        "code": "MEDIA_TYPE_NOT_SUPPORTED",
+        "message": "Instagram API only supports JPEG images. PNG files are not accepted.",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 1,
+      "validPlatforms": 0,
+      "invalidPlatforms": 1,
+      "errorCount": 1,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Validation Error: Video Duration Exceeded
+
+When a video exceeds platform limits:
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "instagram",
+        "platformId": "instagram-456",
+        "code": "VIDEO_DURATION_EXCEEDED",
+        "message": "Video is 180 seconds. Instagram Reels API allows a maximum of 90 seconds.",
+        "field": "media"
+      },
+      {
+        "platform": "twitter",
+        "platformId": "twitter-123",
+        "code": "VIDEO_DURATION_EXCEEDED",
+        "message": "Video is 180 seconds. Twitter API allows a maximum of 120 seconds.",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 2,
+      "validPlatforms": 0,
+      "invalidPlatforms": 2,
+      "errorCount": 2,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Validation Error: File Size Exceeded
+
+When an image exceeds Bluesky's strict 1 MB limit:
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "bluesky",
+        "platformId": "bluesky-abc",
+        "code": "MEDIA_SIZE_EXCEEDED",
+        "message": "Image is 2.5 MB. Bluesky allows a maximum of 1 MB.",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 1,
+      "validPlatforms": 0,
+      "invalidPlatforms": 1,
+      "errorCount": 1,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+### Multiple Platform Errors
+
+When a single post has issues on multiple platforms:
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation failed",
+  "validation": {
+    "valid": false,
+    "errors": [
+      {
+        "platform": "instagram",
+        "platformId": "instagram-456",
+        "code": "MEDIA_TYPE_NOT_SUPPORTED",
+        "message": "Instagram API only supports JPEG images. PNG files are not accepted.",
+        "field": "media"
+      },
+      {
+        "platform": "bluesky",
+        "platformId": "bluesky-abc",
+        "code": "MEDIA_SIZE_EXCEEDED",
+        "message": "Image is 2.5 MB. Bluesky allows a maximum of 1 MB.",
+        "field": "media"
+      },
+      {
+        "platform": "tiktok",
+        "platformId": "tiktok-789",
+        "code": "VIDEO_REQUIRED",
+        "message": "TikTok requires a video. Images are not supported.",
+        "field": "media"
+      }
+    ],
+    "warnings": [],
+    "summary": {
+      "totalPlatforms": 4,
+      "validPlatforms": 1,
+      "invalidPlatforms": 3,
+      "errorCount": 3,
+      "warningCount": 0
+    }
+  }
+}
+```
+
+## Best Practices
+
+1. **Validate content length client-side.** Check character counts before sending the API request. Different platforms have different limits (Twitter: 280, LinkedIn: 3,000, Bluesky: 300).
+
+2. **Always use JPEG for Instagram.** The Instagram API does not support PNG or GIF. Convert images to JPEG before uploading.
+
+3. **Compress images for Bluesky.** Bluesky has a strict 1 MB limit. Use JPEG compression at 80-85% quality to stay under the limit.
+
+4. **Check video durations before uploading.** Instagram Reels API maxes out at 90 seconds, Twitter at 2 minutes, TikTok at 10 minutes. Trim videos accordingly.
+
+5. **Use separate media for different platform groups.** If posting to both image and video platforms, consider creating separate posts:
+   - Image posts for Instagram, Twitter, LinkedIn
+   - Video posts for TikTok, YouTube
+
+6. **Handle validation errors gracefully in your UI.** Display platform-specific error messages so users know exactly what to fix.
+
+7. **Consider platform requirements when designing content.** If targeting TikTok, always start with video. If targeting Instagram, prepare JPEG images.
+
+8. **Keep Bluesky image dimensions under 2000x2000 pixels.** Larger images will fail validation.
+
+9. **For Telegram bots, keep captions under 1,024 characters.** Bots cannot exceed this limit even though users can send 4,096 characters.
+
+10. **Test video FPS for TikTok.** TikTok has minimum FPS requirements. Videos with very low frame rates will fail at publish time.
+
+## Common Issues
+
+| Problem | Cause | Solution |
+|---|---|---|
+| Instagram post fails with `MEDIA_TYPE_NOT_SUPPORTED` | Using PNG or GIF format | Convert to JPEG before uploading |
+| TikTok post fails with `VIDEO_REQUIRED` | Posting images to a video-only platform | Use a video file instead |
+| Bluesky post fails with `MEDIA_SIZE_EXCEEDED` | Image over 1 MB | Compress to 80-85% JPEG quality |
+| Twitter post fails with `CONTENT_TOO_LONG` | Content over 280 characters | Shorten content or use threading |
+| Instagram Reels fails with `VIDEO_DURATION_EXCEEDED` | Video over 90 seconds | Trim video to under 90 seconds |
+| Multiple platforms fail with different errors | Content not optimized for all targets | Create platform-specific posts or fix each error |
+| Validation passes but publish fails | Platform-side issues (rate limits, account restrictions) | Check platform-specific error messages in the post status |
+
+
+---
+
+*[Publora](https://publora.com) is built by [Creative Content Crafts, Inc.](https://cccrafts.ai) Need AI-powered content creation for LinkedIn, Threads, and X? Try [Co.Actor](https://co.actor) -- the best AI service for authentic thought leadership at scale.*

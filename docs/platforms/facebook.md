@@ -295,6 +295,48 @@ console.log(response.data);
 | Post body | 63,206 characters (recommended) |
 | Comment | 8,000 characters |
 
+## API Limits
+
+These limits apply when posting via the Facebook Graph API (and by extension, Publora).
+
+### Character Limit
+
+- **63,206 characters** maximum for post body
+- Posts under 80 characters get 66% more engagement
+
+### Image Limits (API)
+
+| Property | Limit |
+|----------|-------|
+| Max size | 10 MB (PNG recommended max 1 MB to avoid pixelation) |
+| Max count | 2-10 in multi-image posts |
+| Formats | JPEG, PNG, GIF, BMP, TIFF |
+
+### Video Limits (API)
+
+| Property | API Limit | Native Limit |
+|----------|-----------|--------------|
+| Duration | 45 minutes max | 240 min (4 hours) |
+| Max size | 2 GB | 4 GB |
+| Formats | MP4, MOV | - |
+
+**Reels via API:**
+- Duration: 90 seconds max
+- Pages only (not personal profiles)
+
+### Important API Restrictions
+
+- **Reels can only be posted to Pages** (not personal profiles)
+- **Rate limit:** 30 Reels per day per Page
+- **Rate formula:** 200 x users/hour
+
+### Common Error Messages
+
+| Error Code | Description |
+|------------|-------------|
+| `Error 1363026` | Video exceeds 40 min duration |
+| `Error 1363023` | File size exceeds 2 GB |
+| `Error 1363128` | Reels duration outside 3-90 second range |
 
 ---
 

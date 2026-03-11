@@ -309,6 +309,37 @@ console.log(response.data);
 | Alt text | 2,000 characters per image |
 | Images | Up to 4 per post |
 
+## API Limits
+
+**Character Limit:** 300 characters (links don't count toward limit)
+
+**Image Limits:**
+- **Max size: 1 MB** (strict limit - compress to 80-85% JPEG quality)
+- Max count: 4
+- Max dimensions: 2000x2000 pixels
+- Formats: JPEG, PNG, WebP
+
+**Video Limits:**
+- Max duration: 3 minutes
+- Max size: 100 MB (videos under 60s: 50 MB max)
+- Formats: MP4 only
+- **Daily limit: 25 videos OR 10 GB per day**
+- Email verification required before video uploads
+
+**Size Tiers:**
+
+| Duration | Max Size |
+|----------|----------|
+| Under 60s | 50 MB |
+| 60s - 3min | 100 MB |
+
+**Common Error Messages:**
+- `429 Too Many Requests` - Rate limit exceeded
+- Video job state `JOB_STATE_FAILED` - Processing failed
+
+**Rate Limits:**
+- 3000 requests per 5 minutes
+- 25 videos per day
 
 ---
 

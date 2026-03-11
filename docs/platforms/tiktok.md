@@ -334,13 +334,49 @@ console.log(response.data);
 - **Viewer setting restrictions**: Some viewer settings may limit the interaction options available. For example, `SELF_ONLY` posts cannot receive comments from others.
 - **Processing time**: TikTok videos may take some time to process after upload. The post may not appear immediately on the profile.
 
-## Character Limits
+## API Limits
 
-| Element | Limit |
-|---------|-------|
-| Video caption | 2,200 characters |
-| Hashtags | Included in caption character count |
+These limits apply specifically to the TikTok Content Posting API and may differ from native TikTok app limits.
 
+### Character Limit
+
+| Element | API Limit | Native App Limit |
+|---------|-----------|------------------|
+| Video caption | 2,200 characters | 4,000 characters |
+| Hashtags | Included in caption character count | Included in caption character count |
+
+### Video Limits
+
+| Specification | API Limit | Native App Limit |
+|---------------|-----------|------------------|
+| Maximum duration | **10 minutes** | 60 minutes |
+| Minimum duration | 3 seconds | 3 seconds |
+| Maximum file size | 4 GB | 4 GB |
+| Supported formats | MP4, MOV, WebM | MP4, MOV, WebM |
+| Minimum frame rate | 23 FPS | 23 FPS |
+
+### Rate Limits
+
+| Limit Type | Value |
+|------------|-------|
+| Posts per day | 15-20 posts |
+| Videos per minute | Max 2 videos |
+
+### Important API Restrictions
+
+> **Critical:** Unaudited apps can only post **PRIVATE** videos. Your app must pass TikTok's review process to post public videos. Until then, all posts will be restricted to `SELF_ONLY` visibility regardless of your `viewerSetting` value.
+
+- **Video-only platform**: Images are NOT supported via the API. TikTok only accepts video content.
+- **App audit required for public posting**: Without TikTok's app approval, you cannot post publicly visible content.
+- **Rate limiting**: Exceeding daily or per-minute limits will result in rejected posts.
+
+### Common Error Messages
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `spam_risk_too_many_posts` | Daily post limit reached | Wait 24 hours before posting again |
+| `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and 10 minutes |
+| `unaudited_client_can_only_post_to_private_accounts` | App not approved for public posting | Submit your app for TikTok review or use `SELF_ONLY` viewer setting |
 
 ---
 

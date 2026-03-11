@@ -356,6 +356,34 @@ Publora will automatically split this into a numbered thread (e.g., `[1/3]`, `[2
 - **Up to 4 images**: You can attach a maximum of 4 images to a single tweet. Attempting to attach more will result in an error.
 - **Video and images are mutually exclusive**: A single tweet can contain either images or a video, but not both.
 
+## API Limits
+
+### Character Limit
+
+- **Standard accounts:** 280 characters
+- **Premium accounts:** 25,000 characters
+- **Threading:** Supported - content over 280 characters will be split into a thread
+
+### Image Limits
+
+| Property | Limit |
+|----------|-------|
+| Max size | 5 MB |
+| Max count | 4 per tweet |
+| Formats | JPEG, PNG, GIF, WebP |
+
+### Video Limits (API)
+
+| Property | Limit |
+|----------|-------|
+| **Max duration** | **2 minutes (120 seconds)** |
+| Max size | 512 MB |
+| Formats | MP4, MOV |
+
+> **Important:** The X API has a **2-minute video limit** even though the native X app allows videos up to 2:20 (140 seconds). If you attempt to upload a longer video via the API, you will receive the error: *"This user is not allowed to post a video longer than 2 minutes"*
+
+**Premium users via native app:** Up to 4 hours (not available via API)
+
 ## Character Limits
 
 | Account Type | Limit |

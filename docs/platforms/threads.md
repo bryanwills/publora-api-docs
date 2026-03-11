@@ -462,17 +462,39 @@ Publora will automatically split this into multiple thread posts, each staying w
 | Carousel items | 2-20 images or videos |
 | Thread parts | No fixed limit on number of parts |
 
-## Rate Limits
+## API Limits
 
-The underlying Threads API has the following publishing limits:
+### Text Limits
+
+| Element | Limit |
+|---------|-------|
+| Post body | 500 characters |
+| Post body (with text attachment) | 10,000 characters |
+| Links per post | 5 |
+| Hashtags | 1 per post |
+
+### Media Limits
+
+| Media Type | Max Size | Max Count | Supported Formats |
+|------------|----------|-----------|-------------------|
+| Images | 8 MB | 20 per carousel | JPEG, PNG |
+| Videos | 500 MB | 20 per carousel | MP4, MOV |
+
+| Video Constraint | Limit |
+|------------------|-------|
+| Duration | 5 minutes |
+
+### Rate Limits
 
 | Limit Type | Value |
 |------------|-------|
 | Posts per 24 hours | 250 |
-| Posts per hour | ~25 (varies) |
+| Replies per 24 hours | 1,000 |
 
-Publora handles rate limiting automatically and will return appropriate errors if limits are exceeded.
+### Additional Notes
 
+- Threading is supported for long-form content
+- Publora handles rate limiting automatically and will return appropriate errors if limits are exceeded
 
 ---
 

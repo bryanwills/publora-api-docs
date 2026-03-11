@@ -357,14 +357,29 @@ console.log(response.data);
 - **Daily upload quota**: YouTube enforces daily upload quotas. If you hit the quota, Publora will return the error from the YouTube API.
 - **Privacy changes**: You can upload as `private` or `unlisted` first, then manually change the privacy to `public` later through YouTube Studio.
 
-## Character Limits
+## API Limits
+
+### Text Limits
 
 | Element | Limit |
 |---------|-------|
 | Video title | 100 characters |
 | Video description | 5,000 characters |
 | Auto-generated title | First 70 characters of content |
+| Visible description | First 150 characters (shown before "Show more") |
 
+### Media Limits
+
+| Media Type | Max Size | Max Duration | Supported Formats |
+|------------|----------|--------------|-------------------|
+| Videos | 256 GB | 12 hours | MP4, MOV, AVI, WebM |
+| Images | Not supported | - | - |
+
+### Additional Notes
+
+- YouTube is a video-only platform; images cannot be posted as standalone content
+- The first 150 characters of the description are visible without clicking "Show more"
+- Video processing time varies based on length and resolution
 
 ---
 

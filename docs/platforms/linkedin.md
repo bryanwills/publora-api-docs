@@ -44,6 +44,44 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Comments | Yes | Create, delete, reply (1,250 characters max) |
 | Mentions | Yes | @mention people and organizations |
 
+## API Limits
+
+### Character Limit
+
+- **3,000 characters** maximum per post
+- First 210 characters visible before "see more" is shown
+
+### Image Limits (API)
+
+| Property | Limit |
+|----------|-------|
+| Max size | 5 MB |
+| Max count | 10 (multi-image posts) |
+| Formats | JPEG, PNG, GIF |
+
+> **Important:** Organic carousels (swipeable multi-image posts) are NOT supported via the API. The API only supports multi-image grid layouts. Swipeable carousels are only available for sponsored content.
+
+### Video Limits (API)
+
+| Property | Limit |
+|----------|-------|
+| Duration | 30 minutes (more than native's 15 min desktop / 10 min mobile) |
+| Max size | **500 MB** (native allows 5 GB) |
+| Formats | MP4 only |
+
+### Important API Restrictions
+
+- **Cannot mix media types**: Images cannot be combined with videos or documents in the same post
+- **No organic carousels**: Swipeable multi-image posts are not available via API — only multi-image grid layout
+- **Rate limit**: 200+ API calls per hour, based on user count
+
+### Common Error Messages
+
+| Error | Cause |
+|-------|-------|
+| `MEDIA_ASSET_PROCESSING_FAILED` | File too large or unsupported format |
+| `Error 429` | Rate limit exceeded |
+
 ## Mentioning People and Organizations
 
 Publora supports @mentioning LinkedIn members and organizations in your posts. When the post is published, the mention becomes a clickable link and the mentioned person/organization receives a notification.

@@ -277,14 +277,38 @@ console.log(response.data);
 - **Content warnings**: Mastodon supports content warnings (CW), but this feature is not currently available through the Publora API.
 - **Federation delay**: Because Mastodon is federated, posts may take a few seconds to propagate to other instances in the fediverse.
 
-## Character Limits
+## API Limits
+
+### Text Limits
 
 | Element | Limit |
 |---------|-------|
-| Post body | 500 characters |
-| Images | Up to 4 per post |
+| Post body | 500 characters (instance-configurable, some allow 5,000+) |
 | Media description (alt text) | 1,500 characters |
 
+### Media Limits
+
+| Media Type | Max Size | Max Count | Supported Formats |
+|------------|----------|-----------|-------------------|
+| Images | 16 MB | 4 per post | JPEG, PNG, GIF, WebP |
+| Videos | ~99 MB | 1 per post | MP4, WebM |
+
+| Video Constraint | Limit |
+|------------------|-------|
+| Duration | No platform-enforced limit |
+
+### Rate Limits
+
+| Limit Type | Value |
+|------------|-------|
+| Media uploads | 30 per 30 minutes |
+| API requests | 300 per 5 minutes |
+
+### Additional Notes
+
+- Character limits vary by Mastodon instance; mastodon.social uses 500 characters, but some instances allow 5,000+
+- Publora currently connects to mastodon.social only
+- Unlike X/Twitter and Threads, Mastodon does not support auto-threading
 
 ---
 

@@ -323,14 +323,58 @@ console.log(response.data);
 - **Silent messages**: Telegram supports silent message delivery, but this feature is not currently available through the Publora API.
 - **Message editing**: Once posted, Telegram messages can be edited, but this capability is not currently exposed through the Publora API.
 
-## Character Limits
+## API Limits
+
+Understanding the difference between Bot API limits and regular user limits is critical for successful Telegram integration.
+
+### Character Limits
 
 | Element | Limit |
 |---------|-------|
-| Text message (MTProto) | 4,096 characters |
-| Media caption (Bot API) | 1,024 characters |
+| Text message | 4,096 characters |
+| **Bot caption** | **1,024 characters** (bots cannot get Premium 4,096 limit) |
 | Bot username | 32 characters |
 | Channel name | 128 characters |
+
+### Image Limits (Bot API)
+
+| Property | Limit |
+|----------|-------|
+| Max size | 10 MB |
+| Max count | 10 images per media group |
+| Formats | JPEG, PNG, GIF, WebP, BMP |
+
+### Video Limits (Bot API)
+
+| Property | Limit |
+|----------|-------|
+| Duration | No limit (only size matters) |
+| **Max size** | **50 MB** (NOT 4 GB - that's for regular users!) |
+| Local Bot API Server | 2 GB max |
+| Formats | MP4, MOV, AVI, MKV, WebM |
+
+### CRITICAL: Bot API vs User Limits
+
+Bots have significantly lower limits than regular Telegram users. This is a common source of errors:
+
+| Limit | Bot API | Regular Users |
+|-------|---------|---------------|
+| File size | 50 MB | 4 GB |
+| Caption | 1,024 chars | 4,096 chars |
+
+### Common Error Messages
+
+| Error | Cause |
+|-------|-------|
+| `MEDIA_CAPTION_TOO_LONG` | Caption exceeds 1,024 characters (bots) |
+| `Bad Request: file is too big` | File exceeds 50 MB |
+
+### Rate Limits
+
+| Scope | Limit |
+|-------|-------|
+| Global | 30 messages/second |
+| Per group | 20 messages/minute |
 
 
 ---

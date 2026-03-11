@@ -29,20 +29,64 @@ Where `{accountId}` is your Instagram Business or Creator account ID assigned du
 
 ## Requirements
 
-- An **Instagram Business** or **Creator** account (personal accounts are not supported by the Instagram API)
+- An **Instagram Business** account (personal accounts are not supported by the Instagram API)
 - The Instagram account must be connected to a Facebook Page
 - Connected via OAuth through the Publora dashboard
 - API key from Publora
+
+> **Important:** Creator accounts are NOT supported via the Instagram Graph API. You must use a Business account.
+
+## API Limits
+
+These are critical limits specific to the Instagram Graph API (different from native app limits):
+
+### Character Limit
+
+- **Caption:** 2,200 characters (first 125 characters visible before "more")
+
+### Image Limits (API)
+
+| Limit | Value |
+|-------|-------|
+| Max file size | 8 MB |
+| Max count (carousel) | 10 images (native app allows 20) |
+| **Formats** | **JPEG only** (PNG/GIF will fail via API) |
+
+> **Warning:** You cannot mix images and videos in the same carousel via the API.
+
+### Video Limits (API)
+
+| Limit | Reels | Carousel Videos |
+|-------|-------|-----------------|
+| Max duration | **90 seconds** (native allows 15-20 min) | 60 seconds |
+| Min duration | 3 seconds | 3 seconds |
+| Max file size | 300 MB | 300 MB |
+| Formats | MP4, MOV | MP4, MOV |
+
+### Rate Limits
+
+- **50 posts per 24 hours** (some accounts report a limit of 25)
+
+### Important API Restrictions
+
+The following features are **not available** via the Instagram Graph API:
+
+- Creator accounts (Business accounts only)
+- Shopping tags
+- Branded content tags
+- Filters and effects
+- Music/audio additions
+- Mixing images and videos in carousels
 
 ## Supported Content
 
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text only | No | Instagram requires at least one image or video |
-| Images | Yes | Up to 10 per carousel |
-| Videos (Reels) | Yes | MP4 format, default video type |
-| Videos (Stories) | Yes | MP4 format, requires `videoType: "STORIES"` setting |
-| Carousels | Yes | 2-10 images or videos |
+| Images | Yes | JPEG only via API, max 8 MB, 10 per carousel |
+| Videos (Reels) | Yes | MP4/MOV, max 90 seconds, max 300 MB |
+| Videos (Stories) | Yes | MP4/MOV, requires `videoType: "STORIES"` setting |
+| Carousels | Yes | 2-10 items (API limit; native app allows 20) |
 
 ## Platform-Specific Settings
 
