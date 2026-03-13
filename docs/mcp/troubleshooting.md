@@ -413,7 +413,7 @@ curl -X POST https://mcp.publora.com \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
 ```
 
-If this works but mcporter doesn't, the issue is with mcporter's client implementation.
+**Note:** The `Accept` header is technically required by the MCP Streamable HTTP spec, but our server auto-fixes missing headers for compatibility with clients that don't send them.
 
 ---
 
