@@ -1,6 +1,6 @@
 # OpenClaw AI Agent Integration
 
-Connect [OpenClaw](https://docs.openclaw.ai) (open-source autonomous AI agent) to Publora for multi-platform social media posting through natural conversation.
+Connect [OpenClaw](https://docs.openclaw.ai) (open-source autonomous AI agent) to Publora for multi-platform social media posting.
 
 ## Prerequisites
 
@@ -8,37 +8,24 @@ Connect [OpenClaw](https://docs.openclaw.ai) (open-source autonomous AI agent) t
 - Publora account with API key (starts with `sk_`)
 - At least one social media account connected in Publora
 
-## Setup Methods
+## Recommended: REST API
 
-### Method 1: mcporter CLI (Recommended)
+For autonomous agents like OpenClaw, we recommend using the **REST API directly** instead of MCP:
 
-mcporter is a CLI tool for connecting MCP servers to OpenClaw.
+- ✅ Simple HTTP requests — no session management
+- ✅ Standard headers — no special Accept header requirements
+- ✅ Easier to debug — standard curl/httpie works
+- ✅ More reliable — fewer moving parts
 
-**List available tools:**
+See [REST API examples](#rest-api-alternative) below for complete code.
 
-```bash
-mcporter list --http-url https://mcp.publora.com --name publora
-```
+## Alternative: MCP Protocol
 
-**Persist configuration:**
+MCP is better suited for interactive AI assistants (Claude Code, Cursor) where a human talks to the AI. If you still want to use MCP with OpenClaw:
 
-```bash
-mcporter list --http-url https://mcp.publora.com --name publora --persist config/mcporter.json
-```
+### Configuration File (Recommended)
 
-**With authentication:**
-
-```bash
-mcporter list \
-  --http-url https://mcp.publora.com \
-  --name publora \
-  --header "Authorization: Bearer sk_YOUR_API_KEY" \
-  --persist config/mcporter.json
-```
-
-### Method 2: Configuration File
-
-Create or edit `config/mcporter.json`:
+Create `config/mcporter.json`:
 
 ```json
 {
@@ -53,26 +40,13 @@ Create or edit `config/mcporter.json`:
 }
 ```
 
-### Method 3: Environment Variable
+### mcporter CLI
 
 ```bash
-export PUBLORA_API_KEY="sk_YOUR_API_KEY"
+mcporter list --config config/mcporter.json
 ```
 
-Then in config:
-
-```json
-{
-  "servers": {
-    "publora": {
-      "url": "https://mcp.publora.com",
-      "headers": {
-        "Authorization": "Bearer ${PUBLORA_API_KEY}"
-      }
-    }
-  }
-}
-```
+> **Note:** Using CLI flags like `--header` may not work with all mcporter versions. Prefer the config file method.
 
 ## Using with OpenClaw
 
