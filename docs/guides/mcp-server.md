@@ -330,7 +330,7 @@ MCP uses sessions for stateful connections. If you see "Invalid or missing sessi
 | **Interface** | Natural language via AI | HTTP requests |
 | **Best for** | Interactive exploration, quick tasks | Programmatic integration, automation |
 | **Setup** | One-time config | Per-request auth |
-| **Tools** | 16 MCP tools | Full API access |
+| **Tools** | 18 MCP tools | Full API access |
 | **Rate limits** | Same as REST API | Same |
 
 Use MCP for conversational workflows. Use REST API for production integrations.

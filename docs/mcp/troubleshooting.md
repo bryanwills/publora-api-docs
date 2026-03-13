@@ -369,6 +369,54 @@ X-RateLimit-Reset: 1709312400
 
 ---
 
+## mcporter / OpenClaw Issues
+
+### "Unknown MCP server" Error
+
+**Cause:** mcporter CLI argument parsing issue or missing Accept headers.
+
+**Solution 1: Use the configuration file instead of CLI flags**
+
+Create `config/mcporter.json`:
+```json
+{
+  "servers": {
+    "publora": {
+      "url": "https://mcp.publora.com",
+      "headers": {
+        "Authorization": "Bearer sk_YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Then run:
+```bash
+mcporter list --config config/mcporter.json
+```
+
+**Solution 2: Check mcporter version**
+
+Update to the latest version:
+```bash
+pip install --upgrade mcporter
+```
+
+**Solution 3: Test connection manually**
+
+```bash
+curl -X POST https://mcp.publora.com \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer sk_YOUR_API_KEY" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}'
+```
+
+If this works but mcporter doesn't, the issue is with mcporter's client implementation.
+
+---
+
 ## Debugging Tips
 
 ### Enable Verbose Logging
