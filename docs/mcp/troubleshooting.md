@@ -33,7 +33,7 @@ Common issues and solutions for Publora MCP Server.
    ```
 
 4. **Regenerate your key:**
-   - Go to [publora.com](https://publora.com) → Settings → API
+   - Go to [publora.com](https://publora.com) → **API** in the sidebar
    - Click "Generate New Key"
    - Update your configuration
 
@@ -161,7 +161,7 @@ nslookup mcp.publora.com
    ```
 
 3. **Regenerate key:**
-   - [publora.com](https://publora.com) → Settings → API
+   - [publora.com](https://publora.com) → **API** in the sidebar
    - Generate new key
    - Update all configurations
 

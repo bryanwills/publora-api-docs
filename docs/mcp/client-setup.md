@@ -5,7 +5,7 @@ Detailed setup instructions for connecting Publora MCP to different AI clients.
 ## Prerequisites
 
 1. **Publora account** — Sign up at [publora.com](https://publora.com)
-2. **API key** — Get from Settings → API (starts with `sk_`)
+2. **API key** — Get from **API** in sidebar (starts with `sk_`)
 3. **Connected social account** — At least one platform connected
 
 ---
@@ -535,7 +535,7 @@ Some clients support environment variable interpolation:
 
 1. **Include "Bearer" prefix** — `Authorization: Bearer sk_...`
 2. **Check key format** — Should start with `sk_`
-3. **Regenerate key** — At publora.com → Settings → API
+3. **Regenerate key** — At publora.com → **API** in sidebar
 
 ### Connection refused
 

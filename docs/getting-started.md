@@ -19,7 +19,7 @@ See full details at [publora.com/pricing](https://publora.com/pricing)
 ## Step 1: Sign Up and Get an API Key
 
 1. Create an account at [publora.com](https://publora.com) (free tier available)
-2. Go to **Settings > API Keys**
+2. Go to **API** in the sidebar
 3. Click **Generate API Key**
 4. Copy the key immediately — it's shown only once
 
@@ -29,12 +29,14 @@ Your key looks like: `sk_kzq5mjw.a1b2c3d4e5f6...`
 
 Connect your social media accounts via the Publora dashboard:
 
-1. Go to **Connections** in the dashboard
-2. Click **Add Connection** and select a platform
+1. Go to **Channels** in the sidebar
+2. Click **Add Channel** and select a platform
 3. Complete the OAuth authorization in your browser
 4. Repeat for each platform you want to post to
 
 **Note:** Social account connections use OAuth and must be done in the dashboard — not via API. The API is for scheduling posts to already-connected accounts.
+
+> **Tip:** Click **MCP** in the sidebar for AI assistant integration instructions.
 
 ## Step 3: List Your Connections
 

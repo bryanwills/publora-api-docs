@@ -27,8 +27,8 @@ This skill provides complete documentation for the Publora social media scheduli
 **Important:** You cannot programmatically create accounts or obtain API keys. The user must:
 
 1. **Create account** at [publora.com](https://publora.com) (free tier available)
-2. **Connect social accounts** via OAuth in the Publora dashboard (Connections → Add Connection)
-3. **Generate API key** at Settings → API Keys, then provide it to you
+2. **Connect social accounts** via OAuth in the dashboard (**Channels** → Add Channel)
+3. **Generate API key** at **API** in sidebar, then provide it to you
 
 ## Pricing
 

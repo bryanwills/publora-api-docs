@@ -19,7 +19,7 @@ pip install requests
 ### Environment Setup
 
 ```bash
-# Set your API key (get it from publora.com → Settings → API Keys)
+# Set your API key (get it from publora.com → API in sidebar)
 export PUBLORA_API_KEY="sk_your_api_key_here"
 ```
 
@@ -1896,7 +1896,7 @@ const BASE_URL = 'https://api.publora.com/api/v1';
 
 if (!API_KEY || !API_KEY.startsWith('sk_')) {
   console.error('Error: Set PUBLORA_API_KEY environment variable');
-  console.error('Get your key at: https://publora.com → Settings → API Keys');
+  console.error('Get your key at: https://publora.com → API');
   process.exit(1);
 }
 

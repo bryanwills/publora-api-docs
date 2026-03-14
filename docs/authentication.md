@@ -16,8 +16,8 @@ Sign up at [publora.com](https://publora.com) — free accounts are available.
 
 In the Publora dashboard, connect the social platforms you want to post to:
 
-1. Go to **Connections** in the dashboard
-2. Click **Add Connection**
+1. Go to **Channels** in the sidebar
+2. Click **Add Channel**
 3. Select a platform (LinkedIn, X/Twitter, Instagram, etc.)
 4. Complete the OAuth authorization flow in your browser
 5. Repeat for each platform you want to use
@@ -26,9 +26,11 @@ In the Publora dashboard, connect the social platforms you want to post to:
 
 ### 3. Generate Your API Key
 
-1. Go to **Settings** → **API Keys** in the dashboard
+1. Go to **API** in the sidebar
 2. Click **Generate API Key**
 3. **Copy immediately** — the full key is shown only once
+
+> **Tip:** Click **MCP** in the sidebar for MCP-specific setup instructions.
 
 ## Pricing Plans
 
@@ -58,7 +60,7 @@ In the Publora dashboard, connect the social platforms you want to post to:
 Once you have an account with connected social platforms:
 
 1. Sign in at [publora.com](https://publora.com)
-2. Go to **Settings** → **API Keys**
+2. Go to **API** in the sidebar
 3. Click **Generate API Key**
 4. **Copy immediately** — the full key is shown only once
 
@@ -213,7 +215,7 @@ async function verifyAuthentication() {
   // Validate format first
   if (!apiKey?.startsWith('sk_')) {
     console.error('Error: API key must start with sk_');
-    console.error('Get your key at: https://publora.com → Settings → API Keys');
+    console.error('Get your key at: https://publora.com → API');
     return false;
   }
 
@@ -255,7 +257,7 @@ def verify_authentication():
     # Validate format first
     if not api_key or not api_key.startswith('sk_'):
         print('Error: API key must start with sk_')
-        print('Get your key at: https://publora.com → Settings → API Keys')
+        print('Get your key at: https://publora.com → API')
         return False
 
     try:
@@ -324,7 +326,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 | Status | Error | Cause | Solution |
 |--------|-------|-------|----------|
-| 401 | `"Invalid API key"` | Key is wrong, missing, or revoked | Regenerate at Settings → API Keys |
+| 401 | `"Invalid API key"` | Key is wrong, missing, or revoked | Regenerate at API in sidebar |
 | 403 | `"Subscription required"` | No active subscription | Subscribe at publora.com/pricing |
 | 403 | `"Workspace access not enabled"` | Used `x-publora-user-id` without workspace | Enable workspace or remove header |
 
@@ -348,7 +350,7 @@ async function publoraRequest(endpoint, options = {}) {
   });
 
   if (response.status === 401) {
-    throw new Error('Invalid API key. Regenerate at publora.com → Settings → API Keys');
+    throw new Error('Invalid API key. Regenerate at publora.com → API');
   }
 
   if (response.status === 403) {
@@ -391,7 +393,7 @@ def publora_request(endpoint, method='GET', **kwargs):
     )
 
     if response.status_code == 401:
-        raise PubloraAuthError('Invalid API key. Regenerate at publora.com → Settings → API Keys')
+        raise PubloraAuthError('Invalid API key. Regenerate at publora.com → API')
 
     if response.status_code == 403:
         data = response.json()
@@ -494,7 +496,7 @@ const apiKey = 'sk_kzq5mjw.a1b2c3d4e5f6...'; // Never do this!
 
 If your key is compromised:
 
-1. Go to publora.com → Settings → API Keys
+1. Go to publora.com → **API** in the sidebar
 2. Click **Regenerate Key**
 3. Update your environment variables
 4. Old key is immediately invalidated
@@ -509,7 +511,7 @@ If your key is compromised:
 | MCP Header | `Authorization: Bearer sk_...` |
 | Key Format | `sk_` + timestamp + random hex |
 | Key Expiration | Never (until regenerated) |
-| Get Key | publora.com → Settings → API Keys |
+| Get Key | publora.com → API |
 
 ---
 
