@@ -295,14 +295,14 @@ x-publora-key: sk_your_api_key
 ```json
 {
   "connections": [
-    { "id": "twitter-123456", "platform": "twitter", "username": "myaccount", "status": "active" },
-    { "id": "linkedin-ABC123", "platform": "linkedin", "username": "My Company", "status": "active" },
-    { "id": "threads-789012", "platform": "threads", "username": "mythreads", "status": "active" }
+    { "platformId": "twitter-123456789", "username": "myaccount", "displayName": "My Account", "tokenStatus": "unknown" },
+    { "platformId": "linkedin-ABC123", "username": "My Company", "displayName": "My Company", "tokenStatus": "valid" },
+    { "platformId": "threads-789012", "username": "mythreads", "displayName": "My Threads", "tokenStatus": "valid" }
   ]
 }
 ```
 
-Use the `id` field from connections as the platform identifier when creating posts.
+Use the `platformId` field from connections as the platform identifier when creating posts.
 
 ## Examples
 

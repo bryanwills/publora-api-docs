@@ -367,20 +367,34 @@ asyncio.run(list_connections())
 {
   "connections": [
     {
-      "id": "twitter-123456",
-      "platform": "twitter",
+      "platformId": "twitter-123456789",
       "username": "@yourcompany",
-      "displayName": "Your Company"
+      "displayName": "Your Company",
+      "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
+      "tokenStatus": "unknown"
     },
     {
-      "id": "linkedin-abc123",
-      "platform": "linkedin",
+      "platformId": "linkedin-Tz9W5i6ZYG",
       "username": "Your Company Page",
-      "displayName": "Your Company"
+      "displayName": "Your Company",
+      "profileImageUrl": "https://media.licdn.com/...",
+      "tokenStatus": "valid",
+      "tokenExpiresIn": "82d 4h"
     }
   ]
 }
 ```
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `platformId` | string | Unique ID for creating posts (e.g., `twitter-123456789`) |
+| `username` | string | Platform username or handle |
+| `displayName` | string | Display name on the platform |
+| `profileImageUrl` | string | Profile image URL |
+| `tokenStatus` | string | Token health: `valid`, `expiring_soon`, `expired`, `unknown` |
+| `tokenExpiresIn` | string/null | Human-readable time until expiration (e.g., "7d 3h") |
 
 ---
 
