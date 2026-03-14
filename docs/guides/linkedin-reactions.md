@@ -58,9 +58,12 @@ console.log(data);
 //   reaction: {
 //     id: "urn:li:reaction:(urn:li:person:xxx,urn:li:ugcPost:xxx)",
 //     reactionType: "INTEREST"
-//   }
+//   },
+//   urnTranslated: { from: "urn:li:activity:xxx", to: "urn:li:ugcPost:xxx" }  // Only present if URN was translated
 // }
 ```
+
+> **Note:** The `urnTranslated` field is only present when the provided `postedId` was automatically translated to a different URN format (e.g., from `urn:li:activity:xxx` to `urn:li:ugcPost:xxx`). This helps debug URN format issues.
 
 ### Python Example - Add "Like" Reaction
 

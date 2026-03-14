@@ -38,6 +38,7 @@ POST https://api.publora.com/api/v1/linkedin-profile-summary
     },
     "posts": {
       "totalImpressions": 25000,
+      "totalMembersReached": 12500,
       "totalReactions": 500,
       "totalComments": 75,
       "totalReshares": 30
@@ -53,6 +54,7 @@ POST https://api.publora.com/api/v1/linkedin-profile-summary
 | `profile.followers.total` | integer | Total follower count |
 | `profile.followers.periodGrowth` | integer | Follower growth during date range (only present when `dateRange` is provided) |
 | `profile.posts.totalImpressions` | integer | Total post impressions |
+| `profile.posts.totalMembersReached` | integer | Total unique members who saw your posts |
 | `profile.posts.totalReactions` | integer | Total reactions across all posts |
 | `profile.posts.totalComments` | integer | Total comments across all posts |
 | `profile.posts.totalReshares` | integer | Total reshares across all posts |

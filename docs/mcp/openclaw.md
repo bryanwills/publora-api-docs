@@ -149,16 +149,16 @@ For direct API access without MCP:
 ### Create Post (Node.js/TypeScript)
 
 ```javascript
-const response = await fetch('https://api.publora.com/v1/posts', {
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer sk_YOUR_API_KEY',
+    'x-publora-key': 'sk_YOUR_API_KEY',
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
     content: 'Your post content here',
     platforms: ['linkedin-connection-id'],
-    status: 'published',
+    scheduledTime: new Date(Date.now() + 60000).toISOString(), // 1 minute from now
   }),
 });
 
@@ -170,14 +170,15 @@ console.log('Post created:', data);
 
 ```python
 import requests
+from datetime import datetime, timedelta
 
 response = requests.post(
-    'https://api.publora.com/v1/posts',
-    headers={'Authorization': 'Bearer sk_YOUR_API_KEY'},
+    'https://api.publora.com/api/v1/create-post',
+    headers={'x-publora-key': 'sk_YOUR_API_KEY'},
     json={
         'content': 'Post content',
         'platforms': ['linkedin-connection-id'],
-        'status': 'published',
+        'scheduledTime': (datetime.utcnow() + timedelta(minutes=1)).isoformat() + 'Z',
     }
 )
 
@@ -191,16 +192,15 @@ from datetime import datetime, timedelta
 import requests
 
 # Schedule for next Monday at 2pm UTC
-next_monday = datetime.now() + timedelta(days=(7 - datetime.now().weekday()) % 7)
+next_monday = datetime.utcnow() + timedelta(days=(7 - datetime.utcnow().weekday()) % 7)
 scheduled_time = next_monday.replace(hour=14, minute=0, second=0).isoformat() + 'Z'
 
 response = requests.post(
-    'https://api.publora.com/v1/posts',
-    headers={'Authorization': 'Bearer sk_YOUR_API_KEY'},
+    'https://api.publora.com/api/v1/create-post',
+    headers={'x-publora-key': 'sk_YOUR_API_KEY'},
     json={
         'content': 'Scheduled post content',
         'platforms': ['linkedin-connection-id'],
-        'status': 'scheduled',
         'scheduledTime': scheduled_time,
     }
 )
@@ -212,12 +212,27 @@ print('Post scheduled:', response.json())
 
 ```python
 import requests
+from datetime import datetime, timedelta
 
-# Step 1: Request presigned upload URL
-upload_url_response = requests.post(
-    'https://api.publora.com/v1/uploads',
-    headers={'Authorization': 'Bearer sk_YOUR_API_KEY'},
+# Step 1: Create a post first to get postGroupId
+post_response = requests.post(
+    'https://api.publora.com/api/v1/create-post',
+    headers={'x-publora-key': 'sk_YOUR_API_KEY'},
     json={
+        'content': 'Check out this image!',
+        'platforms': ['linkedin-connection-id'],
+        'scheduledTime': (datetime.utcnow() + timedelta(hours=1)).isoformat() + 'Z',
+    }
+)
+post_data = post_response.json()
+post_group_id = post_data['postGroupId']
+
+# Step 2: Request presigned upload URL
+upload_url_response = requests.post(
+    'https://api.publora.com/api/v1/get-upload-url',
+    headers={'x-publora-key': 'sk_YOUR_API_KEY'},
+    json={
+        'postGroupId': post_group_id,
         'fileName': 'image.jpg',
         'contentType': 'image/jpeg',
         'type': 'image'
@@ -225,7 +240,7 @@ upload_url_response = requests.post(
 )
 upload_data = upload_url_response.json()
 
-# Step 2: Upload file to presigned URL
+# Step 3: Upload file to presigned URL
 with open('image.jpg', 'rb') as f:
     requests.put(
         upload_data['uploadUrl'],
@@ -233,17 +248,7 @@ with open('image.jpg', 'rb') as f:
         headers={'Content-Type': 'image/jpeg'}
     )
 
-# Step 3: Use file URL in post
-response = requests.post(
-    'https://api.publora.com/v1/posts',
-    headers={'Authorization': 'Bearer sk_YOUR_API_KEY'},
-    json={
-        'content': 'Check out this image!',
-        'platforms': ['linkedin-connection-id'],
-        'mediaUrls': [upload_data['fileUrl']],
-        'status': 'published',
-    }
-)
+print('Image uploaded and attached to post:', post_group_id)
 ```
 
 ## Platform Capabilities

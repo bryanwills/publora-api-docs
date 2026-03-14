@@ -22,7 +22,7 @@ Retrieve posts authored by a connected LinkedIn account.
 
 ```http
 POST /api/v1/linkedin-posts
-Authorization: Bearer sk_YOUR_API_KEY
+x-publora-key: sk_YOUR_API_KEY
 Content-Type: application/json
 
 {
@@ -76,7 +76,7 @@ Content-Type: application/json
 
 ```bash
 curl -X POST "https://api.publora.com/api/v1/linkedin-posts" \
-  -H "Authorization: Bearer sk_YOUR_API_KEY" \
+  -H "x-publora-key: sk_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "platformId": "linkedin-ABC123",
@@ -92,7 +92,7 @@ import requests
 
 response = requests.post(
     "https://api.publora.com/api/v1/linkedin-posts",
-    headers={"Authorization": "Bearer sk_YOUR_API_KEY"},
+    headers={"x-publora-key": "sk_YOUR_API_KEY"},
     json={
         "platformId": "linkedin-ABC123",
         "count": 20,
@@ -117,7 +117,7 @@ Retrieve comments on a specific LinkedIn post.
 
 ```http
 POST /api/v1/linkedin-post-comments
-Authorization: Bearer sk_YOUR_API_KEY
+x-publora-key: sk_YOUR_API_KEY
 Content-Type: application/json
 
 {
@@ -147,9 +147,7 @@ Content-Type: application/json
       "id": "6636062862760562688",
       "commentUrn": "urn:li:comment:(urn:li:activity:123,6636062862760562688)",
       "actor": "urn:li:person:XYZ789",
-      "message": {
-        "text": "Great insights! Thanks for sharing."
-      },
+      "message": "Great insights! Thanks for sharing.",
       "created": {
         "time": 1582160678569
       },
@@ -175,7 +173,7 @@ Content-Type: application/json
 
 ```bash
 curl -X POST "https://api.publora.com/api/v1/linkedin-post-comments" \
-  -H "Authorization: Bearer sk_YOUR_API_KEY" \
+  -H "x-publora-key: sk_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "postedId": "urn:li:share:7123456789",
@@ -191,7 +189,7 @@ import requests
 
 response = requests.post(
     "https://api.publora.com/api/v1/linkedin-post-comments",
-    headers={"Authorization": "Bearer sk_YOUR_API_KEY"},
+    headers={"x-publora-key": "sk_YOUR_API_KEY"},
     json={
         "postedId": "urn:li:share:7123456789",
         "platformId": "linkedin-ABC123",
@@ -201,7 +199,7 @@ response = requests.post(
 
 data = response.json()
 for comment in data["comments"]:
-    print(f"Comment by {comment['actor']}: {comment['message']['text']}")
+    print(f"Comment by {comment['actor']}: {comment['message']}")
     print(f"Likes: {comment['likesSummary']['totalLikes']}")
     print("---")
 ```
@@ -216,7 +214,7 @@ Retrieve reactions on a specific LinkedIn post.
 
 ```http
 POST /api/v1/linkedin-post-reactions
-Authorization: Bearer sk_YOUR_API_KEY
+x-publora-key: sk_YOUR_API_KEY
 Content-Type: application/json
 
 {
@@ -283,7 +281,7 @@ Content-Type: application/json
 
 ```bash
 curl -X POST "https://api.publora.com/api/v1/linkedin-post-reactions" \
-  -H "Authorization: Bearer sk_YOUR_API_KEY" \
+  -H "x-publora-key: sk_YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "postedId": "urn:li:share:7123456789",
@@ -300,7 +298,7 @@ from collections import Counter
 
 response = requests.post(
     "https://api.publora.com/api/v1/linkedin-post-reactions",
-    headers={"Authorization": "Bearer sk_YOUR_API_KEY"},
+    headers={"x-publora-key": "sk_YOUR_API_KEY"},
     json={
         "postedId": "urn:li:share:7123456789",
         "platformId": "linkedin-ABC123",
@@ -374,7 +372,7 @@ import requests
 
 API_KEY = "sk_YOUR_API_KEY"
 BASE_URL = "https://api.publora.com/api/v1"
-HEADERS = {"Authorization": f"Bearer {API_KEY}"}
+HEADERS = {"x-publora-key": API_KEY}
 
 def get_linkedin_platform_id():
     """Get the LinkedIn platform connection ID."""

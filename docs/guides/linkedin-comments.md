@@ -48,7 +48,7 @@ console.log(data);
 //   comment: {
 //     id: "7434695495614312448",
 //     commentUrn: "urn:li:comment:(urn:li:ugcPost:xxx,7434695495614312448)",
-//     message: { text: "Great insights! Thanks for sharing." }
+//     message: "Great insights! Thanks for sharing."
 //   }
 // }
 ```

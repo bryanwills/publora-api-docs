@@ -1,5 +1,7 @@
 # Workspace / B2B API
 
+> **Note:** Workspace access is not enabled by default. Contact Publora support at **serge@publora.com** to enable Workspace API access for your account.
+
 This guide covers how to use the Publora Workspace API to manage multiple users under your account. This is designed for B2B integrations where you need to create and manage social media posting on behalf of your customers.
 
 ## How It Works
@@ -686,6 +688,7 @@ client = onboard_client('client@example.com', 'Acme Corp')
 
 | Problem | Cause | Solution |
 |---|---|---|
+| `403` "Workspace access is not enabled for this key" | Workspace feature not enabled for your account | Contact serge@publora.com to enable Workspace API access |
 | `401` when using workspace endpoints | Invalid workspace API key | Verify the `x-publora-key` value is your workspace-level API key |
 | `404` when posting on behalf of a user | Missing or invalid `x-publora-user-id` header | Ensure the header is present and contains a valid managed user ID |
 | User has no connections | They have not opened the connection URL yet, or the URL expired | Generate a new connection URL and send it to the user |

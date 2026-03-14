@@ -686,7 +686,7 @@ async def comment_on_post():
   "comment": {
     "id": "7434695495614312448",
     "commentUrn": "urn:li:comment:(urn:li:ugcPost:xxx,7434695495614312448)",
-    "message": { "text": "Great insights! Thanks for sharing." }
+    "message": "Great insights! Thanks for sharing."
   }
 }
 ```
@@ -851,7 +851,7 @@ async def get_post_comments():
       "id": "6636062862760562688",
       "commentUrn": "urn:li:comment:(urn:li:activity:123,6636062862760562688)",
       "actor": "urn:li:person:xxx",
-      "message": { "text": "Great insights! Thanks for sharing." },
+      "message": "Great insights! Thanks for sharing.",
       "created": { "time": 1582160678569 },
       "likesSummary": { "totalLikes": 5 },
       "commentsCount": 2
@@ -1040,26 +1040,29 @@ Remove a user from your workspace.
 
 ## Error Handling
 
-All tools return errors in a consistent format:
+When a tool encounters an error, it throws an exception that the MCP client will receive. Common error messages include:
 
-```json
-{
-  "error": {
-    "code": "INVALID_PARAMETER",
-    "message": "Platform ID not found"
-  }
-}
+| Error Message | Cause |
+|---------------|-------|
+| `"API key required..."` | Missing or invalid API key |
+| `"Platform ID not found"` | Invalid platform connection ID |
+| `"Post not found"` | Invalid post group ID |
+| `"API error: 429"` | Rate limited by the API |
+| `"API error: 502"` | Platform API temporarily unavailable |
+
+**Example error handling in Python:**
+
+```python
+try:
+    result = await session.call_tool("create_post", {
+        "content": "Hello world!",
+        "platforms": ["linkedin-abc123"],
+        "scheduledTime": "2026-03-01T14:00:00Z"
+    })
+    print(result.content[0].text)
+except Exception as e:
+    print(f"Tool error: {e}")
 ```
-
-**Common error codes:**
-
-| Code | Description |
-|------|-------------|
-| `UNAUTHORIZED` | Invalid or missing API key |
-| `INVALID_PARAMETER` | Invalid parameter value |
-| `NOT_FOUND` | Resource not found |
-| `RATE_LIMITED` | Too many requests |
-| `PLATFORM_ERROR` | Error from social platform |
 
 ---
 

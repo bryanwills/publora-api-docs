@@ -8,6 +8,10 @@ info:
 
     All plans include full API access. Starting at $5.40/month (yearly) or $9/month.
     14-day free trial, no credit card needed.
+
+    ## Workspace API
+    The Workspace API allows you to manage multiple users under a single account.
+    **To enable Workspace access, please contact Publora support at serge@publora.com.**
   version: "1.0.0"
   contact:
     email: serge@publora.com
@@ -17,6 +21,22 @@ servers:
     description: Production
 security:
   - ApiKeyAuth: []
+
+tags:
+  - name: Posts
+    description: Create, update, delete, and list posts
+  - name: Connections
+    description: Manage platform connections
+  - name: Media
+    description: Upload media files
+  - name: LinkedIn Analytics
+    description: LinkedIn-specific analytics and interactions
+  - name: Webhooks
+    description: Manage webhook endpoints for real-time notifications
+  - name: Workspace
+    description: "Manage multiple users (requires Workspace access - contact support)"
+  - name: Logs
+    description: Post logs and debugging
 
 components:
   securitySchemes:
@@ -55,6 +75,107 @@ components:
           format: date-time
           nullable: true
           example: "2026-05-15T10:30:00.000Z"
+        tokenStatus:
+          type: string
+          enum: [valid, expiring_soon, expired, unknown]
+          description: "Current status of the access token"
+          example: "valid"
+        tokenExpiresIn:
+          type: string
+          nullable: true
+          description: "Human-readable time until token expiration"
+          example: "29 days"
+        lastSuccessfulPost:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Timestamp of last successful post"
+        lastError:
+          type: string
+          nullable: true
+          description: "Last error message if any"
+
+    ManagedUser:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: "User ID"
+          example: "507f1f77bcf86cd799439011"
+        username:
+          type: string
+          description: "User email"
+          example: "user@example.com"
+        displayName:
+          type: string
+          example: "John Doe"
+        role:
+          type: string
+          enum: [managed]
+          example: "managed"
+        dailyPostsLeft:
+          type: integer
+          example: 100
+        connectionsPageUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: "URL for user to connect their social accounts"
+        connectionsPageTokenExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Webhook:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          example: "My Webhook"
+        url:
+          type: string
+          format: uri
+          example: "https://example.com/webhook"
+        events:
+          type: array
+          items:
+            type: string
+            enum: [post.scheduled, post.published, post.failed, token.expiring]
+          example: ["post.published", "post.failed"]
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PostLog:
+      type: object
+      properties:
+        _id:
+          type: string
+        postGroupId:
+          type: string
+        platform:
+          type: string
+        platformId:
+          type: string
+        event:
+          type: string
+          description: "Log event type (e.g., scheduled, processing, published, failed)"
+        message:
+          type: string
+        details:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
 
     Post:
       type: object
@@ -91,6 +212,8 @@ paths:
       summary: List connected social accounts
       description: Returns all social media accounts connected to your Publora account.
       operationId: getPlatformConnections
+      tags:
+        - Connections
       parameters:
         - name: x-publora-user-id
           in: header
@@ -137,6 +260,8 @@ paths:
         If scheduledTime is provided, the post will be published at that time.
         If omitted, the post is saved as a draft.
       operationId: createPost
+      tags:
+        - Posts
       parameters:
         - name: x-publora-user-id
           in: header
@@ -221,6 +346,8 @@ paths:
       summary: Get post details and status
       description: Retrieve the details, platform statuses, and posted IDs for a post group.
       operationId: getPost
+      tags:
+        - Posts
       parameters:
         - name: postGroupId
           in: path
@@ -266,6 +393,8 @@ paths:
         At least one of status or scheduledTime must be provided.
         Updating a post group also updates all associated platform-specific posts.
       operationId: updatePost
+      tags:
+        - Posts
       parameters:
         - name: postGroupId
           in: path
@@ -370,6 +499,8 @@ paths:
         The database deletion is atomic (uses MongoDB transaction). S3 deletion
         failures are logged but do not fail the request.
       operationId: deletePost
+      tags:
+        - Posts
       parameters:
         - name: postGroupId
           in: path
@@ -417,6 +548,8 @@ paths:
         Upload the file directly to S3 via HTTP PUT, then create a post.
         Upload URLs expire in 1 hour. Max 4 images or 1 video per post.
       operationId: getUploadUrl
+      tags:
+        - Media
       parameters:
         - name: x-publora-user-id
           in: header
@@ -509,6 +642,8 @@ paths:
         Retrieve analytics for a LinkedIn post: impressions, reach, reactions, comments, reshares.
         Results are cached for 30 minutes. Use queryTypes: "ALL" to get all 5 metrics at once.
       operationId: getLinkedInPostStatistics
+      tags:
+        - LinkedIn Analytics
       requestBody:
         required: true
         content:
@@ -614,6 +749,8 @@ paths:
       summary: Get aggregated LinkedIn account analytics
       description: Get total metrics across all published LinkedIn posts for an account.
       operationId: getLinkedInAccountStatistics
+      tags:
+        - LinkedIn Analytics
       requestBody:
         required: true
         content:
@@ -720,6 +857,8 @@ paths:
         and aggregated post engagement metrics. Optionally filter by date range to track
         follower growth over a specific period.
       operationId: getLinkedInProfileSummary
+      tags:
+        - LinkedIn Analytics
       requestBody:
         required: true
         content:
@@ -857,6 +996,8 @@ paths:
         Use period="lifetime" (default) for total follower count, or period="daily" with a dateRange for daily growth data.
         Results are cached for improved performance.
       operationId: getLinkedInFollowers
+      tags:
+        - LinkedIn Analytics
       requestBody:
         required: true
         content:
@@ -983,6 +1124,8 @@ paths:
       summary: Add a reaction to a LinkedIn post
       description: React to a LinkedIn post with LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION, or ENTERTAINMENT.
       operationId: addLinkedInReaction
+      tags:
+        - LinkedIn Analytics
       requestBody:
         required: true
         content:
@@ -1057,6 +1200,8 @@ paths:
         Remove your reaction from a LinkedIn post.
         Parameters can be provided either as query parameters OR in the request body.
       operationId: removeLinkedInReaction
+      tags:
+        - LinkedIn Analytics
       parameters:
         - name: postedId
           in: query
@@ -1141,6 +1286,8 @@ paths:
 
         **Platform filtering:** The `platform` filter uses case-insensitive prefix matching.
       operationId: listPosts
+      tags:
+        - Posts
       parameters:
         - name: x-publora-user-id
           in: header
@@ -1297,6 +1444,843 @@ paths:
                   value: { "error": "Invalid toDate format" }
         "401":
           description: Invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /test-connection/{platformId}:
+    post:
+      summary: Test platform connection health
+      description: |
+        Validate that a platform connection is working correctly.
+        Returns token status, permissions, and last error if any.
+      operationId: testConnection
+      tags:
+        - Connections
+      parameters:
+        - name: platformId
+          in: path
+          required: true
+          description: "Platform connection ID (format: platform-id)"
+          schema:
+            type: string
+          example: "linkedin-Tz9W5i6ZYG"
+      responses:
+        "200":
+          description: Connection test result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  platform:
+                    type: string
+                    example: "linkedin"
+                  platformId:
+                    type: string
+                    example: "linkedin-Tz9W5i6ZYG"
+                  username:
+                    type: string
+                    example: "John Doe"
+                  status:
+                    type: string
+                    enum: [ok, error]
+                    example: "ok"
+                  message:
+                    type: string
+                    example: "Connection is valid"
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                    example: ["w_member_social", "r_basicprofile"]
+                  tokenExpiresIn:
+                    type: string
+                    nullable: true
+                    example: "29 days"
+                  lastSuccessfulPost:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  lastError:
+                    type: string
+                    nullable: true
+        "400":
+          description: Invalid platformId format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /post-logs/{postGroupId}:
+    get:
+      summary: Get post publishing logs
+      description: |
+        Retrieve detailed logs for a post group showing the publishing process,
+        including scheduling, processing, success, and failure events.
+      operationId: getPostLogs
+      tags:
+        - Logs
+      parameters:
+        - name: postGroupId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        "200":
+          description: Post logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  logs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PostLog"
+        "404":
+          description: Post group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /webhooks:
+    get:
+      summary: List all webhooks
+      description: Retrieve all webhooks configured for your account.
+      operationId: listWebhooks
+      tags:
+        - Webhooks
+      responses:
+        "200":
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Webhook"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a webhook
+      description: |
+        Create a new webhook endpoint. Maximum 10 webhooks per user.
+        The webhook secret is only returned on creation - save it securely.
+      operationId: createWebhook
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, events]
+              properties:
+                name:
+                  type: string
+                  description: "Friendly name for the webhook"
+                  example: "Production webhook"
+                url:
+                  type: string
+                  format: uri
+                  description: "HTTPS URL to receive webhook events"
+                  example: "https://example.com/webhooks/publora"
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [post.scheduled, post.published, post.failed, token.expiring]
+                  description: "Events to subscribe to"
+                  example: ["post.published", "post.failed"]
+      responses:
+        "201":
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  webhook:
+                    type: object
+                    properties:
+                      _id:
+                        type: string
+                      name:
+                        type: string
+                      url:
+                        type: string
+                      events:
+                        type: array
+                        items:
+                          type: string
+                      secret:
+                        type: string
+                        description: "Webhook secret for signature verification (only returned on create)"
+                      isActive:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingFields:
+                  value: { "error": "Name, URL, and at least one event are required" }
+                invalidUrl:
+                  value: { "error": "URL must use HTTPS" }
+                invalidEvents:
+                  value: { "error": "Invalid events: xyz" }
+                limitReached:
+                  value: { "error": "Maximum of 10 webhooks per user" }
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /webhooks/{id}:
+    patch:
+      summary: Update a webhook
+      description: Update an existing webhook's name, URL, events, or active status.
+      operationId: updateWebhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [post.scheduled, post.published, post.failed, token.expiring]
+                isActive:
+                  type: boolean
+      responses:
+        "200":
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webhook:
+                    $ref: "#/components/schemas/Webhook"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a webhook
+      description: Delete a webhook endpoint.
+      operationId: deleteWebhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Webhook deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /webhooks/{id}/regenerate-secret:
+    post:
+      summary: Regenerate webhook secret
+      description: |
+        Generate a new secret for a webhook. The old secret will be invalidated.
+        Make sure to update your webhook handler with the new secret.
+      operationId: regenerateWebhookSecret
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Secret regenerated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  secret:
+                    type: string
+                    description: "New webhook secret"
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /linkedin-comments:
+    post:
+      summary: Add a comment to a LinkedIn post
+      description: |
+        Post a comment on a LinkedIn post. Supports replies to existing comments
+        via the parentComment parameter. Maximum comment length is 1250 characters.
+      operationId: createLinkedInComment
+      tags:
+        - LinkedIn Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [postedId, message, platformId]
+              properties:
+                postedId:
+                  type: string
+                  description: "LinkedIn post URN (urn:li:share:*, urn:li:ugcPost:*, urn:li:activity:*)"
+                  example: "urn:li:share:7123456789012345678"
+                message:
+                  type: string
+                  description: "Comment text (max 1250 characters)"
+                  example: "Great insights! Thanks for sharing."
+                platformId:
+                  type: string
+                  description: "LinkedIn connection ID"
+                  example: "linkedin-Tz9W5i6ZYG"
+                parentComment:
+                  type: string
+                  description: "Optional parent comment URN for replies"
+                  example: "urn:li:comment:(urn:li:activity:123,456)"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  comment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: "Comment URN"
+                      message:
+                        type: string
+                      actor:
+                        type: string
+                      object:
+                        type: string
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingFields:
+                  value: { "error": "postedId, message, and platformId are required" }
+                invalidUrn:
+                  value: { "error": "postedId must be a valid LinkedIn URN" }
+                emptyMessage:
+                  value: { "error": "message cannot be empty" }
+                messageTooLong:
+                  value: { "error": "message cannot exceed 1250 characters" }
+        "404":
+          description: LinkedIn connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a comment from a LinkedIn post
+      description: |
+        Remove a comment from a LinkedIn post.
+        Parameters can be provided as query parameters or in the request body.
+      operationId: deleteLinkedInComment
+      tags:
+        - LinkedIn Analytics
+      parameters:
+        - name: postedId
+          in: query
+          description: "LinkedIn post URN (can also be provided in request body)"
+          schema:
+            type: string
+          example: "urn:li:share:7123456789012345678"
+        - name: commentId
+          in: query
+          description: "Comment ID or URN (can also be provided in request body)"
+          schema:
+            type: string
+          example: "6636062862760562688"
+        - name: platformId
+          in: query
+          description: "LinkedIn connection ID (can also be provided in request body)"
+          schema:
+            type: string
+          example: "linkedin-Tz9W5i6ZYG"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                postedId:
+                  type: string
+                commentId:
+                  type: string
+                platformId:
+                  type: string
+      responses:
+        "200":
+          description: Comment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deleted:
+                    type: string
+                    description: "Comment ID that was deleted"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingFields:
+                  value: { "error": "postedId, commentId, and platformId are required" }
+                invalidUrn:
+                  value: { "error": "postedId must be a valid LinkedIn URN" }
+        "404":
+          description: LinkedIn connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ============================================================================
+  # WORKSPACE API
+  # To enable Workspace access, please contact Publora support at serge@publora.com
+  # ============================================================================
+
+  /workspace/users:
+    get:
+      summary: List managed users
+      description: |
+        Retrieve all users managed under your workspace.
+
+        **Requires Workspace access - contact serge@publora.com to enable.**
+      operationId: getManagedUsers
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: List of managed users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ManagedUser"
+        "403":
+          description: Workspace access not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Workspace access is not enabled for this key"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a managed user
+      description: |
+        Create a new managed user under your workspace.
+        The user can then connect their social accounts via a connection URL.
+
+        **Requires Workspace access - contact serge@publora.com to enable.**
+      operationId: createManagedUser
+      tags:
+        - Workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                  format: email
+                  description: "User's email address (must be unique)"
+                  example: "user@example.com"
+                displayName:
+                  type: string
+                  description: "Display name (defaults to email if not provided)"
+                  example: "John Doe"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/ManagedUser"
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Email is required"
+        "403":
+          description: Workspace access not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "User with this email already exists"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /workspace/users/{userId}:
+    delete:
+      summary: Detach a managed user
+      description: |
+        Remove a user from your workspace. The user account is not deleted,
+        but is no longer managed by your workspace.
+
+        **Requires Workspace access - contact serge@publora.com to enable.**
+      operationId: detachManagedUser
+      tags:
+        - Workspace
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        "200":
+          description: User detached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "400":
+          description: Invalid userId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Workspace access not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found or not managed by this key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /workspace/users/{userId}/api-key:
+    post:
+      summary: Generate API key for managed user
+      description: |
+        Generate a new API key for a managed user. This key can be used
+        to make API calls on behalf of the managed user (e.g., create posts
+        to their connected social accounts).
+
+        **Requires Workspace access - contact serge@publora.com to enable.**
+      operationId: generateManagedUserApiKey
+      tags:
+        - Workspace
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: API key generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "API key generated successfully"
+                  apiKey:
+                    type: string
+                    description: "The generated API key (save it securely - shown only once)"
+                    example: "sk_lx5abc.a1b2c3d4e5f6..."
+                  userId:
+                    type: string
+        "400":
+          description: Invalid userId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Workspace or API access not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                noWorkspace:
+                  value: { "error": "Workspace access is not enabled for this key" }
+                noApiAccess:
+                  value: { "error": "API access is not enabled for this workspace owner" }
+        "404":
+          description: User not found or not managed by this key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /workspace/users/{userId}/connection-url:
+    post:
+      summary: Get connection URL for managed user
+      description: |
+        Get or generate a URL that allows a managed user to connect their
+        social media accounts. The URL expires after a configurable period
+        (default: 7 days).
+
+        **Requires Workspace access - contact serge@publora.com to enable.**
+      operationId: getConnectionUrl
+      tags:
+        - Workspace
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rotate:
+                  type: boolean
+                  description: "Force generation of a new token even if current is valid"
+                  default: false
+                expiresInDays:
+                  type: integer
+                  description: "Number of days until the token expires"
+                  default: 7
+                  example: 30
+      responses:
+        "200":
+          description: Connection URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: "URL for user to connect their social accounts"
+                    example: "https://app.publora.com/connect/abc123..."
+                  tokenExpiresAt:
+                    type: string
+                    format: date-time
+                    description: "When the connection URL expires"
+        "400":
+          description: Invalid userId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Workspace access not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found or not managed by this key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Server error
           content:
             application/json:
               schema:
