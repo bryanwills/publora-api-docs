@@ -13,6 +13,8 @@ This skill provides complete documentation for the Publora social media scheduli
 - Creating, updating, or deleting social media posts
 - Uploading media (images/videos) for posts
 - Retrieving LinkedIn analytics (impressions, reactions, followers)
+- Adding reactions and comments to LinkedIn posts
+- Setting up webhooks for post status notifications
 - Managing workspace team members
 - Cross-platform posting workflows
 
@@ -48,14 +50,16 @@ const response = await fetch('https://api.publora.com/api/v1/platform-connection
 | `/update-post/:postGroupId` | PUT | Reschedule or change status |
 | `/delete-post/:postGroupId` | DELETE | Delete a post |
 | `/get-upload-url` | POST | Get presigned URL for media |
+| `/post-logs/:postGroupId` | GET | Get publishing logs for a post |
 
 ### Connections
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/platform-connections` | GET | List connected accounts |
+| `/test-connection/:platformId` | POST | Test if a connection is valid |
 
-### LinkedIn Analytics
+### LinkedIn Analytics & Engagement
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -63,10 +67,24 @@ const response = await fetch('https://api.publora.com/api/v1/platform-connection
 | `/linkedin-account-statistics` | POST | Get account metrics |
 | `/linkedin-followers` | POST | Get follower count/growth |
 | `/linkedin-profile-summary` | POST | Get profile overview |
-| `/linkedin-create-reaction` | POST | React to a post |
-| `/linkedin-delete-reaction` | DELETE | Remove reaction |
+| `/linkedin-reactions` | POST | Add reaction to a post |
+| `/linkedin-reactions` | DELETE | Remove reaction from a post |
+| `/linkedin-comments` | POST | Post a comment |
+| `/linkedin-comments` | DELETE | Delete a comment |
+
+### Webhooks
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/webhooks` | GET | List all webhooks |
+| `/webhooks` | POST | Create a webhook |
+| `/webhooks/:id` | PATCH | Update a webhook |
+| `/webhooks/:id` | DELETE | Delete a webhook |
+| `/webhooks/:id/regenerate-secret` | POST | Regenerate webhook secret |
 
 ### Workspace
+
+> **Note:** Workspace access requires approval. Contact support@publora.com to enable.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -120,6 +138,39 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-post-stati
 });
 ```
 
+### Comment on LinkedIn Post
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'sk_your_api_key'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:ugcPost:7123456789',
+    platformId: 'linkedin-ABC123',
+    message: 'Great insights! Thanks for sharing.'
+  })
+});
+```
+
+### Create Webhook
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/webhooks', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'sk_your_api_key'
+  },
+  body: JSON.stringify({
+    url: 'https://your-server.com/webhook',
+    events: ['post.published', 'post.failed']
+  })
+});
+```
+
 ## Key Concepts
 
 ### Platform IDs
@@ -154,6 +205,14 @@ Time must be in the future.
 Available metrics: `IMPRESSION`, `MEMBERS_REACHED`, `RESHARE`, `REACTION`, `COMMENT`
 
 Use `queryTypes: 'ALL'` to get all metrics at once.
+
+### Webhook Events
+
+Available events:
+- `post.scheduled` - Post was scheduled
+- `post.published` - Post was successfully published
+- `post.failed` - Post failed to publish
+- `token.expiring` - Platform token is about to expire
 
 ## Error Handling
 
