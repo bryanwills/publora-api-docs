@@ -535,7 +535,7 @@ Some clients support environment variable interpolation:
 
 1. **Include "Bearer" prefix** — `Authorization: Bearer sk_...`
 2. **Check key format** — Should start with `sk_`
-3. **Regenerate key** — At publora.com → **API** in sidebar
+3. **Generate new key** — At publora.com → **API** in sidebar
 
 ### Connection refused
 

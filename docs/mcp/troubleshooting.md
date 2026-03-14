@@ -32,7 +32,7 @@ Common issues and solutions for Publora MCP Server.
    Wrong: " Bearer sk_abc123" (leading space)
    ```
 
-4. **Regenerate your key:**
+4. **Generate a new key:**
    - Go to [publora.com](https://publora.com) → **API** in the sidebar
    - Click "Generate New Key"
    - Update your configuration
@@ -160,9 +160,9 @@ nslookup mcp.publora.com
    "Authorization": "Bearer \"sk_abc123\""
    ```
 
-3. **Regenerate key:**
+3. **Generate a new key:**
    - [publora.com](https://publora.com) → **API** in the sidebar
-   - Generate new key
+   - Click **Generate API Key**
    - Update all configurations
 
 4. **Verify correct account** — Make sure you're logged into the right Publora account

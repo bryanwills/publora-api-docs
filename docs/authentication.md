@@ -53,7 +53,7 @@ In the Publora dashboard, connect the social platforms you want to post to:
 | How to get | Dashboard → Settings | OAuth authorization flow |
 | Format | `sk_kzq5mjw.a1b2c3...` | `eyJhbG...` (JWT) |
 
-**Key point:** You get one API key from the dashboard and use it forever (or until you regenerate it).
+**Key point:** You can generate multiple API keys from the dashboard. Each key works independently and never expires.
 
 ## Getting Your API Key
 
@@ -226,7 +226,7 @@ async function verifyAuthentication() {
 
     if (response.status === 401) {
       console.error('Error: Invalid API key');
-      console.error('Your key may have been regenerated. Get a new one at publora.com');
+      console.error('Check your key or generate a new one at publora.com');
       return false;
     }
 
@@ -268,7 +268,7 @@ def verify_authentication():
 
         if response.status_code == 401:
             print('Error: Invalid API key')
-            print('Your key may have been regenerated. Get a new one at publora.com')
+            print('Check your key or generate a new one at publora.com')
             return False
 
         response.raise_for_status()
@@ -326,7 +326,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 | Status | Error | Cause | Solution |
 |--------|-------|-------|----------|
-| 401 | `"Invalid API key"` | Key is wrong, missing, or revoked | Regenerate at API in sidebar |
+| 401 | `"Invalid API key"` | Key is wrong, missing, or deleted | Generate a new key at API in sidebar |
 | 403 | `"Subscription required"` | No active subscription | Subscribe at publora.com/pricing |
 | 403 | `"Workspace access not enabled"` | Used `x-publora-user-id` without workspace | Enable workspace or remove header |
 
@@ -350,7 +350,7 @@ async function publoraRequest(endpoint, options = {}) {
   });
 
   if (response.status === 401) {
-    throw new Error('Invalid API key. Regenerate at publora.com → API');
+    throw new Error('Invalid API key. Generate a new one at publora.com → API');
   }
 
   if (response.status === 403) {
@@ -393,7 +393,7 @@ def publora_request(endpoint, method='GET', **kwargs):
     )
 
     if response.status_code == 401:
-        raise PubloraAuthError('Invalid API key. Regenerate at publora.com → API')
+        raise PubloraAuthError('Invalid API key. Generate a new one at publora.com → API')
 
     if response.status_code == 403:
         data = response.json()
@@ -492,14 +492,16 @@ const apiKey = process.env.PUBLORA_API_KEY;
 const apiKey = 'sk_kzq5mjw.a1b2c3d4e5f6...'; // Never do this!
 ```
 
-### Key Regeneration
+### Managing API Keys
 
-If your key is compromised:
+You can generate multiple API keys — useful for different environments or applications.
+
+**If your key is compromised:**
 
 1. Go to publora.com → **API** in the sidebar
-2. Click **Regenerate Key**
-3. Update your environment variables
-4. Old key is immediately invalidated
+2. Delete the compromised key
+3. Click **Generate API Key** to create a new one
+4. Update your environment variables with the new key
 
 ## Quick Reference
 
@@ -510,7 +512,7 @@ If your key is compromised:
 | REST API Header | `x-publora-key: sk_...` |
 | MCP Header | `Authorization: Bearer sk_...` |
 | Key Format | `sk_` + timestamp + random hex |
-| Key Expiration | Never (until regenerated) |
+| Key Expiration | Never (until deleted) |
 | Get Key | publora.com → API |
 
 ---
