@@ -2,6 +2,46 @@
 
 Publora uses **API keys** for authentication. API keys are long-lived credentials that don't expire or require refresh tokens — unlike OAuth, there's no token exchange workflow.
 
+> **Important for AI Agents:** If you're an AI assistant helping a user with the Publora API, you cannot programmatically create accounts or obtain API keys. The user must complete these steps manually in their browser, then provide you with their API key.
+
+## Prerequisites: Account Setup
+
+Before you can authenticate with the API, you need:
+
+### 1. Create a Publora Account
+
+Sign up at [publora.com](https://publora.com) — free accounts are available.
+
+### 2. Connect Your Social Media Accounts
+
+In the Publora dashboard, connect the social platforms you want to post to:
+
+1. Go to **Connections** in the dashboard
+2. Click **Add Connection**
+3. Select a platform (LinkedIn, X/Twitter, Instagram, etc.)
+4. Complete the OAuth authorization flow in your browser
+5. Repeat for each platform you want to use
+
+**Note:** OAuth authorization happens in Publora's dashboard, not through the API. The API is for scheduling and managing posts to already-connected accounts.
+
+### 3. Generate Your API Key
+
+1. Go to **Settings** → **API Keys** in the dashboard
+2. Click **Generate API Key**
+3. **Copy immediately** — the full key is shown only once
+
+## Pricing Plans
+
+| Plan | Price | Posts/Month | Accounts | Platforms | Video Upload |
+|------|-------|-------------|----------|-----------|--------------|
+| **Starter** | Free | 15 | 1 | LinkedIn & Bluesky | 50MB |
+| **Pro** | $2.99/account | 100/account | Unlimited | All platforms | 100MB |
+| **Premium** | $5.99/account | 500/account | Unlimited | All platforms | 250MB |
+
+- **Starter** is free forever — great for trying the API
+- **Pro** and **Premium** use per-account pricing — add as many social accounts as you need
+- View full details at [publora.com/pricing](https://publora.com/pricing)
+
 ## API Keys vs OAuth Tokens
 
 | Feature | Publora API Keys | OAuth Tokens |
@@ -15,7 +55,7 @@ Publora uses **API keys** for authentication. API keys are long-lived credential
 
 ## Getting Your API Key
 
-### Step-by-Step
+Once you have an account with connected social platforms:
 
 1. Sign in at [publora.com](https://publora.com)
 2. Go to **Settings** → **API Keys**

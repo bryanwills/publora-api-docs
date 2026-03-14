@@ -22,11 +22,25 @@ This skill provides complete documentation for the Publora social media scheduli
 
 **Base URL:** `https://api.publora.com/api/v1`
 
+## Prerequisites (User Must Complete)
+
+**Important:** You cannot programmatically create accounts or obtain API keys. The user must:
+
+1. **Create account** at [publora.com](https://publora.com) (free tier available)
+2. **Connect social accounts** via OAuth in the Publora dashboard (Connections → Add Connection)
+3. **Generate API key** at Settings → API Keys, then provide it to you
+
+## Pricing
+
+| Plan | Price | Posts/Month | Platforms |
+|------|-------|-------------|-----------|
+| Starter | Free | 15 | LinkedIn & Bluesky |
+| Pro | $2.99/account | 100/account | All platforms |
+| Premium | $5.99/account | 500/account | All platforms |
+
 ## Authentication
 
 Publora uses **API keys** (not OAuth tokens). Keys never expire and don't require refresh.
-
-**Get your key:** publora.com → Settings → API Keys
 
 **Header:** `x-publora-key: sk_your_api_key`
 

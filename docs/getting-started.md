@@ -4,18 +4,37 @@
 
 Publora API lets you schedule and publish social media posts across 10 platforms from a single REST endpoint. Base URL: `https://api.publora.com`
 
+> **For AI Agents:** You cannot programmatically create accounts or generate API keys. Your user must complete Steps 1-2 manually at [publora.com](https://publora.com), then provide you with their API key.
+
+## Pricing
+
+| Plan | Price | Posts/Month | Platforms |
+|------|-------|-------------|-----------|
+| **Starter** | Free | 15 | LinkedIn & Bluesky |
+| **Pro** | $2.99/account | 100/account | All platforms |
+| **Premium** | $5.99/account | 500/account | All platforms |
+
+See full details at [publora.com/pricing](https://publora.com/pricing)
+
 ## Step 1: Sign Up and Get an API Key
 
-1. Create an account at [publora.com](https://publora.com)
+1. Create an account at [publora.com](https://publora.com) (free tier available)
 2. Go to **Settings > API Keys**
 3. Click **Generate API Key**
-4. Copy the key immediately -- it's shown only once
+4. Copy the key immediately — it's shown only once
 
 Your key looks like: `sk_kzq5mjw.a1b2c3d4e5f6...`
 
 ## Step 2: Connect Social Accounts
 
-Connect your social media accounts via the Publora dashboard. Each platform has its own OAuth flow.
+Connect your social media accounts via the Publora dashboard:
+
+1. Go to **Connections** in the dashboard
+2. Click **Add Connection** and select a platform
+3. Complete the OAuth authorization in your browser
+4. Repeat for each platform you want to post to
+
+**Note:** Social account connections use OAuth and must be done in the dashboard — not via API. The API is for scheduling posts to already-connected accounts.
 
 ## Step 3: List Your Connections
 
