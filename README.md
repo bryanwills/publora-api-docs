@@ -2,7 +2,7 @@
 
 **Affordable REST API for scheduling and publishing social media posts across 10 platforms.**
 
-Schedule posts to X/Twitter, LinkedIn, Instagram, Threads, TikTok, YouTube, Facebook, Bluesky, Mastodon, and Telegram — all from a single API call. Starting at **$5.40/month** (yearly) or $9/month with full API access. 14-day free trial, no credit card needed.
+Schedule posts to X/Twitter, LinkedIn, Instagram, Threads, TikTok, YouTube, Facebook, Bluesky, Mastodon, and Telegram — all from a single API call. **Free tier available**, paid plans from **$2.99/month** per connected account.
 
 **Website:** [publora.com](https://publora.com) | **Dashboard:** [app.publora.com](https://app.publora.com) | **Email:** serge@publora.com
 
@@ -24,7 +24,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   }'
 ```
 
-**3 API calls. 10 platforms. From $5.40/month.**
+**3 API calls. 10 platforms. Free tier + $2.99/account.**
 
 ## Why Publora?
 
@@ -32,19 +32,19 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 
 | Feature | Publora | Ayrshare | Publer | Sprout Social |
 |---------|---------|----------|--------|---------------|
-| **Starting price** | **$5.40/mo** | $49/mo | $12/mo | $249/mo |
-| Social accounts | 10 (Starter) | 1 (Basic) | 5 (Free) | 5 (Standard) |
+| **Starting price** | **Free** | $49/mo | $12/mo | $249/mo |
+| Per-account pricing | $2.99-5.99 | N/A | N/A | N/A |
 | Platforms | **10** | 13 | 9 | 6 |
 | API access | All plans | Paid only | Paid only | Enterprise |
 | Bluesky support | Yes | Yes | No | No |
 | Threads support | Yes | Yes | Yes | No |
 | Mastodon support | Yes | No | Yes | No |
 
-**Publora is 5-50x cheaper than alternatives with comparable features.**
+**Publora offers a free tier and flexible per-account pricing — pay only for what you use.**
 
 ### Why Developers Choose Publora
 
-1. **Affordable** — Starting at $5.40/month with full API access. No enterprise tier required.
+1. **Affordable** — Free tier available, paid plans from $2.99/account. No enterprise tier required.
 2. **10 Platforms** — X, LinkedIn, Instagram, Threads, TikTok, YouTube, Facebook, Bluesky, Mastodon, Telegram.
 3. **API-First** — Clean REST API designed for developers, not a bloated dashboard.
 4. **AI-Ready** — Docs indexed on [Context7](https://context7.com) so AI coding assistants already know our API.
@@ -97,19 +97,19 @@ curl https://api.publora.com/api/v1/platform-connections \
   -H "x-publora-key: sk_1234567890.abcdef1234567890"
 ```
 
-Get your API key: [publora.com](https://publora.com) → Settings → API Keys → Generate.
+Get your API key: [publora.com](https://publora.com) → **API** in sidebar → Generate.
 
 See [Authentication Guide](docs/authentication.md) for details.
 
 ## Pricing
 
-| Plan | Monthly | Yearly | Social Accounts | Video Upload |
-|------|---------|--------|-----------------|--------------|
-| Starter | $9/mo | $5.40/mo | 10 | 100 MB |
-| Pro | $15/mo | $12/mo | 30 | 250 MB |
-| Premium | $25/mo | $20/mo | 100 | Custom |
+| Plan | Price | Posts/Month | Accounts | Platforms | Video |
+|------|-------|-------------|----------|-----------|-------|
+| **Starter** | Free | 15 | 1 | LinkedIn & Bluesky | 50 MB |
+| **Pro** | $2.99/account | 100/account | Unlimited | All 10 | 100 MB |
+| **Premium** | $5.99/account | 500/account | Unlimited | All 10 | 250 MB |
 
-All plans include full API access. [Start free trial](https://publora.com).
+All plans include full API access. Pro/Premium use per-account pricing — add as many accounts as you need. [Get started free](https://publora.com).
 
 ## Documentation
 

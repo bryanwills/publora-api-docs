@@ -15,7 +15,7 @@ Publora provides a unified REST API for posting tweets to X (formerly Twitter), 
 | Thread creation | Automatic splitting | Manual tweet chaining |
 | Multi-platform | Post to 10 platforms | Twitter only |
 | Setup time | 5 minutes | Hours to days |
-| Pricing | From $5.40/month | Free tier + paid tiers |
+| Pricing | Free tier + $2.99/account | Free tier + paid tiers |
 
 ### Keywords: Twitter API, X API, post tweet API, Twitter posting API, tweet programmatically, Twitter bot API, Twitter automation API, send tweet API, Twitter REST API, Twitter developer API
 

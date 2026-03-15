@@ -703,4 +703,4 @@ class SocialController extends Controller
 
 ---
 
-*[Publora](https://publora.com) — Affordable social media API starting at $5.40/month*
+*[Publora](https://publora.com) — Social media API with free tier, paid plans from $2.99/account*
