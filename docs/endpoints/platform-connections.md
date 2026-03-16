@@ -71,8 +71,8 @@ GET https://api.publora.com/api/v1/platform-connections
 |-------|------|-------------|
 | `platformId` | string | Unique ID in format `platform-id`. Use this in the `platforms` array when creating posts. |
 | `username` | string | Platform username or handle. Note: the stored username may or may not include a `@` prefix depending on what was saved during OAuth. |
-| `displayName` | string/null | Display name on the platform. May be absent from the response (omitted, not `null`) if not set during OAuth, since the field lacks explicit null coercion. |
-| `profileImageUrl` | string/null | Profile image URL. May be absent from the response if not available. |
+| `displayName` | string/null | Display name on the platform. Returns `null` if not set during OAuth. |
+| `profileImageUrl` | string/null | Profile image URL. Returns `null` if not available. |
 | `profileUrl` | string/null | URL to the user's profile on the platform. Can be null if not available for the platform. |
 | `accessTokenExpiresAt` | string/null | Token expiration timestamp (null = no expiration) |
 | `tokenStatus` | string | Current token health: `valid`, `expiring_soon`, `expired`, or `unknown` |

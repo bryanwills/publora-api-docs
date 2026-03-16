@@ -8,7 +8,7 @@ Publora lets you compose a single post and distribute it across multiple social 
 
 ### Plan Restrictions
 
-> **Starter plan note:** The Starter plan (free, 15 posts/month) does not include API access (`apiAccess: false`, `mcpAccess: false`). You must be on the **Pro** plan or higher to use the API for cross-platform posting. Attempting to call the API with a Starter plan key will return a `403` error.
+> **API access note:** API access is controlled by the `apiAccess` entitlement on your account. This entitlement is disabled by default on Starter plans (free, 15 posts/month), but it is possible for a Starter account to have `apiAccess` enabled if configured by support. If your account does not have the `apiAccess` entitlement, API calls will return a `403` error. The same applies to `mcpAccess` for MCP integrations.
 
 ### Platform IDs
 
@@ -68,7 +68,7 @@ When your content exceeds a platform's character limit, Publora adapts it automa
 Publora applies sensible defaults for platform-specific settings:
 
 - **TikTok:** Default privacy and interaction settings are applied automatically.
-- **Instagram:** Video posts are published as **Reels** by default.
+- **Instagram:** Video posts are published as **Reels** by default. Set `videoType: "STORIES"` to post as a Story instead.
 - **YouTube:** Videos are set to **public** visibility by default.
 
 ### Response Status Code

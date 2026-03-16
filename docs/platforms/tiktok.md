@@ -39,7 +39,7 @@ Where `{openId}` is the TikTok `open_id` assigned during account connection via 
 |------|-----------|--------|
 | Text only | No | TikTok requires a video |
 | Images | No | Not supported as standalone posts |
-| Videos | Yes | MP4, MOV, WebM formats, minimum 23 FPS |
+| Videos | Yes | MP4, MOV, WebM, AVI, MKV formats (Publora upload layer); TikTok's API may reject formats other than MP4/MOV/WebM, minimum 23 FPS |
 
 ## Platform-Specific Settings
 
@@ -347,7 +347,7 @@ console.log(response.data);
 
 - **Video only**: TikTok does not support text-only or image-only posts through the API. A video must always be included.
 - **Minimum 23 FPS**: Videos must have a frame rate of at least 23 frames per second. Videos below this threshold will be rejected by TikTok.
-- **Supported formats**: MP4, MOV, and WebM video formats are supported via Publora.
+- **Supported formats**: Publora's upload layer accepts MP4, MOV, WebM, AVI, and MKV video formats. However, TikTok's own API may reject formats other than MP4, MOV, and WebM, so those three are recommended for reliable publishing.
 - **Commercial content disclosure**: If your video promotes a brand or is part of a paid partnership, you must set the appropriate commercial content flags. Failing to do so may violate TikTok's community guidelines.
 - **Brand content dependencies**: Setting `commercialContent` to `true` requires at least one of `brandOrganic` or `brandedContent` to also be `true`. Publora will return a validation error if `commercialContent` is enabled without specifying which type applies.
 - **Viewer setting restrictions**: Some viewer settings may limit the interaction options available. For example, `SELF_ONLY` posts cannot receive comments from others.
@@ -418,7 +418,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 | Error Code | Description | Solution |
 |------------|-------------|----------|
 | `spam_risk_too_many_posts` | Daily post limit reached | Wait 24 hours before posting again |
-| `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and your account's max duration (default 15 minutes) |
+| `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and your account's max duration (default 10 minutes) |
 | `file_format_check_failed` | Unsupported video format | The error message may reference '.mp4' only, but the system actually accepts MP4, MOV, and WebM formats. Verify your file is a valid video in one of these formats. |
 | `unaudited_client_can_only_post_to_private_accounts` | App not approved for public posting | Submit your app for TikTok review or use `SELF_ONLY` viewer setting |
 

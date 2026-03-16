@@ -276,7 +276,7 @@ When posts fail, the platform returns specific error messages. Understanding the
 |-------|---------|------------|
 | `Error 1363026` | Video exceeds 40 min duration | Trim video to under 45 minutes |
 | `Error 1363023` | File size exceeds 2 GB | Compress video to under 2 GB |
-| `Error 1363128` | Reels duration outside 3-180 second range | Adjust Reel to 3-180 seconds (3 min max) |
+| `Error 1363128` | Reels duration outside 3-90 second range | Adjust Reel to 3-90 seconds |
 
 ### LinkedIn Errors
 

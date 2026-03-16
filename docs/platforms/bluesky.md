@@ -38,7 +38,7 @@ Where `{did}` is your Bluesky Decentralized Identifier (DID), assigned during ac
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 300 characters |
-| Images | Yes | Up to 4 per post, all images converted to JPEG before upload |
+| Images | Yes | JPEG, PNG, WebP (all converted to JPEG before upload to Bluesky), up to 4 per post |
 | Videos | Yes | MP4 format |
 | Alt text | Yes | Supported for images |
 | Rich text | Yes | Hashtags and URLs auto-detected |

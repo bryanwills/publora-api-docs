@@ -51,7 +51,7 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
 }
 ```
 
-> **Note:** For non-failed posts, the `error` field may be absent from the JSON response entirely rather than explicitly `null`. Always check for both cases (e.g., `if (post.error)` rather than `if (post.error !== null)`). When a post has failed, the `error` field is present and contains an error object.
+> **Note:** The `error` field is always present in the response (included via `.select()`). For non-failed posts, its value will be `null` rather than absent. When a post has failed, the `error` field contains an error object with details about the failure.
 
 > **Note:** For draft and scheduled posts, the `postedId` field will be absent from the response since the post has not yet been published to the platform. Only published posts include a `postedId`.
 

@@ -214,7 +214,7 @@ x-publora-key: sk_your_api_key
 {
   "content": "Your post content",
   "platforms": ["twitter-123456", "linkedin-ABC123"],
-  "scheduledTime": "2024-03-15T14:00:00.000Z"
+  "scheduledTime": "2026-03-15T14:00:00.000Z"
 }
 ```
 

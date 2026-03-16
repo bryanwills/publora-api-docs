@@ -26,7 +26,7 @@ POST https://api.publora.com/api/v1/get-upload-url
 | `fileName` | string | Yes | Name of the file (e.g., `photo.jpg`). The filename is sanitized before use: whitespace is trimmed, spaces are replaced with underscores, and special characters (except underscores, dots, and hyphens) are removed. For example, `my photo (1).jpg` becomes `my_photo_1.jpg`. |
 | `contentType` | string | Yes | MIME type (e.g., `image/jpeg`, `video/mp4`). The API route does **not** validate this parameter — any MIME type string is accepted. |
 | `postGroupId` | string | Yes | The post group to attach this media to. **Security note:** The API does not verify that the `postGroupId` belongs to the requesting user. This is a known limitation. |
-| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will cause a Mongoose validation error because the `type` field has `enum: ["image", "video"]` — an undefined value fails schema validation. Additionally, even if validation were bypassed, the S3 key would be `undefined` since neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
+| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will store `undefined` in the database, which may cause unexpected behavior. The Mongoose schema has `enum: ["image", "video"]` but without `required: true`, so undefined values are accepted rather than rejected. Additionally, the S3 key would be `undefined` since neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
 
 ## Response
 

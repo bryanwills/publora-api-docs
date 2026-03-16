@@ -26,8 +26,8 @@ GET https://api.publora.com/api/v1/list-posts
 | `platform` | string | all | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram`, `pinterest`. Internally, the filter applies a case-insensitive regex against stored compound platform IDs (e.g., `twitter-123`). The filter uses a regex anchored to the start of the string (`^platform-`), so passing a bare platform name like `twitter` matches all Twitter connections. Passing a full compound ID like `twitter-123` would generate regex `^twitter-123-` which requires a trailing dash and will likely return no results — use bare platform names instead. No validation is performed on the value — invalid names (e.g., `?platform=foobar`) silently return an empty result set rather than an error. |
 | `sortBy` | string | `createdAt` | Sort field: `createdAt`, `scheduledTime`, `updatedAt` |
 | `sortOrder` | string | `desc` | Sort order: `asc` or `desc`. Invalid values silently default to `desc`. |
-| `fromDate` | string | - | Filter posts scheduled on or after this ISO 8601 date (inclusive, uses `$gte`). Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
-| `toDate` | string | - | Filter posts scheduled on or before this ISO 8601 date (inclusive, uses `$lte`). Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
+| `fromDate` | string | - | Filter posts scheduled on or after this date (inclusive, uses `$gte`). Accepts any date string parseable by JavaScript's `new Date()`, though ISO 8601 is recommended for consistency. Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
+| `toDate` | string | - | Filter posts scheduled on or before this date (inclusive, uses `$lte`). Accepts any date string parseable by JavaScript's `new Date()`, though ISO 8601 is recommended for consistency. Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
 
 ## Response
 
@@ -402,8 +402,8 @@ echo "$ALL_POSTS" > scheduled_posts.json
 |--------|-------|-------|
 | 400 | `"Invalid status. Must be one of: draft, scheduled, published, failed, partially_published"` | Invalid status filter value |
 | 400 | `"Invalid sortBy. Must be one of: createdAt, updatedAt, scheduledTime"` | Invalid sortBy field |
-| 400 | `"Invalid fromDate format"` | fromDate is not a valid ISO 8601 date |
-| 400 | `"Invalid toDate format"` | toDate is not a valid ISO 8601 date |
+| 400 | `"Invalid fromDate format"` | fromDate is not a valid date string (not parseable by `new Date()`) |
+| 400 | `"Invalid toDate format"` | toDate is not a valid date string (not parseable by `new Date()`) |
 | 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
 | 401 | `"API key is required"` | Missing `x-publora-key` header |
 | 401 | `"Invalid API key"` | The provided API key is not valid |

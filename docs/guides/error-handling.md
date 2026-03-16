@@ -12,6 +12,8 @@ The Publora API uses standard HTTP status codes to indicate success or failure. 
 |---|---|---|
 | `200` | OK | Request succeeded (GET, PUT, DELETE, and most POST endpoints including `create-post`) |
 | `201` | Created | Resource created successfully (used by specific POST endpoints such as workspace user creation) |
+
+> **Note:** Most POST endpoints (including `create-post`) return `200` on success, but workspace user creation (`POST /workspace/users`) returns `201`. Check for both `200` and `201` as success codes in your error handling logic.
 | `400` | Bad Request | Invalid input, missing required fields, or malformed data |
 | `401` | Unauthorized | Missing or invalid API key |
 | `403` | Forbidden | Valid API key but insufficient permissions or plan limits reached |
@@ -51,7 +53,7 @@ or
 | `403` | `"Account inactive"` | Your account has been deactivated. Response includes `message: "Your account is inactive."` | Contact support@publora.com to reactivate your account |
 | `403` | Limit exceeded (structured) | You have exceeded a usage limit for your plan. Response uses `LimitExceededError` format with fields: `code`, `error` (short label), `message` (long text), `metric`, `limit`, `used`, `requested`, `remaining`, `periodStart`, `periodEnd`, `planName`, plus context-specific fields (see below) | Wait for the current period to reset, reduce usage, or upgrade your plan |
 | `403` | `"MCP access is not enabled for this account"` | Your account does not have MCP access enabled | Contact support or upgrade your plan to enable MCP access |
-| `400` | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header contains a malformed user ID (not a valid ObjectId format). A valid-format but non-existent user ID returns `403` `"User is not managed by key"` instead | Verify the user ID is correct and belongs to the account associated with the MCP API key |
+| `400` | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header contains a malformed user ID (not a valid ObjectId format). A valid-format but non-existent user ID returns `403` `"User is not managed by key"` instead | Verify the user ID is a valid ObjectId and belongs to the account associated with the MCP API key |
 | `400` | `"Invalid scheduled time format"` | The `scheduledTime` is not a valid ISO 8601 string | Use a valid time in the format `YYYY-MM-DDTHH:mm:ss.sssZ` |
 | `404` | `"Post group not found"` | The post group ID does not exist or does not belong to your account | Verify the ID and ensure you are using the correct API key |
 | `400` | `"Cannot update post: post is currently in {status} status"` | Attempting to modify a post that is in a non-editable status (e.g., `published`, `failed`) | Only `draft` and `scheduled` posts can be updated. The external API `update-post` endpoint only checks `postGroup.status` (must be `draft` or `scheduled`). It does NOT check `processingStatus`. The `processingStatus` check only applies to the internal dashboard update flow. Note: `processing` is not a value of the `status` field -- it is tracked separately via the `processingStatus` field (values: `pending`, `processing`, `finished`). The `status` field values are: `draft`, `scheduled`, `published`, `failed`, `partially_published`. |
@@ -71,7 +73,7 @@ The `code` field in a `LimitExceededError` response identifies the specific limi
 
 ### LimitExceededError Context Fields
 
-In addition to the standard fields (`code`, `error`, `message`, `metric`, `limit`, `used`, `requested`, `remaining`, `periodStart`, `periodEnd`, `planName`), the response may include context-specific fields depending on the error code:
+In addition to the standard fields (`code`, `error`, `message`, `metric`, `limit`, `used`, `requested`, `remaining`, `periodStart`, `periodEnd`, `planName`), the response spreads `...this.context` into the top-level response object. This means context-specific fields appear conditionally depending on the error code -- they are not guaranteed to be present on every `LimitExceededError` response:
 
 | Context Field | Appears With | Description |
 |---|---|---|

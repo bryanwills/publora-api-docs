@@ -170,9 +170,9 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 
 | Platform | Characters | Images | Video | Special Features |
 |----------|------------|--------|-------|------------------|
-| LinkedIn | 3,000 | 20 | 500MB | Documents, @mentions |
+| LinkedIn | 3,000 | 10 | 500MB | Documents, @mentions |
 | X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
-| Instagram | 2,200 | 10 | 3min | Reels supported |
+| Instagram | 2,200 | 10 | 60s (carousel), 3min (Reels) | Reels, Stories |
 | Threads | 500 | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |
@@ -183,7 +183,7 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 
 *Varies by instance
 
-> **Note:** LinkedIn's "20 images" is the multi-image upload limit, not a carousel. Organic carousels on LinkedIn are **not** supported via the API (carousels are only available for sponsored/ad content). To share multi-page content organically, use LinkedIn document (PDF) posts instead.
+> **Note:** LinkedIn's 10-image limit is for multi-image uploads, not carousels. Organic carousels on LinkedIn are **not** supported via the API (carousels are only available for sponsored/ad content). To share multi-page content organically, use LinkedIn document (PDF) posts instead.
 
 > **Note:** Multi-threaded nested posts on Threads are temporarily unavailable. Single posts and carousel posts to Threads continue to work normally.
 
@@ -335,7 +335,7 @@ Get a presigned URL to upload media files.
 | Type | Formats |
 |------|---------|
 | Images | JPEG, PNG, GIF, WebP |
-| Videos | MP4, MOV, AVI, MKV, WebM |
+| Videos | MP4, MOV, AVI, WebM |
 
 **Python example:**
 

@@ -59,6 +59,8 @@ POST https://api.publora.com/api/v1/test-connection/:platformId
 }
 ```
 
+> **Important:** All validation results — both success and failure — return HTTP 200. The connection test outcome is indicated by the `status` field (`"ok"` or `"error"`), not the HTTP status code. Only infrastructure errors (404 connection not found, 500 server error) use non-200 status codes.
+
 ## Response Fields
 
 | Field | Type | Description |

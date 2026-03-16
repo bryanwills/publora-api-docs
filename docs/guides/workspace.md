@@ -24,7 +24,7 @@ The Workspace API lets you create **managed users** under your workspace. Each m
 
 ### Rate Limits
 
-Each managed user has a `dailyPostsLeft` field (default: 100) returned in the user object. Note: this field is stored but **not currently enforced** as a hard limit. The actual posting limits are determined by the workspace owner's plan entitlements: `monthlyPosts` (total posts per billing cycle), `scheduledPosts` (maximum concurrent scheduled posts), and `scheduleHorizonDays` (how far in advance posts can be scheduled). These are enforced by the limits service at scheduling time.
+Each managed user has a `dailyPostsLeft` field (default: 100) returned in the user object. This field is stored per user but **not enforced** as an actual posting limit. Workspace-level post limits are enforced via the **workspace owner's account entitlements**: `monthlyPosts` (total posts per billing cycle across all managed users), `scheduledPosts` (maximum concurrent scheduled posts), and `scheduleHorizonDays` (how far in advance posts can be scheduled). These entitlements are checked by the limits service at scheduling time. The `dailyPostsLeft` value does not gate or restrict posting.
 
 ### Endpoints Overview
 

@@ -58,7 +58,7 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Property | Limit |
 |----------|-------|
 | Max size | 5 MB |
-| Max count | 20 (multi-image posts) |
+| Max count | 10 (multi-image posts) |
 | Formats | JPEG, PNG, GIF, WebP (WebP images are auto-converted to JPEG before upload to LinkedIn) |
 
 > **Note:** GIF images are passed through without conversion — if the LinkedIn API rejects a GIF, consider converting to JPEG/PNG before uploading.
@@ -268,7 +268,16 @@ curl -X DELETE https://api.publora.com/api/v1/linkedin-reactions \
   }'
 ```
 
-> **Note:** The delete reaction response may also include an `urnTranslated` field (`{ from: "original-urn", to: "translated-urn" }`) when URN translation was needed.
+> **Note:** The delete reaction response includes the `reaction` field containing the reaction type that was deleted. It may also include an `urnTranslated` field (`{ from: "original-urn", to: "translated-urn" }`) when URN translation was needed.
+
+**Response example:**
+```json
+{
+  "success": true,
+  "reaction": "LIKE",
+  "urnTranslated": { "from": "original-urn", "to": "translated-urn" }
+}
+```
 
 ## Comments
 

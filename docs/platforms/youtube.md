@@ -33,7 +33,7 @@ Where `{channelId}` is your YouTube channel ID assigned during account connectio
 - API key from Publora
 - Video content is **required** (YouTube is a video platform)
 
-> **Refresh token lifespan:** YouTube refresh tokens in Publora's system default to approximately 6 months expiry. After that period, the user will need to re-authenticate via the Publora dashboard to reconnect their YouTube channel.
+> **Refresh token lifespan:** When the OAuth provider does not specify an expiry, Publora defaults the refresh token lifespan to approximately 182 days (~6 months), calculated as `365/2` days in the code. After that period, the user will need to re-authenticate via the Publora dashboard to reconnect their YouTube channel.
 
 ## Supported Content
 
@@ -368,7 +368,7 @@ console.log(response.data);
 ## Platform Quirks
 
 - **Video only**: YouTube does not support text-only or image-only posts through the API. A video file must always be included.
-- **MP4, MOV, AVI, WebM supported**: Publora validates video format server-side using the platform limits configuration (`postValidationService.js` calls `isVideoFormatSupported(platform, mimeType)` for all platforms including YouTube). YouTube accepts MP4, MOV, AVI, and WebM formats. MP4 or MOV are recommended for best compatibility.
+- **MP4, MOV, AVI, WebM supported**: Publora validates video format server-side using the platform limits configuration (`postValidationService.js` calls `isVideoFormatSupported(platform, mimeType)` for all platforms including YouTube). YouTube accepts MP4, MOV, AVI, and WebM formats. If you upload an unsupported format, Publora will reject it before it reaches the YouTube API.
 - **Single video only**: Publora supports uploading one video per post. If you attempt to attach multiple videos, the API will reject the request with an error.
 - **Default title is empty string**: When no `title` is specified in platform settings, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. It is recommended to explicitly set the title via `platformSettings` in the `create-post` request for best results.
 - **Content becomes description**: The full `content` text is used as the YouTube video description, while the `title` (or auto-generated title) is used as the video title.
@@ -391,7 +391,7 @@ console.log(response.data);
 
 | Media Type | Max Size | Max Duration | Supported Formats |
 |------------|----------|--------------|-------------------|
-| Videos | 512 MB (Publora server limit; YouTube natively allows up to 256 GB) | 12 hours | MP4, MOV (Publora accepts MP4 and MOV; YouTube natively accepts additional formats like AVI, WebM) |
+| Videos | 512 MB (Publora server limit; YouTube natively allows up to 256 GB) | 12 hours | MP4, MOV, AVI, WebM |
 | Images | Not supported | - | - |
 
 ### Additional Notes

@@ -480,7 +480,7 @@ console.log(response.data);
 // Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
-Publora will automatically split this into multiple thread posts, each staying within the 500-character limit.
+Publora will automatically split this into multiple thread posts, each staying within the 500-character limit, with `(1/N)` numbering markers added to each part.
 
 ## Platform Quirks
 

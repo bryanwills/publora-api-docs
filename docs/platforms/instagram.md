@@ -34,7 +34,7 @@ Where `{accountId}` is your Instagram Business account ID assigned during connec
 - Connected via Instagram OAuth through the Publora dashboard
 - API key from Publora
 
-> **Important:** Business accounts are recommended. Creator accounts may also work but have not been fully tested — Publora uses `instagram_business_*` OAuth scopes. Personal accounts are not supported.
+> **Important:** Business accounts are recommended but Creator accounts also work with `instagram_business_*` scopes. Personal accounts are not supported.
 
 ## API Limits
 
@@ -50,7 +50,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 |-------|-------|
 | Max file size | 8 MB |
 | Max count (carousel) | 10 images (native app allows 20) |
-| **Formats** | **JPEG only** per Instagram docs (PNG may work in practice — Publora does not convert PNG to JPEG) |
+| **Formats** | **JPEG recommended** via API (PNG may work in practice) |
 
 > **Warning:** You cannot mix images and videos in the same carousel via the API.
 
@@ -83,7 +83,7 @@ The following features are **not available** via the Instagram Graph API:
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text only | No | Instagram requires at least one image or video |
-| Images | Yes | JPEG only via API, max 8 MB, 10 per carousel |
+| Images | Yes | JPEG recommended via API (PNG may work in practice), max 8 MB, 10 per carousel |
 | Videos (Reels) | Yes | MP4/MOV, max 3 minutes (180 seconds), max 300 MB |
 | Videos (Stories) | Yes | MP4/MOV, requires `videoType: "STORIES"` setting |
 | Carousels | Yes | 2-10 items (API limit; native app allows 20) |

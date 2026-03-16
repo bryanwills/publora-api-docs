@@ -6,7 +6,7 @@ This guide covers how Publora validates posts before scheduling to prevent publi
 
 Posts are validated before scheduling to catch issues that would cause publishing failures on target platforms. Each social media platform has unique requirements for content length, media types, file sizes, and video durations. Publora validates your posts against these platform-specific limits and returns detailed error information so you can fix issues before scheduling.
 
-Validation happens automatically -- you do not need to call a separate endpoint. When you create or update a post, the API validates it and returns any errors or warnings in the response.
+Validation runs when you change a post's status to `scheduled` in the Publora dashboard. The REST API `create-post` endpoint does **not** trigger full validation -- it only performs basic field presence checks. See the "When Validation Occurs" section below for details.
 
 ## When Validation Occurs
 
@@ -501,7 +501,7 @@ When a single post has issues on multiple platforms:
 
 3. **Compress images for Bluesky.** Bluesky has a strict 1 MB limit. Use JPEG compression at 80-85% quality to stay under the limit.
 
-4. **Check video durations before uploading.** Instagram Reels API maxes out at 3 minutes (180s), Twitter at 2 minutes, TikTok at 10 minutes. Trim videos accordingly.
+4. **Check video durations before uploading.** Instagram Reels API maxes out at 3 minutes (180s), carousel videos at 60 seconds, Twitter at 2 minutes, TikTok at 10 minutes. Trim videos accordingly.
 
 5. **Use separate media for different platform groups.** If posting to both image and video platforms, consider creating separate posts:
    - Image posts for Instagram, Twitter, LinkedIn

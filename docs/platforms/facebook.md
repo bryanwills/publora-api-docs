@@ -46,7 +46,7 @@ Where `{pageId}` is your Facebook Page ID assigned during account connection via
 
 Facebook page tokens have a **59-day lifespan**. Publora automatically handles token refresh so you do not need to manually reconnect your account. However, if the refresh fails (e.g., due to permission changes on Facebook), you will need to reconnect the page through the Publora dashboard.
 
-> **Note:** The auto-refresh mechanism is handled by a separate service and may not be visible in the core backend source code.
+> **Note:** The auto-refresh mechanism is handled by a separate internal service and runs independently of the API.
 
 ## Examples
 
