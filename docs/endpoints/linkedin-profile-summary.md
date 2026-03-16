@@ -21,8 +21,10 @@ POST https://api.publora.com/api/v1/linkedin-profile-summary
 |-----------|------|----------|-------------|
 | `platformId` | string | Yes | LinkedIn connection ID (format: `linkedin-{id}`) |
 | `dateRange` | object | No | Date range filter for metrics |
-| `dateRange.start` | object | No | Start date: `{ year, month, day }` |
-| `dateRange.end` | object | No | End date: `{ year, month, day }` |
+| `dateRange.start` | object | Conditional | Start date: `{ year, month, day }` |
+| `dateRange.end` | object | Conditional | End date: `{ year, month, day }` |
+
+> **Note:** Both `start` and `end` are required when `dateRange` is provided. You cannot specify only one of them.
 
 ## Response
 

@@ -58,7 +58,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 
 | Limit | Reels | Carousel Videos |
 |-------|-------|-----------------|
-| Max duration | **3 minutes (180 seconds)** | 60 seconds |
+| Max duration | **3 minutes (180 seconds)** via API. Native app allows up to 15-20 minutes. | 60 seconds |
 | Min duration | 3 seconds | 3 seconds |
 | Max file size | 300 MB | 300 MB |
 | Formats | MP4, MOV | MP4, MOV |

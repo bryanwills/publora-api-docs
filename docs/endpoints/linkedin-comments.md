@@ -42,6 +42,8 @@ POST https://api.publora.com/api/v1/linkedin-comments
 
 > **Note:** The `id` field is the numeric comment ID extracted from the LinkedIn API's `x-restli-id` response header. The full comment URN is in the `commentUrn` field. The `comment` object also includes data returned by the LinkedIn API spread into it, so additional fields from the LinkedIn response may be present.
 
+> **Note:** Fields like `created` are passed through from LinkedIn's API response and may vary. They are not guaranteed to always be present.
+
 ### Examples
 
 #### JavaScript (fetch)

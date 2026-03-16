@@ -38,7 +38,7 @@ Where `{accountId}` is your Mastodon account ID assigned during account connecti
 |------|-----------|--------|
 | Text | Yes | 500 characters |
 | Images | Yes | JPEG, PNG, GIF, WebP, up to 4 per post |
-| Videos | Yes | MP4, WebM formats |
+| Videos | Yes | MP4, WebM, MOV formats |
 | Visibility | Yes | Public by default |
 
 ## Visibility
@@ -283,7 +283,7 @@ console.log(response.data);
 - **Public by default**: All posts made through Publora are published with public visibility. They will appear on the federated timeline.
 - **Up to 4 images**: A maximum of 4 images can be attached to a single post. Publora does not enforce this limit itself — it relies on the Mastodon API to reject posts that exceed the limit.
 - **Image formats**: Mastodon accepts JPEG, PNG, GIF, and WebP natively. Publora does not validate image formats on its end and does not perform any format conversion for Mastodon — all supported formats are passed through as-is.
-- **MP4 and WebM for videos**: Mastodon accepts MP4 and WebM video formats. Publora does not restrict video formats server-side for Mastodon, so both formats are passed through.
+- **MP4, WebM, and MOV for videos**: Mastodon accepts MP4, WebM, and MOV video formats. Publora does not restrict video formats server-side for Mastodon, so all three formats are passed through.
 - **500-character limit**: Mastodon enforces a strict 500-character limit. Publora will return an error if your content exceeds this. Unlike X/Twitter and Threads, Mastodon does not auto-thread.
 - **Hashtags**: Hashtags in Mastodon are part of the post body and count toward the character limit. They become clickable and searchable on the platform.
 - **Content warnings**: Mastodon supports content warnings (CW), but this feature is not currently available through the Publora API.
@@ -303,7 +303,7 @@ console.log(response.data);
 | Media Type | Max Size | Max Count | Supported Formats |
 |------------|----------|-----------|-------------------|
 | Images | 16 MB | 4 per post | JPEG, PNG, GIF, WebP |
-| Videos | ~99 MB | 1 per post | MP4, WebM |
+| Videos | ~99 MB | 1 per post | MP4, WebM, MOV |
 
 | Video Constraint | Limit |
 |------------------|-------|

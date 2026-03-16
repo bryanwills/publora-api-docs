@@ -485,7 +485,7 @@ Publora will automatically split this into multiple thread posts, each staying w
 ## Platform Quirks
 
 - **Single hashtag limit**: Threads allows a maximum of 1 hashtag per post. If your content includes more than one hashtag, only the first will be recognized by the platform.
-- **WebP auto-conversion**: If you provide WebP images, Publora automatically converts them before uploading to Threads.
+- **WebP auto-conversion**: If you provide WebP images, Publora automatically converts them to **JPEG** before uploading to Threads.
 - **Auto-threading**: Content exceeding 500 characters is automatically split into a thread. Publora adds `(1/N)` numbering markers to the end of each post (e.g., `(1/3)`, `(2/3)`, `(3/3)`) and splits at sentence boundaries to keep posts readable.
 - **Manual thread parts**: You can use `---` as a separator in your content to explicitly define where thread breaks should occur.
 - **No edit support**: Once posted, Threads posts cannot be edited via the API. You would need to delete and repost.

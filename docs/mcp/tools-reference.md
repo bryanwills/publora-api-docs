@@ -107,6 +107,8 @@ Create and schedule a post to one or more platforms.
 
 > **MCP vs REST difference:** `scheduledTime` is required in the MCP schema to ensure AI agents always specify a publish time. In the REST API, this field is optional — omitting it creates a draft post instead.
 
+> **MCP limitation:** `platformSettings` is NOT available via MCP. To configure platform-specific settings (TikTok privacy level, YouTube title, Instagram videoType, Threads replyControl), use the REST API directly.
+
 **Example prompts:**
 
 ```text

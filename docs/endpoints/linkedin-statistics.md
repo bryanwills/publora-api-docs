@@ -286,7 +286,6 @@ When `aggregation` is `"DAILY"`, each metric value is an array of daily data poi
     ]
   },
   "aggregation": "DAILY",
-  "cachedMetrics": [],
   "cached": false
 }
 ```

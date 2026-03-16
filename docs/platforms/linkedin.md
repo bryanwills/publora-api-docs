@@ -61,6 +61,8 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Max count | 20 (multi-image posts) |
 | Formats | JPEG, PNG, GIF, WebP (WebP images are auto-converted to JPEG before upload to LinkedIn) |
 
+> **Note:** GIF images are passed through without conversion — if the LinkedIn API rejects a GIF, consider converting to JPEG/PNG before uploading.
+
 > **Important:** Organic carousels (swipeable multi-image posts) are NOT supported via the API. The API only supports multi-image grid layouts. Swipeable carousels are only available for sponsored content.
 
 ### Video Limits (API)

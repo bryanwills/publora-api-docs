@@ -419,6 +419,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 |------------|-------------|----------|
 | `spam_risk_too_many_posts` | Daily post limit reached | Wait 24 hours before posting again |
 | `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and your account's max duration (default 15 minutes) |
+| `file_format_check_failed` | Unsupported video format | The error message may reference '.mp4' only, but the system actually accepts MP4, MOV, and WebM formats. Verify your file is a valid video in one of these formats. |
 | `unaudited_client_can_only_post_to_private_accounts` | App not approved for public posting | Submit your app for TikTok review or use `SELF_ONLY` viewer setting |
 
 ---
