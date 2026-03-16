@@ -293,6 +293,8 @@ Reschedule or change post status.
 | `status` | string | No | New status: `draft` or `scheduled` |
 | `scheduledTime` | string | No | New scheduled time (ISO 8601) |
 
+> **Note:** At least one of `status` or `scheduledTime` must be provided, otherwise the backend returns a 400 error.
+
 **Example prompts:**
 
 ```text

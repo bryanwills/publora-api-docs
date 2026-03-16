@@ -58,6 +58,7 @@ March 15, 2026              ✗ Not ISO 8601
 ### Timing Constraints
 
 - **Past times:** If the scheduled time is in the past, it is silently set to the current time
+- **No scheduled time:** If the resulting status is `scheduled` and neither the request body nor the existing post has a `scheduledTime`, it defaults to the current time (`new Date()`). This default does not apply when updating to `draft` — the existing value is preserved
 - **Maximum:** Recommended within 2 months for best reliability
 - **Timezone:** Always use UTC (Z suffix or +00:00 offset)
 

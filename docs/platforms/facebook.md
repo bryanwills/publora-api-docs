@@ -300,6 +300,7 @@ console.log(response.data);
 - **59-day token lifespan**: Facebook page access tokens expire after 59 days. Publora auto-refreshes these tokens, but if the refresh fails silently (e.g., due to permission changes on Facebook's side), posts will start failing without a specific token-related error. If you experience unexplained posting failures, try reconnecting the page through the Publora dashboard.
 - **Album behavior**: When posting multiple images, Facebook may display them as a carousel or an album depending on the count and the viewer's device.
 - **Video and images are separate**: A single post can contain either images or a video, but not both simultaneously. This is a Facebook platform limitation. Note that Publora's backend validation does **not** enforce this mixed media restriction for Facebook (it only does so for Instagram). If Facebook rejects mixed media, the error comes from the Facebook API itself, not from Publora's validation layer.
+- **Multi-media code path supports images only**: The multi-media code path currently only supports multiple images (photo albums). Multiple videos in a single post are not properly supported — if you attach multiple videos, they will be processed through the photo upload path incorrectly. Use one video per post for reliable behavior.
 - **Link previews**: If your text content includes a URL, Facebook will automatically generate a link preview. This is Facebook's behavior and is not controlled by Publora.
 
 ## Character Limits

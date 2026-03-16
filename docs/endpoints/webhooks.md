@@ -185,7 +185,7 @@ Webhook management has two implementations: the **public API** (`/api/v1/webhook
 | **Update field checks** | Uses truthy checks on `name`/`url`/`events` — empty string `""` is silently ignored | Uses `!== undefined` checks — empty string is treated as a value |
 | **`isActive` type check** | Requires strict boolean (`typeof isActive === "boolean"`) — strings like `"false"` are silently ignored | Uses `isActive !== undefined` — accepts any truthy/falsy value |
 | **Re-enable webhook** | Sets `isActive: true` but does **not** reset `failureCount` | Sets `isActive: true` **and** resets `failureCount` to 0 |
-| **List response** | Excludes `userId` from response; does **not** sort by `createdAt`; may include `__v` (Mongoose version key) | Excludes only `secret` from response; sorts by `createdAt` descending |
+| **List response** | Excludes `userId` and `secret` from response; does **not** sort by `createdAt`; may include `__v` (Mongoose version key) | Excludes only `secret` from response; sorts by `createdAt` descending |
 | **URL validation error** | Returns `"URL must use HTTPS"` for non-HTTP/HTTPS protocols | Returns `"Only HTTP and HTTPS URLs are allowed"` for non-HTTP/HTTPS protocols |
 | **Update response fields** | Update response omits `failureCount` and `lastTriggeredAt` | Update response includes `failureCount` and `lastTriggeredAt` |
 | **`::1` / `.localhost` blocking** | Does **not** block `::1` (IPv6 loopback) or `.localhost` subdomains | Blocks both `::1` and `.localhost` subdomains |

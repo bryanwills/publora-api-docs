@@ -15,7 +15,7 @@ Publora provides a unified REST API for posting tweets to X (formerly Twitter), 
 | Thread creation | Automatic splitting | Manual tweet chaining |
 | Multi-platform | Post to 11 platforms | Twitter only |
 | Setup time | 5 minutes | Hours to days |
-| Pricing | Free tier + $2.99/account | Free tier + paid tiers |
+| Pricing | Free tier available; paid plan required for X | Free tier + paid tiers |
 
 ### Keywords: Twitter API, X API, post tweet API, Twitter posting API, tweet programmatically, Twitter bot API, Twitter automation API, send tweet API, Twitter REST API, Twitter developer API
 
@@ -385,6 +385,8 @@ Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2
 | Max size | 5 MB |
 | Max count | 4 per tweet |
 | Formats | JPEG, PNG, GIF, WebP |
+
+> **Note:** All images are automatically converted to PNG (max 1000px width) via sharp before upload, regardless of the original format. This means animated GIFs will lose their animation.
 
 ### Video Limits (API)
 

@@ -359,7 +359,7 @@ Understanding the difference between Bot API limits and regular user limits is c
 | Element | Limit |
 |---------|-------|
 | Text message | 4,096 characters |
-| **Bot caption** | **1,024 characters** (bots cannot get Premium 4,096 limit) |
+| **Bot caption** | **1,024 characters** (bots cannot get Premium 2,048 caption limit; the 4,096 limit is for text-only messages, not captions) |
 | Bot username | 32 characters |
 | Channel name | 128 characters |
 
