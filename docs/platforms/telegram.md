@@ -60,7 +60,7 @@ MTProto connections use a Telegram **user session** instead of a bot, enabling h
 |------|-----------|--------|
 | Text | Yes | 4,096 characters (text-only messages, both bot and MTProto); 1,024 characters (captions with media, bot API) |
 | Images | Yes | JPEG, PNG, GIF, BMP, WebP (WebP auto-converted to JPEG) |
-| Videos | Yes | MP4 format |
+| Videos | Yes | MP4, MOV formats |
 | Formatting | Yes | Bold, italic, code, links, blockquotes |
 
 ## Text Formatting
@@ -366,7 +366,7 @@ Understanding the difference between Bot API limits and regular user limits is c
 | Duration | No limit (only size matters) |
 | **Max size** | **50 MB** (NOT 4 GB - that's for regular users!) |
 | Local Bot API Server | 2 GB max |
-| Formats | MP4, MOV, AVI, MKV, WebM |
+| Formats | MP4, MOV |
 
 ### CRITICAL: Bot API vs User Limits
 
