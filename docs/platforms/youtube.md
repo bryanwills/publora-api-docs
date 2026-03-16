@@ -106,6 +106,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -133,6 +134,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -151,6 +153,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -175,6 +178,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** YouTube requires a video. First create the post, then upload the video using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
@@ -204,6 +208,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -231,6 +236,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -249,6 +255,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -273,6 +280,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ### Upload with Auto-Generated Title
@@ -298,6 +306,7 @@ const data = await response.json();
 // Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 // Description will be the full content
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -320,6 +329,7 @@ response = requests.post(
 data = response.json()
 # Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -332,6 +342,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Weekly Vlog: What I learned shipping 3 features in 5 days. This week was intense but incredibly productive. We managed to ship the new analytics dashboard, the team collaboration feature, and a complete redesign of the onboarding flow.",
     "platforms": ["youtube-UCxxxxxxxx"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -351,6 +362,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 
 // Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ## Platform Quirks
@@ -387,7 +399,7 @@ console.log(response.data);
 - YouTube is a video-only platform; images cannot be posted as standalone content
 - The first 150 characters of the description are visible without clicking "Show more"
 - Video processing time varies based on length and resolution
-- The size (256 GB) and duration (12 hours) limits listed above are YouTube's native limits. Publora does not independently enforce these; the YouTube API will reject files that exceed them.
+- YouTube natively allows videos up to 256 GB and 12 hours. However, Publora's upload endpoint enforces a server-side limit of 512 MB (via multer configuration). Videos exceeding 512 MB will be rejected by Publora before reaching YouTube.
 - Publora enforces a 1,000-character limit on video descriptions via frontend validation only. The API itself does not enforce this limit, so API users can send up to YouTube's native 5,000-character limit.
 
 ---

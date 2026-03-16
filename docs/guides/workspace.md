@@ -735,7 +735,7 @@ client = onboard_client('acme-corp', 'Acme Corp')
 | `404` `"User not found or not managed by this key"` when detaching a user | The user ID does not exist or is not managed by your workspace | Verify the user ID is correct and belongs to your workspace via `GET /api/v1/workspace/users` |
 | User has no connections | They have not opened the connection URL yet, or the URL expired | Generate a new connection URL and send it to the user |
 | Connection URL expired | The URL has a limited lifespan | Generate a fresh connection URL via `POST /workspace/users/:userId/connection-url` |
-| `403` limit reached | Monthly or scheduled post limit exceeded per the workspace owner's plan entitlements | Check your plan's `monthlyPosts` and `scheduledPosts` limits, wait for next billing cycle, or contact Publora to upgrade |
+| `403` limit reached | Monthly or scheduled post limit exceeded per the workspace owner's plan entitlements | Upgrade the plan or wait for the next billing cycle; contact Publora to discuss higher limits |
 | Posts not appearing for a managed user | Using your own API key without the `x-publora-user-id` header | Include the `x-publora-user-id` header so the post is created under the managed user's account |
 | `403` "API access is not enabled for this workspace owner" | The workspace owner's plan does not include the `apiAccess` entitlement, which is required for generating per-user API keys | Contact Publora support to ensure the workspace owner's plan includes API access |
 | Per-user API key does not work | Key was regenerated, invalidating the old one | Use the latest generated key; generating a new key invalidates previous keys |

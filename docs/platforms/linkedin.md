@@ -409,6 +409,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -430,6 +431,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -442,6 +444,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Excited to announce our Series A funding! We are building the future of social media management for developer teams. More details coming soon.",
     "platforms": ["linkedin-987654321"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -460,6 +463,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ### Post with an Image
@@ -481,6 +485,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -502,6 +507,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -514,6 +520,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Our team just wrapped up an incredible hackathon weekend. Here are some highlights from the event!",
     "platforms": ["linkedin-987654321"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -532,6 +539,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** To attach media to a LinkedIn post, first create the post, then upload media using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.

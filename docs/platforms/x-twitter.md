@@ -39,7 +39,7 @@ Where `{userId}` is your X/Twitter numeric user ID assigned during account conne
 |------|-----------|--------|
 | Text | Yes | 280 characters |
 | Images | Yes | Up to 4 per post, auto-converted to PNG (max 1000px width) |
-| Videos | Yes | MP4 format |
+| Videos | Yes | MP4, MOV format |
 | Threads | Yes | Auto-split with `(1/N)` markers |
 
 ## Character Counting
@@ -132,6 +132,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -153,6 +154,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -165,6 +167,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Hello from Publora! Posting to X has never been easier.",
     "platforms": ["twitter-12345678"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -183,6 +186,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ### Post with an Image
@@ -204,6 +208,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -225,6 +230,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -237,6 +243,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Check out this screenshot of our new dashboard!",
     "platforms": ["twitter-12345678"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -255,6 +262,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** To attach media to a post, first create the post, then use the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
@@ -282,6 +290,7 @@ The new SDK is available for JavaScript, Python, and Go. Each SDK includes full 
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -309,6 +318,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -321,6 +331,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Here is a deep dive into our new feature release and what it means for developers building on our platform.\n\nWe have completely redesigned the API layer to support batch operations, real-time webhooks, and granular rate limiting. This means you can now process up to 1000 requests per minute with predictable throughput.\n\nThe new SDK is available for JavaScript, Python, and Go. Each SDK includes full TypeScript definitions, async support, and built-in retry logic. Check our docs for migration guides.",
     "platforms": ["twitter-12345678"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -345,6 +356,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2/3)`, `(3/3)`) at sentence boundaries.

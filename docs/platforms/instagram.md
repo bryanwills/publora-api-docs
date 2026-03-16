@@ -58,7 +58,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 
 | Limit | Reels | Carousel Videos |
 |-------|-------|-----------------|
-| Max duration | **3 minutes (180 seconds)** (native allows 15-20 min) | 60 seconds |
+| Max duration | **3 minutes (180 seconds)** | 60 seconds |
 | Min duration | 3 seconds | 3 seconds |
 | Max file size | 300 MB | 300 MB |
 | Formats | MP4, MOV | MP4, MOV |
@@ -128,6 +128,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -149,6 +150,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -161,6 +163,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Sunset views from the office rooftop. #startup #views",
     "platforms": ["instagram-11223344"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -179,6 +182,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** Instagram requires media on every post. First create the post, then upload media using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`. For carousels, upload multiple files to the same `postGroupId`.
@@ -386,6 +390,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -412,6 +417,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -429,6 +435,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -452,6 +459,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ## Platform Quirks

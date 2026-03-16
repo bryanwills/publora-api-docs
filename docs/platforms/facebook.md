@@ -69,6 +69,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -90,6 +91,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -102,6 +104,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "We are thrilled to announce our new product launch! After months of development, we are finally ready to share what we have been building. Visit our website to learn more and sign up for early access.",
     "platforms": ["facebook-112233445566"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -120,6 +123,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ### Post with Multiple Images
@@ -141,6 +145,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -162,6 +167,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -174,6 +180,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Highlights from our company retreat last weekend! Great team, great memories.",
     "platforms": ["facebook-112233445566"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -192,6 +199,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** To attach media to a Facebook post, first create the post, then upload media using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
@@ -218,6 +226,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -242,6 +251,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -257,6 +267,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       "facebook-778899001122"
     ]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -278,6 +289,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ## Platform Quirks

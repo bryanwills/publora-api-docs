@@ -485,7 +485,7 @@ console.log('Post scheduled!');
 
 ### Upload Multiple Images for a Carousel Post
 
-You can attach up to 4 images to a single post (or up to 10 for Instagram carousels). Each image requires its own upload URL.
+You can attach multiple images to a single post (the limit varies by platform). Each image requires its own upload URL.
 
 > **Important:** Create the post as a **draft** first, upload all images, then schedule.
 

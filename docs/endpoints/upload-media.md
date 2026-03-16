@@ -90,7 +90,7 @@ If you create a post with `scheduledTime` set immediately, the scheduler may att
 | Type | Formats | Max Size |
 |------|---------|----------|
 | Image | JPEG, PNG, GIF, WebP | No enforced limit (pre-signed URL) |
-| Video | MP4, MOV | No enforced limit (pre-signed URL) |
+| Video | MP4, MOV, AVI, MKV, WebM | No enforced limit (pre-signed URL) |
 
 **Note:** The 512 MB per file limit applies only to the server-side multipart upload endpoint (`process-video`), not to pre-signed URL uploads. Individual platforms may impose their own size limits at publish time.
 
@@ -365,7 +365,7 @@ This endpoint accepts `multipart/form-data` with a single video file attached (f
 
 > **Known issue:** The `process-video` endpoint does not pass the `type` parameter to the presigned URL generator, which results in an `undefined` S3 key — the key variable remains undefined when the type is neither `"image"` nor `"video"`, causing an S3 error. This is a backend bug being tracked for a fix.
 >
-> **Note:** The multer `fileFilter` rejection (for non-MOV/MP4 files) throws an error inside multer's callback. The resulting HTTP response format depends on Express's global error handler and may not produce a clean JSON 400 response.
+> **Note:** The multer `fileFilter` rejection throws an error inside multer's callback. The resulting HTTP response format depends on Express's global error handler and may not produce a clean JSON 400 response.
 
 ### Response
 
@@ -377,14 +377,14 @@ This endpoint accepts `multipart/form-data` with a single video file attached (f
 
 The `sessionId` is returned for future use, but the SSE progress endpoint (`/processing-progress/:id`) is currently disabled (commented out in source). There is no working SSE endpoint to subscribe to yet.
 
-**Limits:** 1 video file per request, 512 MB max. Only MP4 and MOV formats are accepted.
+**Limits:** 1 video file per request, 512 MB max. Supported formats: MP4, MOV, AVI, MKV, WebM.
 
 ### Errors
 
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"No video file uploaded"` | No file is attached to the request |
-| 400 | `"Only MOV/MP4 files are allowed for this endpoint"` | The uploaded file format is not MOV or MP4 |
+| 400 | `"Unsupported video format. Allowed: MP4, MOV, AVI, MKV, WebM"` | The uploaded file format is not supported |
 
 ## Delete Media
 

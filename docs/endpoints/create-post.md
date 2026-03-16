@@ -75,11 +75,14 @@ When creating via the API, these defaults are applied automatically:
   "youtube": {
     "privacy": "public",
     "title": ""
+  },
+  "threads": {
+    "replyControl": ""
   }
 }
 ```
 
-> **Note:** Only `tiktok`, `instagram`, and `youtube` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`, `threads`) are silently ignored and dropped.
+> **Note:** Only `tiktok`, `instagram`, `youtube`, and `threads` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`) are silently ignored and dropped.
 
 ## Examples
 

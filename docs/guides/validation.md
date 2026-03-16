@@ -465,14 +465,14 @@ When a single post has issues on multiple platforms:
         "platform": "instagram",
         "code": "MEDIA_TYPE_NOT_SUPPORTED",
         "message": "Image format \"image/png\" is not supported on Instagram",
-        "field": "media",
+        "field": "imageFormat",
         "severity": "error"
       },
       {
         "platform": "bluesky",
         "code": "MEDIA_SIZE_EXCEEDED",
         "message": "Image (2.5MB) exceeds Bluesky's 1.0MB limit",
-        "field": "media",
+        "field": "imageSize",
         "severity": "error"
       },
       {

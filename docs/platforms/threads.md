@@ -152,6 +152,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -173,6 +174,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -185,6 +187,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Just shipped a major update to our API. Faster response times, better error messages, and new endpoints for batch operations.",
     "platforms": ["threads-55667788"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -203,6 +206,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ### Post with an Image Carousel
@@ -407,6 +411,7 @@ The actual migration took three months. We ran both systems in parallel, compari
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -434,6 +439,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -446,6 +452,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "We just completed a major infrastructure migration and I want to share what we learned. Moving from a monolithic architecture to microservices is not as straightforward as the blog posts make it sound.\n\nFirst, we had to map every single dependency between our services. This alone took two weeks. We discovered circular dependencies we never knew existed and had to refactor several core modules before we could even begin the migration.\n\nThe actual migration took three months. We ran both systems in parallel, comparing outputs in real-time. When we finally cut over, we had 99.97% uptime throughout the process. The key was incremental rollout and comprehensive monitoring at every step.",
     "platforms": ["threads-55667788"]
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -470,6 +477,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 Publora will automatically split this into multiple thread posts, each staying within the 500-character limit.
@@ -478,7 +486,7 @@ Publora will automatically split this into multiple thread posts, each staying w
 
 - **Single hashtag limit**: Threads allows a maximum of 1 hashtag per post. If your content includes more than one hashtag, only the first will be recognized by the platform.
 - **WebP auto-conversion**: If you provide WebP images, Publora automatically converts them before uploading to Threads.
-- **Auto-threading**: Content exceeding 500 characters is automatically split into a thread with `(1/N)` numbering markers added to each part. Publora splits at sentence boundaries to keep posts readable.
+- **Auto-threading**: Content exceeding 500 characters is automatically split into a thread. Publora adds `(1/N)` numbering markers to the end of each post (e.g., `(1/3)`, `(2/3)`, `(3/3)`) and splits at sentence boundaries to keep posts readable.
 - **Manual thread parts**: You can use `---` as a separator in your content to explicitly define where thread breaks should occur.
 - **No edit support**: Once posted, Threads posts cannot be edited via the API. You would need to delete and repost.
 - **MP4 and MOV for videos**: MP4 and MOV video formats are supported. Other formats will be rejected.

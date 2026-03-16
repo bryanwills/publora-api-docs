@@ -23,7 +23,7 @@ Control Publora directly from AI assistants like Claude Code, Claude Desktop, Cu
 
 ### 1. Get Your API Key
 
-Log in to [Publora](https://publora.com) -> **API** in the sidebar -> Copy your key (`sk_...`). Click **MCP** in the sidebar for additional setup instructions.
+Log in to [Publora](https://publora.com) → **API** in the sidebar → Copy your key (`sk_...`). Click **MCP** in the sidebar for additional setup instructions.
 
 ### 2. Configure Your MCP Client
 
@@ -77,7 +77,7 @@ Restart Claude Code. Verify with `/mcp` command.
 
 ### Claude Desktop
 
-1. Open Claude Desktop -> **Settings** -> **Developer** -> **Edit Config**
+1. Open Claude Desktop → **Settings** → **Developer** → **Edit Config**
 2. Add the Publora server configuration (same JSON as above)
 3. Restart Claude Desktop
 

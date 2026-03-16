@@ -131,6 +131,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -163,6 +164,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -186,6 +188,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -215,6 +218,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 > **Note:** TikTok requires a video. First create the post, then upload the video using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
@@ -249,6 +253,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Python (requests)**
@@ -281,6 +286,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **cURL**
@@ -304,6 +310,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
+# Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 **Node.js (axios)**
@@ -333,6 +340,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
+// Response: { "success": true, "postGroupId": "abc123..." }
 ```
 
 ## Platform Quirks
@@ -384,7 +392,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 
 | Specification | API Limit | Native App Limit |
 |---------------|-----------|------------------|
-| Maximum duration | **15 minutes (900 seconds)** (actual limit is fetched dynamically from TikTok's creator info API and may vary per account) | 60 minutes |
+| Maximum duration | **15 minutes (900 seconds)** -- actual limit is fetched dynamically from TikTok's creator info API and may vary per account | 60 minutes |
 | Minimum duration | 3 seconds | 3 seconds |
 | Maximum file size | 4 GB | 4 GB |
 | Supported formats | MP4, MOV, WebM | MP4, MOV, WebM |
