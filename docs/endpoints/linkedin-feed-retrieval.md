@@ -270,12 +270,12 @@ Content-Type: application/json
 
 | Type | Description | Emoji |
 |------|-------------|-------|
-| `LIKE` | Thumbs up | :+1: |
-| `PRAISE` | Celebrate | :fire: |
-| `EMPATHY` | Love / Heart | :heart: |
-| `INTEREST` | Insightful | :bulb: |
-| `APPRECIATION` | Support | :clap: |
-| `ENTERTAINMENT` | Funny | :smile: |
+| `LIKE` | Thumbs up | 👍 |
+| `PRAISE` | Celebrate | 🔥 |
+| `EMPATHY` | Love / Heart | ❤️ |
+| `INTEREST` | Insightful | 💡 |
+| `APPRECIATION` | Support | 👏 |
+| `ENTERTAINMENT` | Funny | 😄 |
 
 ### cURL Example
 

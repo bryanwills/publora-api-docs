@@ -395,7 +395,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 | Maximum duration | **10 minutes (600 seconds)** -- actual limit is fetched dynamically from TikTok's creator info API and may vary per account | 60 minutes |
 | Minimum duration | 3 seconds | 3 seconds |
 | Maximum file size | 4 GB | 4 GB |
-| Supported formats | MP4, MOV, WebM | MP4, MOV, WebM |
+| Supported formats | MP4, MOV, WebM (TikTok API); AVI, MKV also accepted by Publora upload layer | MP4, MOV, WebM |
 | Minimum frame rate | 23 FPS | 23 FPS |
 
 ### Rate Limits

@@ -48,11 +48,11 @@ Publora supports two connection types for Telegram:
 
 ### MTProto Connection
 
-MTProto connections use a Telegram **user session** instead of a bot, enabling higher limits (4,096-character captions, 4 GB file uploads). MTProto requires a **Telegram Premium** subscription on the service user account.
+MTProto connections use a Telegram **user session** instead of a bot, enabling higher limits (2,048-character captions with Premium, 4 GB file uploads). MTProto requires a **Telegram Premium** subscription on the service user account. Note: Publora's code enforces a 4,096-character limit for all text fields, but Telegram's actual caption limit on media posts is 1,024 characters (regular users) or 2,048 characters (Premium). The 4,096 limit applies only to text-only messages. Long captions on media posts may be truncated or rejected by Telegram's API.
 
 **Service user concept:** The MTProto connection operates through a dedicated Telegram user account (the "service user") that acts on behalf of your organization. This user must be an admin of the target channel/group. Because the service user is a regular Telegram account (not a bot), it benefits from the higher user-tier limits. The service user's session is stored encrypted by Publora in the connection record and decrypted at runtime.
 
-> **Note:** MTProto connections require the service user to have an active Telegram Premium subscription. Without Premium, certain features (such as the extended 4,096-character caption limit) will not be available. For self-hosted deployments, the `TELEGRAM_MT_ALLOW_NON_PREMIUM` environment variable can be set to bypass the Premium requirement for MTProto connections.
+> **Note:** MTProto connections require the service user to have an active Telegram Premium subscription. Without Premium, certain features (such as the extended 2,048-character caption limit on media posts) will not be available. For self-hosted deployments, the `TELEGRAM_MT_ALLOW_NON_PREMIUM` environment variable can be set to bypass the Premium requirement for MTProto connections.
 
 ## Supported Content
 
@@ -78,7 +78,7 @@ Telegram supports markdown-style formatting in message text. You can use the fol
 
 ## Caption vs. Message
 
-When posting with media (images or videos), the text content is sent as a **caption** attached to the media. Captions have a stricter limit of 1,024 characters when using the bot API (MTProto supports 4,096-character captions). Text-only messages (without media) support up to 4,096 characters for both bot API and MTProto connections.
+When posting with media (images or videos), the text content is sent as a **caption** attached to the media. Captions have a stricter limit of 1,024 characters when using the bot API. MTProto with Premium supports up to 2,048-character captions on media posts (not 4,096 -- the 4,096 limit applies only to text-only messages). Text-only messages (without media) support up to 4,096 characters for both bot API and MTProto connections.
 
 ## Examples
 

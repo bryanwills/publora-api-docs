@@ -228,9 +228,9 @@ When a plan limit is exceeded, the API returns a structured error response. The 
 ```json
 {
   "error": "Post limit reached",
-  "message": "Monthly post limit reached. Your Pro plan allows 100 platform posts per month.",
   "code": "POST_LIMIT_REACHED",
   "metric": "posts.platform_monthly",
+  "message": "Monthly post limit reached. Your Pro plan allows 100 platform posts per month.",
   "limit": 100,
   "used": 100,
   "requested": 2,
@@ -240,6 +240,8 @@ When a plan limit is exceeded, the API returns a structured error response. The 
   "planName": "Pro"
 }
 ```
+
+> **Note:** Not all fields are present on every error code. For example, `SCHEDULE_HORIZON_REACHED` returns `null` for `used`, `requested`, `remaining`, `periodStart`, and `periodEnd`.
 
 Some limit errors include additional context fields:
 
@@ -262,7 +264,6 @@ Possible `code` values:
 | `SCHEDULE_HORIZON_REACHED` | `"Schedule horizon reached"` | Scheduling too far in the future for current plan |
 | `CONNECTIONS_OVER_LIMIT` | `"Account over channel limit"` | Too many platform connections for current plan |
 | `PLATFORM_NOT_AVAILABLE` | `"Platform not available"` | Platform not available on current plan (e.g., a custom plan with restricted `allowedPlatforms`). Metric: `posts.platform_monthly`. |
-| `CHANNEL_LIMIT_REACHED` | `"Channel limit reached"` | Channel limit reached for current plan |
 
 ## Post Statuses
 

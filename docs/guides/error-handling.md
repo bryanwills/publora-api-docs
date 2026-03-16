@@ -48,6 +48,7 @@ or
 | `401` | `"Invalid API key owner"` | Workspace resolution failed for the API key (the key exists but its owner account could not be resolved) | Verify the API key is associated with a valid account, or regenerate the key |
 | `403` | `"API access is not enabled for this account"` | Your account is on the Starter plan, which does not include API access | Upgrade to Pro or Premium to use the API |
 | `403` | `"Workspace access is not enabled for this key"` | The API key does not have workspace-level access enabled | Verify the API key has the correct permissions, or generate a new key with workspace access |
+| `403` | `"Subscription required"` | Your account does not have an active subscription. Response includes `message: "No active plan entitlements found for this account."` | Subscribe to a paid plan |
 | `403` | `"Account on hold"` | Your account has been placed on hold. Response includes `message: "Your account is temporarily on hold. Please contact support."`, `holdExpiresAt` (ISO 8601 timestamp), and `holdReason` fields | Wait until the hold expires or contact support to resolve the issue |
 | `403` | `"Account inactive"` | Your account has been deactivated. Response includes `message: "Your account is inactive."` | Contact support@publora.com to reactivate your account |
 | `403` | Limit exceeded (structured) | You have exceeded a usage limit for your plan. Response uses `LimitExceededError` format with fields: `code`, `error` (short label), `message` (long text), `metric`, `limit`, `used`, `requested`, `remaining`, `periodStart`, `periodEnd`, `planName`, plus context-specific fields (see below) | Wait for the current period to reset, reduce usage, or upgrade your plan |
@@ -55,7 +56,33 @@ or
 | `400` | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header contains a malformed user ID (not a valid ObjectId format). A valid-format but non-existent user ID returns `403` `"User is not managed by key"` instead | Verify the user ID is a valid ObjectId and belongs to the account associated with the MCP API key |
 | `400` | `"Invalid scheduled time format"` | The `scheduledTime` is not a valid ISO 8601 string | Use a valid time in the format `YYYY-MM-DDTHH:mm:ss.sssZ` |
 | `404` | `"Post group not found"` | The post group ID does not exist or does not belong to your account | Verify the ID and ensure you are using the correct API key |
-| `400` | `"Cannot update post: post is currently in {status} status"` | Attempting to modify a post that is in a non-editable status (e.g., `published`, `failed`) | Only `draft` and `scheduled` posts can be updated. The external API `update-post` endpoint only checks `postGroup.status` (must be `draft` or `scheduled`). It does NOT check `processingStatus`. The `processingStatus` check only applies to the internal dashboard update flow. Note: `processing` is not a value of the `status` field -- it is tracked separately via the `processingStatus` field (values: `pending`, `processing`, `finished`). The `status` field values are: `draft`, `scheduled`, `published`, `failed`, `partially_published`. |
+| `400` | `"Cannot update post: post is currently in {status} status"` | Attempting to modify a post that is in a non-editable status (e.g., `published`, `failed`) | Only `draft` and `scheduled` posts can be updated. Both the external API `update-post` endpoint and the internal dashboard update flow check `postGroup.status` (must be `draft` or `scheduled`). Neither checks `processingStatus`. Note: `processing` is not a value of the `status` field -- it is tracked separately via the `processingStatus` field (values: `pending`, `processing`, `finished`). The `status` field values are: `draft`, `scheduled`, `published`, `failed`, `partially_published`. |
+
+### Post Creation Errors
+
+| Status | Error Message | Cause | Resolution |
+|---|---|---|---|
+| `400` | `"Content is required"` | The `content` field is empty or missing in a create-post request | Provide a non-empty `content` string |
+| `400` | `"Platforms are required"` | The `platforms` field is missing from the request body | Include a `platforms` field in the request |
+| `400` | `"At least one platform is required"` | The `platforms` array is present but empty | Add at least one platform ID to the `platforms` array |
+| `400` | `"Invalid platform ID format: {platformId}"` | A platform ID in the `platforms` array does not match the expected `{platform}-{id}` format | Use the correct format, e.g., `"twitter-123456"` |
+| `400` | `"Invalid platforms JSON format"` | The `platforms` field could not be parsed as valid JSON | Ensure `platforms` is a valid JSON array |
+| `400` | `"Platforms must be an array"` | The `platforms` field is not an array (e.g., a string or object) | Pass `platforms` as a JSON array of platform ID strings |
+| `400` | `"Invalid platformSettings JSON"` | The `platformSettings` field could not be parsed as valid JSON | Ensure `platformSettings` is a valid JSON object |
+| `400` | `"platformSettings must be an object"` | The `platformSettings` field is not a JSON object | Pass `platformSettings` as a JSON object, not an array or primitive |
+
+### Post Update Errors
+
+| Status | Error Message | Cause | Resolution |
+|---|---|---|---|
+| `400` | `"Either status or scheduledTime must be provided"` | An update-post request was sent without specifying `status` or `scheduledTime` | Include at least one of `status` or `scheduledTime` in the request body |
+| `400` | `"Status must be either 'draft' or 'scheduled'"` | The `status` field in an update-post request contains an invalid value | Set `status` to either `"draft"` or `"scheduled"` |
+
+### Media Upload Errors
+
+| Status | Error Message | Cause | Resolution |
+|---|---|---|---|
+| `400` | `"fileName, contentType, and postGroupId are required"` | A get-upload-url request is missing one or more required fields | Include all three fields: `fileName`, `contentType`, and `postGroupId` |
 
 ### LimitExceededError Codes
 
@@ -69,6 +96,8 @@ The `code` field in a `LimitExceededError` response identifies the specific limi
 | `PLATFORM_NOT_AVAILABLE` | The target platform is not available on the current plan |
 | `CONNECTIONS_OVER_LIMIT` | Number of connected accounts exceeds the plan limit |
 | `CHANNEL_LIMIT_REACHED` | Maximum number of channels for the plan has been reached |
+
+> **Note on `CHANNEL_LIMIT_REACHED`:** The `checkConnectionLimit` middleware returns a **different response format** from the standard `LimitExceededError`. Instead of the fields listed above, it returns: `success` (boolean), `code` (`"CHANNEL_LIMIT_REACHED"`), `error` (message string), `canExpand` (boolean), `planKey`, `planName`, `currentQuantity`, `targetQuantity`, `connectionCount`, and `pricing` (expansion pricing details). If you are handling connection limit errors specifically, parse these fields rather than the standard `LimitExceededError` shape.
 
 ### LimitExceededError Context Fields
 
@@ -207,7 +236,7 @@ try {
         break;
       case 403:
         console.error('Access denied:', error.message);
-        // Could be limit exceeded, account hold, or account inactive
+        // Could be "Subscription required", limit exceeded, or account hold
         break;
       case 400:
         console.error('Bad request:', error.message);

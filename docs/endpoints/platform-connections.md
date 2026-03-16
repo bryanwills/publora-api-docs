@@ -16,6 +16,8 @@ GET https://api.publora.com/api/v1/platform-connections
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
 | `x-publora-client` | No | Client identifier (e.g., `mcp`). Used for MCP access gating. |
 
+> **Server-to-server only:** The `x-publora-key`, `x-publora-user-id`, and `x-publora-client` headers are not included in the server's CORS `Access-Control-Allow-Headers`. Browser-based requests that send these custom headers will fail the CORS preflight check. Use this API from a backend server or serverless function, not directly from client-side JavaScript.
+
 ## Response
 
 ```json

@@ -27,12 +27,12 @@ POST https://api.publora.com/api/v1/linkedin-reactions
 
 | Type | Emoji | Description |
 |------|-------|-------------|
-| `LIKE` | :+1: | Thumbs up |
-| `PRAISE` | :fire: | Celebrate / Fire |
-| `EMPATHY` | :heart: | Love / Heart |
-| `INTEREST` | :bulb: | Insightful / Light bulb |
-| `APPRECIATION` | :clap: | Support / Clapping hands |
-| `ENTERTAINMENT` | :smile: | Funny / Laughing |
+| `LIKE` | 👍 | Thumbs up |
+| `PRAISE` | 🔥 | Celebrate / Fire |
+| `EMPATHY` | ❤️ | Love / Heart |
+| `INTEREST` | 💡 | Insightful / Light bulb |
+| `APPRECIATION` | 👏 | Support / Clapping hands |
+| `ENTERTAINMENT` | 😄 | Funny / Laughing |
 
 > **Note:** The `reactionType` parameter is **case-insensitive** — e.g., `"like"`, `"Like"`, and `"LIKE"` are all accepted.
 

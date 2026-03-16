@@ -76,7 +76,7 @@ Image requirements vary significantly across platforms. Pay particular attention
 | **Instagram** | 8 MB | 10 (API carousel) | **JPEG only (API)** |
 | **Threads** | 8 MB | 10 | JPEG, PNG |
 | **TikTok** | - | 0 | Video only platform |
-| **LinkedIn** | 5 MB | 20 (multi-image) | JPEG, PNG, GIF |
+| **LinkedIn** | 5 MB | 10 (multi-image) | JPEG, PNG, GIF |
 | **YouTube** | - | 0 | Video only for uploads |
 | **Facebook** | 10 MB | 10 | JPEG, PNG, GIF, BMP, TIFF |
 | **Mastodon** | 16 MB | 4 | JPEG, PNG, GIF, WebP (instance-configurable) |

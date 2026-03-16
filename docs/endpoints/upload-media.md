@@ -26,15 +26,15 @@ POST https://api.publora.com/api/v1/get-upload-url
 | `fileName` | string | Yes | Name of the file (e.g., `photo.jpg`). The filename is sanitized before use: whitespace is trimmed, spaces are replaced with underscores, and special characters (except underscores, dots, and hyphens) are removed. For example, `my photo (1).jpg` becomes `my_photo_1.jpg`. |
 | `contentType` | string | Yes | MIME type (e.g., `image/jpeg`, `video/mp4`). The API route does **not** validate this parameter — any MIME type string is accepted. |
 | `postGroupId` | string | Yes | The post group to attach this media to. **Security note:** The API does not verify that the `postGroupId` belongs to the requesting user. This is a known limitation. |
-| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will store `undefined` in the database, which may cause unexpected behavior. The Mongoose schema has `enum: ["image", "video"]` but without `required: true`, so undefined values are accepted rather than rejected. Additionally, the S3 key would be `undefined` since neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
+| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will store `undefined` in the database, which may cause unexpected behavior. The S3 key prefix is also derived from this field, so omitting it means neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
 
 ## Response
 
 ```json
 {
   "success": true,
-  "uploadUrl": "https://brandcraft-media.s3.amazonaws.com/images/...",
-  "fileUrl": "https://brandcraft-media.s3.amazonaws.com/images/1710500000000-product-photo.jpg",
+  "uploadUrl": "https://your-bucket.s3.amazonaws.com/images/...",
+  "fileUrl": "https://your-bucket.s3.amazonaws.com/images/1710500000000-product-photo.jpg",
   "mediaId": "65f8a1b2c3d4e5f6a7b8c9d0"
 }
 ```
@@ -52,9 +52,12 @@ POST https://api.publora.com/api/v1/get-upload-url
 
 The dashboard uses a different endpoint (`/media/generate-upload-url`) with different behavior:
 
+> **Note:** The `/media/generate-upload-url` endpoint is deprecated and not actively used in the current codebase. It is documented here for reference only.
+
 | Aspect | API (`/api/v1/get-upload-url`) | Dashboard (`/media/generate-upload-url`) |
 |--------|-------------------------------|------------------------------------------|
 | **Required fields** | `fileName`, `contentType`, `postGroupId` | `fileName`, `contentType` (no `postGroupId` required) |
+| **Optional fields** | `type` | `metadata` (object), `type` (`"image"` or `"video"`) |
 | **Validation** | No `contentType` validation | Validates `contentType` starts with `image/` or `video/`; returns `"Only video and image files are allowed"` (400) if invalid |
 | **Error message** | `"fileName, contentType, and postGroupId are required"` | `"fileName and contentType are required"` |
 | **Response format** | `{ success, uploadUrl, fileUrl, mediaId }` | `{ uploadUrl, key }` (no `success`, `fileUrl`, or `mediaId`) |
@@ -384,7 +387,6 @@ The `sessionId` is returned for future use, but the SSE progress endpoint (`/pro
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"No video file uploaded"` | No file is attached to the request |
-| 400 | `"Only video and image files are allowed"` | The `contentType` does not start with `image/` or `video/` (dashboard validation) |
 | 400 | `"Unsupported video format. Allowed: MP4, MOV, AVI, MKV, WebM"` | The uploaded file format is not one of the accepted video formats. **Note:** This error is thrown inside multer's `fileFilter` callback, so it may not be returned as a clean JSON 400 response depending on Express's error handler. |
 
 ## Delete Media
@@ -431,8 +433,10 @@ On success, the endpoint returns `{ success: true }`.
 Uploaded file URLs use the S3 format and are returned directly as `fileUrl` in the response from the `get-upload-url` endpoint. For example:
 
 ```
-https://brandcraft-media.s3.amazonaws.com/images/1710500000000-product-photo.jpg
+https://your-bucket.s3.amazonaws.com/images/1710500000000-product-photo.jpg
 ```
+
+> **Internal note:** The API internally stores two URL fields on each media record: `url` (the S3 domain URL, e.g., `https://your-bucket.s3.amazonaws.com/...`) and `urlPure` (the CDN URL via `media.publora.com`, e.g., `https://media.publora.com/...`). Only `url` is returned in API responses. The `urlPure` field is used internally for CDN-served media.
 
 ## Platform Media Limits
 

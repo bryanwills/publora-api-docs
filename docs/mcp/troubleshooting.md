@@ -350,16 +350,16 @@ If persistent:
 
 ## Plan Limit Errors
 
-### "Plan limit exceeded" (HTTP 403)
+### "Post limit reached" / "Schedule limit reached"
 
 **Cause:** You have exceeded a plan-based limit (monthly posts, connections, scheduled posts, or schedule horizon).
 
-**Note:** Publora uses HTTP `403 Forbidden` for plan limit errors, not `429 Too Many Requests`. Per-request API rate limiting is planned but not currently enforced.
+**Note:** The MCP server wraps Publora API limit errors and returns them in the `.error` field of the response (e.g., `"Post limit reached"`, `"Schedule limit reached"`). The underlying API uses HTTP `403 Forbidden`, but MCP clients will see the descriptive error string, not the HTTP status code.
 
 **Solutions:**
 
 1. **Check your plan limits:**
-   - **Starter (free):** 15 posts/month (dashboard only — `apiAccess: false`, `mcpAccess: false`). Starter users **cannot** use the API or MCP at all; attempting to do so returns a `403` error. Upgrade to Pro or Premium for API/MCP access.
+   - **Starter (free):** 15 posts/month (dashboard only — `apiAccess: false`, `mcpAccess: false`). Starter users **cannot** use the API or MCP at all; attempting to do so returns an access error. Upgrade to Pro or Premium for API/MCP access.
    - **Pro:** 100 posts/month per connection
    - **Premium:** 500 posts/month per connection
 2. **Upgrade your plan** — Higher tiers have higher limits

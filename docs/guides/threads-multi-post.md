@@ -222,7 +222,7 @@ The Threads API has publishing limits:
 | Limit Type | Value |
 |------------|-------|
 | Posts per 24 hours | 250 |
-| Posts per hour | ~25 (approximate) |
+| Posts per hour | 50 |
 
 **Important:** Each post in a thread counts toward these limits. A 5-post thread uses 5 posts from your daily quota.
 

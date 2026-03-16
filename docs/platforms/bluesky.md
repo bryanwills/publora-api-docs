@@ -38,7 +38,7 @@ Where `{did}` is your Bluesky Decentralized Identifier (DID), assigned during ac
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 300 characters |
-| Images | Yes | JPEG, PNG, WebP (all converted to JPEG before upload to Bluesky), up to 4 per post |
+| Images | Yes | Up to 4 per post, all images converted to JPEG before upload |
 | Videos | Yes | MP4 format |
 | Alt text | Yes | Supported for images |
 | Rich text | Yes | Hashtags and URLs auto-detected |
@@ -329,7 +329,7 @@ console.log(response.data);
 - **Max size: ~976 KB** (Publora enforces 976.56 * 1024 bytes, slightly under 1 MB — compress to 80-85% JPEG quality)
 - Max count: 4
 - Max dimensions: 2000x2000 pixels
-- Formats: JPEG, PNG, WebP
+- Input formats: JPEG, PNG, WebP (all converted to JPEG before upload to Bluesky). Additional formats supported by sharp (GIF, TIFF, BMP) are also accepted and converted to JPEG.
 
 **Video Limits:**
 - Max duration: 3 minutes

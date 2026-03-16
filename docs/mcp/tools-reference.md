@@ -2,7 +2,7 @@
 
 Complete reference for all 18 active Publora MCP tools with parameters, examples, and code snippets. Three additional tools (`linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions`) are temporarily disabled pending LinkedIn approval of the `r_member_social` permission — see [LinkedIn Feed Retrieval Tools](#linkedin-feed-retrieval-tools-coming-soon--requires-linkedin-approval) below.
 
-> **Note:** Most MCP tool responses return the full `{ success, ... }` API response wrapper as shown in the examples below. A few tools — `list_connections`, `list_workspace_users`, and `create_workspace_user` — strip the wrapper and return the inner data directly (e.g., just the `connections` array). The response examples below reflect the actual format returned by each tool.
+> **Note:** Most tools return the full `{ success, ... }` backend API response as shown in the examples below. A few tools — `list_connections`, `list_workspace_users`, and `create_workspace_user` — return a different response shape (e.g., an array or object without the `success` wrapper) because the underlying API endpoints use a different response format. The MCP server does not do any post-processing on responses. The response examples below reflect the actual format returned by each tool.
 
 ## Posts Tools
 
@@ -108,6 +108,32 @@ Create and schedule a post to one or more platforms.
 > **MCP vs REST difference:** `scheduledTime` is required in the MCP schema to ensure AI agents always specify a publish time. In the REST API, this field is optional — omitting it creates a draft post instead.
 
 > **MCP limitation:** `platformSettings` is NOT available via MCP. To configure platform-specific settings (TikTok privacy level, YouTube title, Instagram videoType, Threads replyControl), use the REST API directly.
+>
+> **`platformSettings` schema reference** — only these 4 platforms support settings; settings for other platforms are silently ignored:
+>
+> ```json
+> {
+>   "platformSettings": {
+>     "tiktok": {
+>       "viewerSetting": "string",
+>       "commercialContent": {
+>         "brandOrganic": "boolean",
+>         "brandedContent": "boolean"
+>       }
+>     },
+>     "instagram": {
+>       "videoType": "REELS | STORIES"  // default: "REELS"
+>     },
+>     "youtube": {
+>       "privacy": "public | unlisted | private",  // default: "public"
+>       "title": "string"  // default: ""
+>     },
+>     "threads": {
+>       "replyControl": "string"  // default: ""
+>     }
+>   }
+> }
+> ```
 
 **Example prompts:**
 
@@ -150,6 +176,15 @@ async def schedule_post():
 asyncio.run(schedule_post())
 ```
 
+**Response example:**
+
+```json
+{
+  "success": true,
+  "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1"
+}
+```
+
 **LinkedIn Mentions:**
 
 You can @mention people and companies in LinkedIn posts using this syntax in your content:
@@ -172,7 +207,7 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 |----------|------------|--------|-------|------------------|
 | LinkedIn | 3,000 | 10 | 500MB | Documents, @mentions |
 | X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
-| Instagram | 2,200 | 10 | 60s (carousel), 3min (Reels) | Reels, Stories |
+| Instagram | 2,200 | 10 | 3 min (180s) Reels, 60s carousel | Reels & Stories supported |
 | Threads | 500 | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |
@@ -183,7 +218,7 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 
 *Varies by instance
 
-> **Note:** LinkedIn's 10-image limit is for multi-image uploads, not carousels. Organic carousels on LinkedIn are **not** supported via the API (carousels are only available for sponsored/ad content). To share multi-page content organically, use LinkedIn document (PDF) posts instead.
+> **Note:** LinkedIn's "10 images" is the multi-image upload limit, not a carousel. Organic carousels on LinkedIn are **not** supported via the API (carousels are only available for sponsored/ad content). To share multi-page content organically, use LinkedIn document (PDF) posts instead.
 
 > **Note:** Multi-threaded nested posts on Threads are temporarily unavailable. Single posts and carousel posts to Threads continue to work normally.
 
@@ -222,6 +257,27 @@ async def get_post_details():
             })
             print(result.content[0].text)
 ```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
+  "posts": [
+    {
+      "platformId": "linkedin-abc123",
+      "platform": "linkedin",
+      "status": "scheduled",
+      "content": "Excited to share our latest update!",
+      "postedId": null,
+      "error": null
+    }
+  ]
+}
+```
+
+> **Note:** The `get_post` response returns per-platform post fields (`platform`, `platformId`, `content`, `status`, `postedId`, `error`) — not `scheduledTime`. The `scheduledTime` is a post-group-level field available via `list_posts`.
 
 ---
 
@@ -277,6 +333,8 @@ async def reschedule_post():
 }
 ```
 
+> **Note:** The `scheduledTime` field in the response is only included when the post has a scheduled time set. Draft posts without a scheduled time will omit this field.
+
 > **Note:** Only posts with status `draft` or `scheduled` can be updated. Attempting to update a post in any other status (e.g., `published`, `failed`, `partially_published`) returns a `400` error: `"Cannot update post: post is currently in {status} status"`.
 
 ---
@@ -313,6 +371,14 @@ async def delete_post():
                 "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1"
             })
             print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true
+}
 ```
 
 ---

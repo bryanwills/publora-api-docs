@@ -397,7 +397,7 @@ When a video exceeds platform limits:
       {
         "platform": "instagram",
         "code": "VIDEO_DURATION_EXCEEDED",
-        "message": "Video duration (3m 0s) exceeds Instagram's 1m 30s limit",
+        "message": "Video duration (3m 0s) exceeds Instagram's 60s carousel limit",
         "field": "videoDuration",
         "severity": "error"
       },
