@@ -26,7 +26,7 @@ POST https://api.publora.com/api/v1/create-post
 | `content` | string | Yes | Post text content (cannot be empty or whitespace-only). Must be a string — non-string truthy values (numbers, objects) will pass validation but cause unexpected behavior. |
 | `platforms` | string[] | Yes | Array of platform connection IDs matching `/^[a-z]+-[a-zA-Z0-9_-]+$/` (e.g., `twitter-123456789`, `linkedin-ABC123`) |
 | `scheduledTime` | string | No | ISO 8601 UTC datetime. If omitted, the post is created as a `draft`. If the scheduled time is in the past, it is silently set to the current time |
-| `platformSettings` | object | No | Platform-specific settings object. Keys are platform names, values are setting objects (e.g., `{ "tiktok": { "viewerSetting": "PUBLIC_TO_EVERYONE" } }`). Merged with defaults per platform. Can be a JSON string or object. |
+| `platformSettings` | object | No | Platform-specific settings object. Keys are platform names, values are setting objects (e.g., `{ "tiktok": { "viewerSetting": "PUBLIC_TO_EVERYONE" } }`). Merged with defaults per platform. Can be a JSON string or object. Per-platform values must be plain objects — arrays, `null`, or primitive values for individual platform keys are silently ignored. |
 
 ## Response
 
@@ -207,11 +207,12 @@ response = requests.post(
 | 400 | `"Invalid platform ID format: <id>"` | Platform ID does not match `/^[a-z]+-[a-zA-Z0-9_-]+$/` |
 | 400 | `"Invalid scheduled time format"` | `scheduledTime` is not a valid ISO 8601 datetime |
 | 400 | `"Invalid platformSettings JSON"` | `platformSettings` was provided as a string that could not be parsed as valid JSON |
+| 400 | `"platformSettings must be an object"` | `platformSettings` is provided but is not a plain object (e.g., array, null, or primitive after JSON parsing) |
 | 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
 | 401 | `"API key is required"` | Missing `x-publora-key` header |
 | 401 | `"Invalid API key"` | `x-publora-key` value is incorrect or revoked |
 | 401 | `"Invalid API key owner"` | API key exists but the associated workspace/user could not be resolved |
-| 403 | `"API access is not enabled for this account"` | No active subscription or account is on Starter plan without API access |
+| 403 | `"API access is not enabled for this account"` | The account's plan does not include API access (e.g., Starter plan or custom plan with `apiAccess` disabled) |
 | 403 | `"MCP access is not enabled for this account"` | Returned when `x-publora-client: mcp` is set but MCP access is not enabled |
 | 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
 | 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |
@@ -220,7 +221,9 @@ response = requests.post(
 
 ### LimitExceededError (403)
 
-When a plan limit is exceeded, the API returns a structured error response. The `error` field contains a short label, while the `message` field contains the full human-readable explanation:
+When a plan limit is exceeded, the API returns a structured error response. The `error` field contains a short label, while the `message` field contains the full human-readable explanation.
+
+> **Note:** The first time a post limit is exceeded in a given billing month, an email notification is sent to the account owner. This notification is sent only once per month.
 
 ```json
 {
@@ -258,7 +261,7 @@ Possible `code` values:
 | `SCHEDULED_POST_LIMIT_REACHED` | `"Scheduled post limit reached"` | Scheduled post limit exceeded |
 | `SCHEDULE_HORIZON_REACHED` | `"Schedule horizon reached"` | Scheduling too far in the future for current plan |
 | `CONNECTIONS_OVER_LIMIT` | `"Account over channel limit"` | Too many platform connections for current plan |
-| `PLATFORM_NOT_AVAILABLE` | `"Platform not available"` | Platform not available on current plan (e.g., Starter plan user posting to Twitter/X). Metric: `posts.platform_monthly`. |
+| `PLATFORM_NOT_AVAILABLE` | `"Platform not available"` | Platform not available on current plan (e.g., a custom plan with restricted `allowedPlatforms`). Metric: `posts.platform_monthly`. |
 | `CHANNEL_LIMIT_REACHED` | `"Channel limit reached"` | Channel limit reached for current plan |
 
 ## Post Statuses

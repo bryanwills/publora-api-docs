@@ -49,7 +49,7 @@ GET https://api.publora.com/api/v1/webhooks
 }
 ```
 
-> **Note:** API list responses may include `__v` (Mongoose version key). This field can be safely ignored.
+> **Note:** Both API and dashboard list responses may include `__v` (Mongoose version key). This field can be safely ignored.
 
 ---
 
@@ -187,6 +187,7 @@ Webhook management has two implementations: the **public API** (`/api/v1/webhook
 | **Re-enable webhook** | Sets `isActive: true` but does **not** reset `failureCount` | Sets `isActive: true` **and** resets `failureCount` to 0 |
 | **List response** | Excludes `userId` from response; does **not** sort by `createdAt`; may include `__v` (Mongoose version key) | Excludes only `secret` from response; sorts by `createdAt` descending |
 | **URL validation error** | Returns `"URL must use HTTPS"` for non-HTTP/HTTPS protocols | Returns `"Only HTTP and HTTPS URLs are allowed"` for non-HTTP/HTTPS protocols |
+| **Update response fields** | Update response omits `failureCount` and `lastTriggeredAt` | Update response includes `failureCount` and `lastTriggeredAt` |
 | **`::1` / `.localhost` blocking** | Does **not** block `::1` (IPv6 loopback) or `.localhost` subdomains | Blocks both `::1` and `.localhost` subdomains |
 
 > **Tip:** If you need to fully reset a webhook's failure state through the API, delete and recreate it. The dashboard UI handles this automatically.
@@ -195,7 +196,7 @@ Webhook management has two implementations: the **public API** (`/api/v1/webhook
 
 ## Webhook Payload
 
-The webhook delivery system operates as a separate internal service.
+> **Note:** The webhook delivery system operates as a separate internal service. The behavior described in the Webhook Payload, Signature Verification, and Webhook Reliability sections below reflects the production implementation.
 
 When an event occurs, Publora sends a POST request to your webhook URL:
 

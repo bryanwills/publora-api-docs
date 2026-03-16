@@ -26,7 +26,7 @@ POST https://api.publora.com/api/v1/get-upload-url
 | `fileName` | string | Yes | Name of the file (e.g., `photo.jpg`). The filename is sanitized before use: whitespace is trimmed, spaces are replaced with underscores, and special characters (except underscores, dots, and hyphens) are removed. For example, `my photo (1).jpg` becomes `my_photo_1.jpg`. |
 | `contentType` | string | Yes | MIME type (e.g., `image/jpeg`, `video/mp4`). The API route does **not** validate this parameter — any MIME type string is accepted. |
 | `postGroupId` | string | Yes | The post group to attach this media to. **Security note:** The API does not verify that the `postGroupId` belongs to the requesting user. This is a known limitation. |
-| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will result in an `undefined` S3 key — the server has no default, so neither the `"image"` nor `"video"` branch executes when `type` is not provided. Always include this parameter. |
+| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will cause a Mongoose validation error because the `type` field has `enum: ["image", "video"]` — an undefined value fails schema validation. Additionally, even if validation were bypassed, the S3 key would be `undefined` since neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
 
 ## Response
 
@@ -46,7 +46,7 @@ POST https://api.publora.com/api/v1/get-upload-url
 | `fileUrl` | The public URL where the file will be accessible after upload. |
 | `mediaId` | The unique ID of the created media record. Use this to reference or delete the media. |
 
-> **Internal fields:** Media records also store additional internal fields (`urlPure`, `mimeType`, `addedAt`, `filePath`, `uploadUrl`, `fileName` (S3 key), `metadata`) that are not returned by the API. The `metadata` object contains: `size`, `width`, `height`, `aspectRatio`, `format`, `frameRate`, `codecName`, `bitRate`, and `duration`.
+> **Internal fields:** Media records also store additional internal fields (`urlPure`, `mimeType`, `addedAt`, `filePath`, `uploadUrl`, `fileName` (S3 key), `metadata`) that are not returned by the API. Note that `mimeType` is a top-level field on the media record when created via the API `get-upload-url` endpoint, but the `process-video` endpoint stores `mimeType` inside the `metadata` subdocument instead. The `metadata` object contains: `size`, `width`, `height`, `aspectRatio`, `format` (defaults to `"unknown"` — never populated by any endpoint), `frameRate`, `codecName`, `bitRate`, and `duration`.
 
 ### Dashboard vs API Differences
 
@@ -55,7 +55,7 @@ The dashboard uses a different endpoint (`/media/generate-upload-url`) with diff
 | Aspect | API (`/api/v1/get-upload-url`) | Dashboard (`/media/generate-upload-url`) |
 |--------|-------------------------------|------------------------------------------|
 | **Required fields** | `fileName`, `contentType`, `postGroupId` | `fileName`, `contentType` (no `postGroupId` required) |
-| **Validation** | No `contentType` validation | Validates `contentType` starts with `image/` or `video/` |
+| **Validation** | No `contentType` validation | Validates `contentType` starts with `image/` or `video/`; returns `"Only video and image files are allowed"` (400) if invalid |
 | **Error message** | `"fileName, contentType, and postGroupId are required"` | `"fileName and contentType are required"` |
 | **Response format** | `{ success, uploadUrl, fileUrl, mediaId }` | `{ uploadUrl, key }` (no `success`, `fileUrl`, or `mediaId`) |
 | **Auth** | API key (`x-publora-key`) | Session cookie |
@@ -363,9 +363,9 @@ POST https://api.publora.com/media/process-video
 
 This endpoint accepts `multipart/form-data` with a single video file attached (field name: `video`) and a `postGroupId`. The server uploads the file to S3 and extracts metadata automatically. Processing is asynchronous -- the endpoint returns a `sessionId` which can be used to track progress via SSE (Server-Sent Events).
 
-> **Known issue:** The `process-video` endpoint does not pass the `type` parameter to the presigned URL generator, which results in an `undefined` S3 key — the key variable remains undefined when the type is neither `"image"` nor `"video"`, causing an S3 error. This is a backend bug being tracked for a fix.
+> **Resolved issue:** The `process-video` endpoint now correctly passes `type: "video"` to the presigned URL generator. This was previously a bug where the missing `type` parameter resulted in an `undefined` S3 key, but it has been fixed.
 >
-> **Note:** The multer `fileFilter` rejection throws an error inside multer's callback. The resulting HTTP response format depends on Express's global error handler and may not produce a clean JSON 400 response.
+> **Note:** The multer `fileFilter` rejection (for unsupported video formats) throws an error inside multer's callback. The resulting HTTP response format depends on Express's global error handler and may not produce a clean JSON 400 response.
 
 ### Response
 
@@ -377,14 +377,15 @@ This endpoint accepts `multipart/form-data` with a single video file attached (f
 
 The `sessionId` is returned for future use, but the SSE progress endpoint (`/processing-progress/:id`) is currently disabled (commented out in source). There is no working SSE endpoint to subscribe to yet.
 
-**Limits:** 1 video file per request, 512 MB max. Supported formats: MP4, MOV, AVI, MKV, WebM.
+**Limits:** 1 video file per request, 512 MB max. Accepted formats: MP4, MOV, AVI, MKV, and WebM.
 
 ### Errors
 
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"No video file uploaded"` | No file is attached to the request |
-| 400 | `"Unsupported video format. Allowed: MP4, MOV, AVI, MKV, WebM"` | The uploaded file format is not supported |
+| 400 | `"Only video and image files are allowed"` | The `contentType` does not start with `image/` or `video/` (dashboard validation) |
+| 400 | `"Unsupported video format. Allowed: MP4, MOV, AVI, MKV, WebM"` | The uploaded file format is not one of the accepted video formats. **Note:** This error is thrown inside multer's `fileFilter` callback, so it may not be returned as a clean JSON 400 response depending on Express's error handler. |
 
 ## Delete Media
 

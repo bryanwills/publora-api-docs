@@ -101,6 +101,58 @@ These endpoints manage API keys and require **dashboard session authentication**
 | PATCH | `/auth/api-keys/:keyId` | Update an API key (e.g., rename) |
 | DELETE | `/auth/api-keys/:keyId` | Revoke (soft-delete) an API key |
 
+**Response formats:**
+
+- **POST** `/auth/api-keys` (Create):
+  ```json
+  {
+    "message": "API key created successfully",
+    "apiKey": {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "My Key",
+      "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+      "createdAt": "2026-02-22T10:00:00.000Z",
+      "lastUsedAt": null,
+      "rawKey": "sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
+    }
+  }
+  ```
+  > **Important:** `rawKey` is only returned once at creation time. Store it immediately.
+
+- **GET** `/auth/api-keys` (List):
+  ```json
+  {
+    "apiKeys": [
+      {
+        "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
+        "name": "My Key",
+        "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+        "createdAt": "2026-02-22T10:00:00.000Z",
+        "lastUsedAt": "2026-02-23T14:30:00.000Z"
+      }
+    ]
+  }
+  ```
+
+- **DELETE** `/auth/api-keys/:keyId` (Revoke):
+  ```json
+  { "message": "API key revoked successfully" }
+  ```
+
+- **PATCH** `/auth/api-keys/:keyId` (Update):
+  ```json
+  {
+    "message": "API key updated successfully",
+    "apiKey": {
+      "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
+      "name": "Renamed Key",
+      "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+      "createdAt": "2026-02-22T10:00:00.000Z",
+      "lastUsedAt": "2026-02-23T14:30:00.000Z"
+    }
+  }
+  ```
+
 **Key name handling:**
 - Names are HTML-sanitized to prevent XSS
 - If no name is provided (or the name is empty), the key defaults to `"Default"`
@@ -230,7 +282,7 @@ After successful authentication, the middleware attaches a `req.apiUser` object 
 | `ownerId` | `ObjectId` | The billing owner's user ID (may differ from the direct key owner for managed workspace users, resolved via `resolveWorkspaceEntitlementsByActor`) |
 | `ownerUser` | `Object` | Subset of the `actorUser` document (the user whose API key was used, resolved via workspace entitlements) containing `{ _id, permissions, isAdmin }` |
 | `billingOwnerUser` | `Object` | The user responsible for billing. Contains `{ _id, permissions, isAdmin, entitlements }`. May differ from `ownerUser` in workspace setups |
-| `keyPrefix` | `string` | The prefix portion of the API key used for lookup |
+| `keyPrefix` | `string` | The prefix portion of the API key used for lookup (falls back to `"legacy"` for keys without a dot separator) |
 | `isWorkspace` | `boolean` | `true` if acting on behalf of a managed user via `x-publora-user-id` |
 | `client` | `string` | Client identifier — `"mcp"` or `"api"` (default) |
 | `entitlements` | `Object` | Feature flags and plan capabilities for the billing owner |
@@ -393,7 +445,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 | 404 | `"User not found"` | POST `/auth/api-keys` — authenticated user could not be found in the database | Contact support; the account may be deleted |
 | 400 | `"Name is required"` | PATCH `/auth/api-keys/:keyId` — name field is missing or empty | Provide a non-empty name |
 | 400 | `"Name must be maximum 100 characters"` | PATCH `/auth/api-keys/:keyId` — name exceeds 100 characters | Shorten the name to 100 characters or fewer |
-| 400 | `"Invalid key ID format"` | PATCH `/auth/api-keys/:keyId` — keyId is not a valid ObjectId | Provide a valid 24-character hex ObjectId |
+| 400 | `"Invalid key ID format"` | PATCH or DELETE `/auth/api-keys/:keyId` — keyId is not a valid ObjectId | Provide a valid 24-character hex ObjectId |
 | 404 | `"API key not found"` | DELETE or PATCH `/auth/api-keys/:keyId` — the specified key doesn't exist or has been revoked | Verify the key ID is correct and the key has not already been deleted |
 | 500 | `"Internal server error"` | Unexpected error during authentication middleware | Retry the request; if persistent, contact support |
 
