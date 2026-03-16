@@ -366,7 +366,7 @@ Understanding the difference between Bot API limits and regular user limits is c
 | Duration | No limit (only size matters) |
 | **Max size** | **50 MB** (NOT 4 GB - that's for regular users!) |
 | Local Bot API Server | 2 GB max |
-| Formats | MP4, MOV |
+| Formats | MP4, MOV, AVI, MKV, WebM |
 
 ### CRITICAL: Bot API vs User Limits
 

@@ -267,7 +267,7 @@ console.log(response.data);
 
 ## Platform Quirks
 
-- **mastodon.social only**: New connections are limited to the mastodon.social instance (the OAuth flow uses a hardcoded instance URL). However, the test-connection validator extracts the instance URL from the connection's `profileUrl` field, falling back to mastodon.social as default. Support for other instances may be added in the future.
+- **mastodon.social only**: New connections are limited to the mastodon.social instance (the OAuth flow uses a hardcoded instance URL). The test-connection validator attempts to extract the instance URL from the connection's `profileUrl` field, but `profileUrl` is never set during Mastodon connection creation, so it always falls back to mastodon.social. Support for other instances may be added in the future.
 - **Public by default**: All posts made through Publora are published with public visibility. They will appear on the federated timeline.
 - **Up to 4 images**: A maximum of 4 images can be attached to a single post. Publora does not enforce this limit itself — it relies on the Mastodon API to reject posts that exceed the limit.
 - **Image formats**: Mastodon accepts JPEG, PNG, GIF, and WebP natively. Publora does not validate image formats on its end and does not perform any format conversion for Mastodon — all supported formats are passed through as-is.

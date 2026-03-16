@@ -1,6 +1,6 @@
 # MCP Tools Reference
 
-Complete reference for all 15 active Publora MCP tools with parameters, examples, and code snippets. Three additional tools (`linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions`) are temporarily disabled pending LinkedIn approval of the `r_member_social` permission — see [LinkedIn Feed Retrieval Tools](#linkedin-feed-retrieval-tools-coming-soon--requires-linkedin-approval) below.
+Complete reference for all 18 active Publora MCP tools with parameters, examples, and code snippets. Three additional tools (`linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions`) are temporarily disabled pending LinkedIn approval of the `r_member_social` permission — see [LinkedIn Feed Retrieval Tools](#linkedin-feed-retrieval-tools-coming-soon--requires-linkedin-approval) below.
 
 > **Note:** Most MCP tool responses return the full `{ success, ... }` API response wrapper as shown in the examples below. A few tools — `list_connections`, `list_workspace_users`, and `create_workspace_user` — strip the wrapper and return the inner data directly (e.g., just the `connections` array). The response examples below reflect the actual format returned by each tool.
 
@@ -15,13 +15,13 @@ List posts with optional filters for status, platform, and date range.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `status` | string | No | Filter by status: `draft`, `scheduled`, `published`, `failed`, `partially_published` |
-| `platform` | string | No | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
-| `fromDate` | string | No | Start date (ISO 8601): `2026-02-01T00:00:00Z`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
-| `toDate` | string | No | End date (ISO 8601): `2026-02-28T23:59:59Z`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
+| `platform` | string | No | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram` |
+| `fromDate` | string | No | Start date (ISO 8601): `2026-02-01T00:00:00Z` |
+| `toDate` | string | No | End date (ISO 8601): `2026-02-28T23:59:59Z` |
 | `page` | number | No | Page number (default: 1) |
 | `limit` | number | No | Results per page (default: 20, max: 100) |
-| `sortBy` | string | No | Sort field: `createdAt`, `updatedAt`, `scheduledTime` (default: createdAt). *Accepted but not currently implemented — the backend hardcodes sort order.* |
-| `sortOrder` | string | No | Sort direction: `asc` or `desc` (default: desc). *Accepted but not currently implemented — the backend hardcodes sort order.* |
+| `sortBy` | string | No | Sort field: `createdAt`, `updatedAt`, `scheduledTime` (default: createdAt) |
+| `sortOrder` | string | No | Sort direction: `asc` or `desc` (default: desc) |
 
 **Example prompts:**
 
@@ -405,35 +405,32 @@ asyncio.run(list_connections())
 **Response example:**
 
 ```json
-{
-  "success": true,
-  "connections": [
-    {
-      "platformId": "twitter-123456789",
-      "username": "@yourcompany",
-      "displayName": "Your Company",
-      "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
-      "profileUrl": null,
-      "tokenStatus": "unknown",
-      "tokenExpiresIn": null,
-      "accessTokenExpiresAt": null,
-      "lastSuccessfulPost": null,
-      "lastError": null
-    },
-    {
-      "platformId": "linkedin-Tz9W5i6ZYG",
-      "username": "Your Company Page",
-      "displayName": "Your Company",
-      "profileImageUrl": "https://media.licdn.com/...",
-      "profileUrl": "https://www.linkedin.com/company/your-company",
-      "tokenStatus": "valid",
-      "tokenExpiresIn": "82d 4h",
-      "accessTokenExpiresAt": "2026-06-15T12:00:00.000Z",
-      "lastSuccessfulPost": "2026-03-10T09:30:00.000Z",
-      "lastError": null
-    }
-  ]
-}
+[
+  {
+    "platformId": "twitter-123456789",
+    "username": "@yourcompany",
+    "displayName": "Your Company",
+    "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
+    "profileUrl": null,
+    "tokenStatus": "unknown",
+    "tokenExpiresIn": null,
+    "accessTokenExpiresAt": null,
+    "lastSuccessfulPost": null,
+    "lastError": null
+  },
+  {
+    "platformId": "linkedin-Tz9W5i6ZYG",
+    "username": "Your Company Page",
+    "displayName": "Your Company",
+    "profileImageUrl": "https://media.licdn.com/...",
+    "profileUrl": "https://www.linkedin.com/company/your-company",
+    "tokenStatus": "valid",
+    "tokenExpiresIn": "82d 4h",
+    "accessTokenExpiresAt": "2026-06-15T12:00:00.000Z",
+    "lastSuccessfulPost": "2026-03-10T09:30:00.000Z",
+    "lastError": null
+  }
+]
 ```
 
 **Response fields:**

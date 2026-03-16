@@ -33,7 +33,7 @@ POST https://api.publora.com/api/v1/test-connection/:platformId
   "username": "John Doe",
   "status": "ok",
   "message": "Connected as John Doe",
-  "permissions": ["openid", "profile", "w_member_social"],
+  "permissions": ["w_member_social", "w_member_social_feed", "r_basicprofile", "r_member_postAnalytics", "r_member_profileAnalytics"],
   "tokenExpiresIn": "45d 3h",
   "lastSuccessfulPost": "2026-02-22T09:15:00.000Z",
   "lastError": null

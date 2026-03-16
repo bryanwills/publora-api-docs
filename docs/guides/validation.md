@@ -36,7 +36,7 @@ Each platform has a maximum character limit. Some platforms also have minimum re
 | **YouTube** | 100 (title) / 5,000 (description) | First 150 chars of description visible |
 | **Facebook** | 63,206 | Posts under 80 chars get higher engagement |
 | **Mastodon** | 500 | Instance-configurable (some allow 5,000+) |
-| **Bluesky** | 300 | Links do not count toward limit |
+| **Bluesky** | 300 | Links count toward the limit in Publora |
 | **Telegram** | 4,096 (users) / 1,024 (bot captions) | Bots limited to 1,024 for captions |
 | **Pinterest** | 100 (title) / 800 (description) | Optimal description: 220-232 chars. *Pinterest is in the platform registry but publishing support is not yet fully available/tested.* |
 
@@ -175,7 +175,7 @@ When validation errors occur, the API returns a `400` status code with a structu
 | `platform` | string | Platform name (e.g., "twitter", "instagram") |
 | `code` | string | Machine-readable error code |
 | `message` | string | Human-readable error description |
-| `field` | string | The field that caused the error ("content", "media", "video", "settings") |
+| `field` | string | The field that caused the error (e.g., "content", "imageSize", "videoSize", "imageFormat", "videoDuration", "video", "settings") |
 | `severity` | string | Either `"error"` (blocking) or `"warning"` (non-blocking) |
 | `constraint` | string | (optional) String descriptor of the violated constraint (e.g., `"maxLength"`, `"maxCount"`, `"maxSize"`, `"maxDuration"`, `"requiredType"`) |
 | `currentValue` | number/string | (optional) The current value that exceeded the constraint |
@@ -191,7 +191,12 @@ When validation errors occur, the API returns a `400` status code with a structu
 |---|---|---|
 | `CONTENT_TOO_LONG` | Content exceeds the platform's character limit | Shorten the content or use threading where supported. **Note:** On threading-capable platforms (Twitter, Threads) with threading enabled, this is a **warning** (content will be auto-threaded). On other platforms or when threading is disabled, it is an **error**. |
 | `CONTENT_TOO_SHORT` | Content is below the minimum required length | Add more content |
+
+*Reserved -- not currently emitted by the validation service.*
+
 | `CONTENT_REQUIRED` | Text content is required but missing | Add text content to the post |
+
+*Reserved -- not currently emitted by the validation service.*
 | `CONTENT_OR_MEDIA_REQUIRED` | Either text or media is needed | Add content or attach media |
 | `THREAD_PART_TOO_LONG` | A single thread part exceeds the platform's per-part character limit | Break the thread part into smaller segments. (This code is defined in the `@publora/platform-limits` package. Threading validation may occur in a separate service.) |
 | `INVALID_PLATFORM_CONTENT` | Content contains elements not supported by the platform | Remove unsupported content elements. (This error code is defined in the codebase but not currently emitted by the validation service.) |
@@ -207,6 +212,8 @@ When validation errors occur, the API returns a `400` status code with a structu
 | `MEDIA_DIMENSIONS_INVALID` | Image dimensions outside allowed range | Resize the image |
 | `IMAGES_NOT_SUPPORTED` | Platform is video-only (TikTok, YouTube) | Use a video instead |
 
+*Reserved -- not currently emitted by the validation service.*
+
 ### Video Errors
 
 | Code | Description | Resolution |
@@ -215,6 +222,8 @@ When validation errors occur, the API returns a `400` status code with a structu
 | `VIDEO_DURATION_EXCEEDED` | Video is longer than the platform allows | Trim the video to meet the limit |
 | `VIDEO_DURATION_TOO_SHORT` | Video is shorter than the minimum required | Use a longer video (min 3s for TikTok/FB Reels) |
 | `VIDEO_NOT_SUPPORTED` | Platform does not support video | Remove the video or change target platforms |
+
+*Reserved -- not currently emitted by the validation service.*
 
 ### Platform Errors
 
@@ -359,7 +368,7 @@ When uploading a PNG to Instagram (JPEG only via API):
         "platform": "instagram",
         "code": "MEDIA_TYPE_NOT_SUPPORTED",
         "message": "Image format \"image/png\" is not supported on Instagram",
-        "field": "media",
+        "field": "imageFormat",
         "severity": "error"
       }
     ],
@@ -389,14 +398,14 @@ When a video exceeds platform limits:
         "platform": "instagram",
         "code": "VIDEO_DURATION_EXCEEDED",
         "message": "Video duration (3m 0s) exceeds Instagram's 1m 30s limit",
-        "field": "media",
+        "field": "videoDuration",
         "severity": "error"
       },
       {
         "platform": "twitter",
         "code": "VIDEO_DURATION_EXCEEDED",
         "message": "Video duration (3m 0s) exceeds Twitter/X's 2m 0s limit",
-        "field": "media",
+        "field": "videoDuration",
         "severity": "error"
       }
     ],
@@ -426,7 +435,7 @@ When an image exceeds Bluesky's strict 1 MB limit:
         "platform": "bluesky",
         "code": "MEDIA_SIZE_EXCEEDED",
         "message": "Image (2.5MB) exceeds Bluesky's 1.0MB limit",
-        "field": "media",
+        "field": "imageSize",
         "severity": "error"
       }
     ],

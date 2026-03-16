@@ -384,7 +384,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 
 | Specification | API Limit | Native App Limit |
 |---------------|-----------|------------------|
-| Maximum duration | **10 minutes** | 60 minutes |
+| Maximum duration | **15 minutes (900 seconds)** (actual limit is fetched dynamically from TikTok's creator info API and may vary per account) | 60 minutes |
 | Minimum duration | 3 seconds | 3 seconds |
 | Maximum file size | 4 GB | 4 GB |
 | Supported formats | MP4, MOV, WebM | MP4, MOV, WebM |
@@ -410,7 +410,7 @@ These limits apply specifically to the TikTok Content Posting API and may differ
 | Error Code | Description | Solution |
 |------------|-------------|----------|
 | `spam_risk_too_many_posts` | Daily post limit reached | Wait 24 hours before posting again |
-| `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and 10 minutes |
+| `duration_check_failed` | Video duration out of range | Ensure video is between 3 seconds and your account's max duration (default 15 minutes) |
 | `unaudited_client_can_only_post_to_private_accounts` | App not approved for public posting | Submit your app for TikTok review or use `SELF_ONLY` viewer setting |
 
 ---

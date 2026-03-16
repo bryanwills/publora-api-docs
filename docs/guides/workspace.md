@@ -24,7 +24,7 @@ The Workspace API lets you create **managed users** under your workspace. Each m
 
 ### Rate Limits
 
-Each managed user has a daily posting limit of **100 posts per day** (`dailyPostsLeft`).
+Each managed user has a `dailyPostsLeft` field (default: 100) returned in the user object. Note: this field is stored but **not currently enforced** as a hard limit. The actual posting limits are determined by the workspace owner's plan entitlements: `monthlyPosts` (total posts per billing cycle), `scheduledPosts` (maximum concurrent scheduled posts), and `scheduleHorizonDays` (how far in advance posts can be scheduled). These are enforced by the limits service at scheduling time.
 
 ### Endpoints Overview
 
@@ -718,7 +718,7 @@ client = onboard_client('acme-corp', 'Acme Corp')
 
 4. **Never expose your workspace API key.** Your workspace key has full access to all managed users. Keep it server-side only. Use per-user API keys for any client-facing scenarios.
 
-5. **Monitor `dailyPostsLeft`.** Each managed user is limited to 100 posts per day. If you are building a high-volume integration, track this limit and queue posts accordingly.
+5. **Monitor plan entitlements.** The actual posting limits come from the workspace owner's plan (`monthlyPosts`, `scheduledPosts`, `scheduleHorizonDays`). The `dailyPostsLeft` field is stored per user but not currently enforced. If you are building a high-volume integration, track your plan's monthly and scheduled post limits and queue posts accordingly.
 
 6. **Detach unused users.** If a managed user is no longer needed (e.g., they cancel their subscription with you), detach them via the `DELETE` endpoint. This removes the workspace association but preserves the user record.
 
@@ -735,7 +735,7 @@ client = onboard_client('acme-corp', 'Acme Corp')
 | `404` `"User not found or not managed by this key"` when detaching a user | The user ID does not exist or is not managed by your workspace | Verify the user ID is correct and belongs to your workspace via `GET /api/v1/workspace/users` |
 | User has no connections | They have not opened the connection URL yet, or the URL expired | Generate a new connection URL and send it to the user |
 | Connection URL expired | The URL has a limited lifespan | Generate a fresh connection URL via `POST /workspace/users/:userId/connection-url` |
-| `403` daily limit reached | Managed user has used all 100 daily posts | Wait until the next day or contact Publora to increase the limit |
+| `403` limit reached | Monthly or scheduled post limit exceeded per the workspace owner's plan entitlements | Check your plan's `monthlyPosts` and `scheduledPosts` limits, wait for next billing cycle, or contact Publora to upgrade |
 | Posts not appearing for a managed user | Using your own API key without the `x-publora-user-id` header | Include the `x-publora-user-id` header so the post is created under the managed user's account |
 | `403` "API access is not enabled for this workspace owner" | The workspace owner's plan does not include the `apiAccess` entitlement, which is required for generating per-user API keys | Contact Publora support to ensure the workspace owner's plan includes API access |
 | Per-user API key does not work | Key was regenerated, invalidating the old one | Use the latest generated key; generating a new key invalidates previous keys |

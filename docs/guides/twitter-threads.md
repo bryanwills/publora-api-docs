@@ -165,7 +165,7 @@ const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: `Check out this new feature!
+    content: `Check out this new feature! 🎉
 
 ---
 

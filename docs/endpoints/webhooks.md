@@ -195,6 +195,8 @@ Webhook management has two implementations: the **public API** (`/api/v1/webhook
 
 ## Webhook Payload
 
+The webhook delivery system operates as a separate internal service.
+
 When an event occurs, Publora sends a POST request to your webhook URL:
 
 ### Headers

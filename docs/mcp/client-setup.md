@@ -107,7 +107,7 @@ Start a new conversation and ask:
 "What MCP tools do you have available?"
 ```
 
-Claude should list the 15 active Publora tools (3 additional tools — `linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions` — are temporarily disabled pending LinkedIn approval).
+Claude should list the 18 active Publora tools (3 additional tools — `linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions` — are temporarily disabled pending LinkedIn approval).
 
 ---
 
@@ -551,6 +551,6 @@ Some clients support environment variable interpolation:
 
 ## Next Steps
 
-- [Tools Reference](./tools-reference.md) — All 15 active tools with parameters
+- [Tools Reference](./tools-reference.md) — All 18 active tools with parameters
 - [Examples](./examples.md) — Real-world conversation examples
 - [Troubleshooting](./troubleshooting.md) — Common issues and solutions

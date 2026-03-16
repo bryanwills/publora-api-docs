@@ -239,7 +239,7 @@ def import_from_csv(file_path):
             if response.ok:
                 result['postGroupId'] = response.json()['postGroupId']
             else:
-                result['error'] = response.json().get('message', 'Unknown error')
+                result['error'] = response.json().get('error', 'Unknown error')
 
             results.append(result)
             status = '✓' if response.ok else '✗'

@@ -321,7 +321,7 @@ These limits apply when posting via the Facebook Graph API (and by extension, Pu
 | Property | API Limit | Native Limit |
 |----------|-----------|--------------|
 | Duration | 45 minutes max | 240 min (4 hours) |
-| Max size | 2 GB | 4 GB |
+| Max size | 512 MB (Publora server limit; Facebook natively allows up to 2 GB via API, 4 GB natively) | 4 GB |
 | Formats | MP4, MOV | - |
 
 **Reels via API:**
@@ -339,7 +339,7 @@ These limits apply when posting via the Facebook Graph API (and by extension, Pu
 | Error Code | Description |
 |------------|-------------|
 | `Error 1363026` | Video exceeds 45 min duration |
-| `Error 1363023` | File size exceeds 2 GB |
+| `Error 1363023` | File size exceeds 2 GB (note: Publora's 512 MB server limit will reject files before this Facebook error is reached) |
 | `Error 1363128` | Reels duration outside 3-90 second range |
 
 ---

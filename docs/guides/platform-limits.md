@@ -52,7 +52,7 @@ All platforms have character limits for text content. Some platforms have differ
 | **YouTube** | 100 (title) / 5,000 (description) | - | First 150 chars of description visible |
 | **Facebook** | 63,206 characters | - | Posts under 80 chars get 66% more engagement |
 | **Mastodon** | 500 characters | Instance-configurable | Some instances allow 5,000+ |
-| **Bluesky** | 300 characters | - | Links do not count toward limit |
+| **Bluesky** | 300 characters | - | Links count toward the limit in Publora |
 | **Telegram** | 4,096 characters | 1,024 (bot caption) | Bots limited to 1,024 for media captions |
 | **Pinterest** | 100 (title) / 800 (description) | 500 (ads) | **Not currently supported** -- planned for a future release |
 

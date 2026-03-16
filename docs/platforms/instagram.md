@@ -58,7 +58,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 
 | Limit | Reels | Carousel Videos |
 |-------|-------|-----------------|
-| Max duration | **90 seconds** (native allows 15-20 min) | 60 seconds |
+| Max duration | **15 minutes (900 seconds)** (native allows 15-20 min) | 60 seconds |
 | Min duration | 3 seconds | 3 seconds |
 | Max file size | 300 MB | 300 MB |
 | Formats | MP4, MOV | MP4, MOV |
@@ -84,7 +84,7 @@ The following features are **not available** via the Instagram Graph API:
 |------|-----------|--------|
 | Text only | No | Instagram requires at least one image or video |
 | Images | Yes | JPEG only via API, max 8 MB, 10 per carousel |
-| Videos (Reels) | Yes | MP4/MOV, max 90 seconds, max 300 MB |
+| Videos (Reels) | Yes | MP4/MOV, max 15 minutes (900 seconds), max 300 MB |
 | Videos (Stories) | Yes | MP4/MOV, requires `videoType: "STORIES"` setting |
 | Carousels | Yes | 2-10 items (API limit; native app allows 20) |
 
@@ -105,7 +105,7 @@ Instagram supports a `platformSettings` object to control video behavior:
 | Setting | Values | Default | Description |
 |---------|--------|---------|-------------|
 | `videoType` | `"REELS"`, `"STORIES"` | `"REELS"` | Determines how videos are published |
-| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. |
+| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. **Note:** This setting is only available via the dashboard `updatePostGroup` endpoint, not via the `create-post` API. |
 
 ## Examples
 

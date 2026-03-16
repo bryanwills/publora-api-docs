@@ -27,9 +27,9 @@ Media is automatically attached to the post group via the `postGroupId` you prov
 
 ### Limits
 
-- **Maximum file size:** 512 MB per file. All uploads go through a 512 MB multer limit on the Publora server regardless of platform. While some platforms natively support larger files (e.g., YouTube 256 GB, Facebook 2 GB, Telegram 2 GB), Publora caps all uploads at 512 MB. Note: this limit is not enforced server-side via a `ContentLengthRange` condition on the presigned URL, but the 512 MB multer middleware limit applies to the upload URL request.
-- **Per post:** Up to **4 images** OR **1 video** (not both). Note: per-post media limits are validated at scheduling time (when the post moves to `scheduled` status), not at upload time
-- **Instagram carousels:** Up to **10 images** (exception to the 4-image limit)
+- **Maximum file size:** 512 MB per file. All uploads go through a 512 MB multer limit on the Publora server regardless of platform. While some platforms natively support larger files (e.g., YouTube 256 GB, Facebook 2 GB, Telegram 2 GB), Publora caps all uploads at 512 MB. Note: this limit is not enforced server-side via a `ContentLengthRange` condition on the presigned URL. The 512 MB multer middleware limit applies to the dashboard's `/media/process-video` route, not to the external API `GET /api/v1/get-upload-url` endpoint (which uses JSON body parsing, not multer).
+- **Per post:** The maximum number of images varies by platform: Twitter/X, Bluesky, and Mastodon allow up to **4 images**; Instagram and Threads allow up to **10 images** (carousels); LinkedIn allows up to **20 images**; Facebook and Telegram allow up to **10 images**. Video posts are limited to **1 video** per post. Note: per-post media limits are validated at scheduling time (when the post moves to `scheduled` status), not at upload time. This validation only applies to the dashboard flow; the external API `update-post` endpoint does not perform media validation.
+- **Instagram restriction:** Instagram does not allow mixing images and videos in the same post. A post must contain either all images or a single video. This is validated at scheduling time.
 - **Threads carousels:** Up to **10 images** (video items in carousels are not currently supported by Publora; standalone video posts work normally)
 
 ### Automatic Processing

@@ -356,7 +356,7 @@ console.log(response.data);
 ## Platform Quirks
 
 - **Video only**: YouTube does not support text-only or image-only posts through the API. A video file must always be included.
-- **MP4 or MOV recommended**: Publora does not validate video format before uploading — any file is passed through to the YouTube API. However, YouTube recommends MP4 or MOV for best compatibility. If you upload an unsupported format, the YouTube API will reject it.
+- **MP4 or MOV recommended**: Publora validates video format server-side using the platform limits configuration (`postValidationService.js` calls `isVideoFormatSupported(platform, mimeType)` for all platforms including YouTube). YouTube recommends MP4 or MOV for best compatibility. If you upload an unsupported format, Publora will reject it before it reaches the YouTube API.
 - **Single video only**: Publora supports uploading one video per post. If you attempt to attach multiple videos, the API will reject the request with an error.
 - **Default title is empty string**: When no `title` is specified in platform settings, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. It is recommended to explicitly set the title via `platformSettings` in the `create-post` request for best results.
 - **Content becomes description**: The full `content` text is used as the YouTube video description, while the `title` (or auto-generated title) is used as the video title.
@@ -379,7 +379,7 @@ console.log(response.data);
 
 | Media Type | Max Size | Max Duration | Supported Formats |
 |------------|----------|--------------|-------------------|
-| Videos | 256 GB | 12 hours | MP4, MOV (Publora accepts MP4 and MOV; YouTube natively accepts additional formats like AVI, WebM) |
+| Videos | 512 MB (Publora server limit; YouTube natively allows up to 256 GB) | 12 hours | MP4, MOV (Publora accepts MP4 and MOV; YouTube natively accepts additional formats like AVI, WebM) |
 | Images | Not supported | - | - |
 
 ### Additional Notes

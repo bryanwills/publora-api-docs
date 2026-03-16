@@ -66,6 +66,7 @@ When content exceeds 500 characters, Publora automatically splits it:
 - Falls back to sentence boundaries (`. `, `! `, `? `)
 - Falls back to word boundaries if needed
 - Each part respects the 500-character limit
+- Adds `(1/N)` markers at the end of each post by default (e.g., `(1/3)`, `(2/3)`, `(3/3)`)
 
 ### Manual Thread Parts
 
@@ -86,14 +87,14 @@ And this is my third post!
 
 **Method 2: Explicit markers**
 ```
-First part of the thread (1/3)
+First part of the thread [1/3]
 
-Second part of the thread (2/3)
+Second part of the thread [2/3]
 
-Third and final part (3/3)
+Third and final part [3/3]
 ```
 
-When explicit `(n/m)` markers are detected, Publora preserves them exactly as written and splits at those points.
+When explicit markers are detected, Publora preserves them exactly as written and splits at those points. Use square brackets `[n/m]`, which is distinct from the auto-added numbering format `(1/N)` that uses parentheses.
 
 ### Media in Threads
 
@@ -477,7 +478,7 @@ Publora will automatically split this into multiple thread posts, each staying w
 
 - **Single hashtag limit**: Threads allows a maximum of 1 hashtag per post. If your content includes more than one hashtag, only the first will be recognized by the platform.
 - **WebP auto-conversion**: If you provide WebP images, Publora automatically converts them before uploading to Threads.
-- **Auto-threading**: Content exceeding 500 characters is automatically split into a thread. Publora splits at sentence boundaries to keep posts readable.
+- **Auto-threading**: Content exceeding 500 characters is automatically split into a thread with `(1/N)` numbering markers added to each part. Publora splits at sentence boundaries to keep posts readable.
 - **Manual thread parts**: You can use `---` as a separator in your content to explicitly define where thread breaks should occur.
 - **No edit support**: Once posted, Threads posts cannot be edited via the API. You would need to delete and repost.
 - **MP4 and MOV for videos**: MP4 and MOV video formats are supported. Other formats will be rejected.

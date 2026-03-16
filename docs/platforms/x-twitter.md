@@ -95,14 +95,14 @@ And this is my third tweet!
 
 **Method 2: Explicit markers**
 ```
-First part of the thread (1/3)
+First part of the thread [1/3]
 
-Second part of the thread (2/3)
+Second part of the thread [2/3]
 
-Third and final part (3/3)
+Third and final part [3/3]
 ```
 
-When explicit `(n/m)` markers are detected, Publora preserves them exactly as written and splits at those points.
+When explicit markers are detected, Publora preserves them exactly as written and splits at those points. Use square brackets `[n/m]`, which is distinct from the auto-added numbering format `(1/N)` that uses parentheses.
 
 ### Media in Threads
 

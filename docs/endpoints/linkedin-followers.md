@@ -199,6 +199,7 @@ curl -X POST https://api.publora.com/api/v1/linkedin-followers \
 | 400 | `"period must be a string"` | period parameter is not a string type |
 | 400 | `"Invalid period. Must be one of: lifetime, daily"` | period is not "lifetime" or "daily" |
 | 400 | `"dateRange is required for daily period"` | period is "daily" but dateRange is missing |
+| 400 | `"dateRange must be an object"` | dateRange is not a plain object (e.g., it is null, an array, or a non-object type) |
 | 400 | `"dateRange must have both 'start' and 'end' objects"` | dateRange provided but missing start or end |
 | 400 | `"dateRange.start and dateRange.end must have: year, month, day"` | dateRange start/end missing required fields |
 | 401 | `"API key is required"` | No `x-publora-key` header provided |
