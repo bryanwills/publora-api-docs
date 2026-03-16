@@ -12,7 +12,7 @@ Publora provides a unified REST API for publishing text posts and media content 
 |---------|-------------|--------------------------|
 | Authentication | Single API key | App password + DID resolution |
 | Rich text | Automatic facets | Manual facet creation |
-| Multi-platform | Post to 10 platforms | Bluesky only |
+| Multi-platform | Post to 11 platforms | Bluesky only |
 | Setup time | 5 minutes | 30+ minutes |
 | Media handling | Automatic | Manual blob upload |
 | Rate limiting | Handled | Manual implementation |
@@ -29,7 +29,7 @@ Where `{did}` is your Bluesky Decentralized Identifier (DID), assigned during ac
 
 ## Requirements
 
-- A Bluesky account connected via **username + app password** through the Publora dashboard
+- A Bluesky account connected via **identifier + app password** through the Publora dashboard. The `identifier` field is your Bluesky handle (e.g., `yourname.bsky.social`) — not labeled "username" in the connection form.
 - You must use an **app password**, not your main account password (generate one in Bluesky Settings > App Passwords)
 - API key from Publora
 
@@ -38,7 +38,7 @@ Where `{did}` is your Bluesky Decentralized Identifier (DID), assigned during ac
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 300 characters |
-| Images | Yes | Up to 4 per post, JPEG supported, WebP auto-converted |
+| Images | Yes | Up to 4 per post, all images converted to JPEG before upload |
 | Videos | Yes | MP4 format |
 | Alt text | Yes | Supported for images |
 | Rich text | Yes | Hashtags and URLs auto-detected |
@@ -294,27 +294,28 @@ console.log(response.data);
 ## Platform Quirks
 
 - **App password required**: You must use a Bluesky app password, not your main account password. Generate one at Settings > App Passwords in the Bluesky app.
-- **WebP auto-conversion**: WebP images are automatically converted to JPEG before uploading. JPEG is the preferred format.
+- **All images converted to JPEG**: All uploaded images (including PNG, WebP, GIF, and other formats) are converted to JPEG via sharp before uploading. JPEG is the only format sent to Bluesky regardless of the input format.
 - **Up to 4 images**: A maximum of 4 images can be attached to a single post.
 - **Rich text auto-detection**: Publora automatically detects hashtags (`#tag`) and URLs in your content and creates the correct Bluesky facets with proper byte offsets. You do not need to do any special formatting.
 - **Byte offset precision**: Bluesky facets use byte offsets, not character offsets. This means multi-byte characters (emojis, CJK characters, etc.) are handled correctly by Publora, but if you are debugging, be aware of this distinction.
-- **Alt text mapping**: The `altTexts` array maps positionally to the media files uploaded via the [media upload workflow](../guides/media-uploads.md). The first alt text corresponds to the first uploaded image, and so on. If you provide fewer alt texts than images, the remaining images will have no alt text.
+- **Alt text mapping**: The `altTexts` array maps positionally to the media files uploaded via the [media upload workflow](../guides/media-uploads.md). The first alt text corresponds to the first uploaded image, and so on. If you provide fewer alt texts than images, the remaining images will have no alt text. **Note:** The `altTexts` parameter is not currently processed by the `create-post` API endpoint and will be silently ignored. Alt text support is available through the dashboard.
 - **DID-based platform ID**: Unlike other platforms that use numeric IDs, Bluesky uses a DID (Decentralized Identifier) format like `did:plc:abc123xyz`.
+- **`test-connection` may report missing credentials**: The platform connection validator checks for both `accessToken` and `username` fields, but Bluesky connections store a `password` (app password) instead of `accessToken`. As a result, calling `test-connection` for a Bluesky account will always report that the connection lacks credentials. This is a known limitation -- the connection will still work for posting.
 
 ## Character Limits
 
 | Element | Limit |
 |---------|-------|
 | Post body | 300 characters |
-| Alt text | 2,000 characters per image |
+| Alt text | 2,000 characters per image (Bluesky limit; not enforced by Publora) |
 | Images | Up to 4 per post |
 
 ## API Limits
 
-**Character Limit:** 300 characters (links don't count toward limit)
+**Character Limit:** 300 characters (links count toward the limit in Publora — validation uses total `content.length`, not a link-aware count)
 
 **Image Limits:**
-- **Max size: 1 MB** (strict limit - compress to 80-85% JPEG quality)
+- **Max size: ~976 KB** (Publora enforces 976.56 * 1024 bytes, slightly under 1 MB — compress to 80-85% JPEG quality)
 - Max count: 4
 - Max dimensions: 2000x2000 pixels
 - Formats: JPEG, PNG, WebP

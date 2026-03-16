@@ -14,17 +14,23 @@ POST https://api.publora.com/api/v1/create-post
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `mcp` for MCP integrations). Affects which access controls are checked. |
 | `Content-Type` | Yes | `application/json` |
+
+> **Note:** The API does not include `x-publora-key` or `x-publora-user-id` in CORS allowed headers, so requests from browser-based clients will fail preflight checks. This API is designed for server-to-server use only.
 
 ## Request Body
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `content` | string | Yes | Post text content |
-| `platforms` | string[] | Yes | Array of platform connection IDs (format: `platform-platformId`) |
-| `scheduledTime` | string | No | ISO 8601 UTC datetime. If omitted, queued for next available slot |
+| `content` | string | Yes | Post text content (cannot be empty or whitespace-only). Must be a string — non-string truthy values (numbers, objects) will pass validation but cause unexpected behavior. |
+| `platforms` | string[] | Yes | Array of platform connection IDs matching `/^[a-z]+-[a-zA-Z0-9_-]+$/` (e.g., `twitter-123456789`, `linkedin-ABC123`) |
+| `scheduledTime` | string | No | ISO 8601 UTC datetime. If omitted, the post is created as a `draft`. If the scheduled time is in the past, it is silently set to the current time |
+| `platformSettings` | object | No | Platform-specific settings object. Keys are platform names, values are setting objects (e.g., `{ "tiktok": { "viewerSetting": "PUBLIC_TO_EVERYONE" } }`). Merged with defaults per platform. Can be a JSON string or object. |
 
 ## Response
+
+Returns HTTP **200** on success (not 201).
 
 ```json
 {
@@ -72,6 +78,8 @@ When creating via the API, these defaults are applied automatically:
   }
 }
 ```
+
+> **Note:** Only `tiktok`, `instagram`, and `youtube` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`, `threads`) are silently ignored and dropped.
 
 ## Examples
 
@@ -146,7 +154,7 @@ const { data } = await axios.post(
 console.log(data.postGroupId);
 ```
 
-### Post to all 10 platforms at once
+### Post to all 11 platforms at once
 
 ```javascript
 const response = await fetch('https://api.publora.com/api/v1/create-post', {
@@ -161,7 +169,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
       'twitter-111', 'linkedin-222', 'instagram-333',
       'threads-444', 'tiktok-555', 'youtube-666',
       'facebook-777', 'bluesky-888', 'mastodon-999',
-      'telegram-000'
+      'telegram-000', 'pinterest-101'
     ],
     scheduledTime: '2026-03-01T09:00:00.000Z'
   })
@@ -188,30 +196,88 @@ response = requests.post(
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 400 | `"Content is required"` | Missing `content` field |
-| 400 | `"Platforms are required"` | Missing or empty `platforms` array |
-| 400 | `"Invalid scheduled time"` | `scheduledTime` is in the past or malformed |
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
-| 403 | `"Subscription required"` | No active subscription |
-| 403 | `"Free plan limit reached"` | Free tier: max 15 posts/month |
-| 500 | `"Internal server error"` | Unexpected server error |
+| 400 | `"Content is required"` | Missing `content` field or content is empty/whitespace-only |
+| 400 | `"Platforms are required"` | `platforms` field is missing or null |
+| 400 | `"At least one platform is required"` | `platforms` is an empty array |
+| 400 | `"Platforms must be an array"` | `platforms` is not an array |
+| 400 | `"Invalid platforms JSON format"` | `platforms` contains malformed JSON |
+| 400 | `"Invalid platform ID format: <id>"` | Platform ID does not match `/^[a-z]+-[a-zA-Z0-9_-]+$/` |
+| 400 | `"Invalid scheduled time format"` | `scheduledTime` is not a valid ISO 8601 datetime |
+| 400 | `"Invalid platformSettings JSON"` | `platformSettings` was provided as a string that could not be parsed as valid JSON |
+| 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | `x-publora-key` value is incorrect or revoked |
+| 401 | `"Invalid API key owner"` | API key exists but the associated workspace/user could not be resolved |
+| 403 | `"API access is not enabled for this account"` | No active subscription or account is on Starter plan without API access |
+| 403 | `"MCP access is not enabled for this account"` | Returned when `x-publora-client: mcp` is set but MCP access is not enabled |
+| 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |
+| 403 | LimitExceededError (structured) | Plan limit reached (see below) |
+| 500 | `"Failed to create post group"` | Unexpected server error |
+
+### LimitExceededError (403)
+
+When a plan limit is exceeded, the API returns a structured error response. The `error` field contains a short label, while the `message` field contains the full human-readable explanation:
+
+```json
+{
+  "error": "Post limit reached",
+  "message": "Monthly post limit reached. Your Pro plan allows 100 platform posts per month.",
+  "code": "POST_LIMIT_REACHED",
+  "metric": "posts.platform_monthly",
+  "limit": 100,
+  "used": 100,
+  "requested": 2,
+  "remaining": 0,
+  "periodStart": "2026-03-01T00:00:00.000Z",
+  "periodEnd": "2026-04-01T00:00:00.000Z",
+  "planName": "Pro"
+}
+```
+
+Some limit errors include additional context fields:
+
+| Field | Present on | Description |
+|-------|-----------|-------------|
+| `scheduledTime` | `SCHEDULE_HORIZON_REACHED` | The requested scheduled time that exceeded the horizon |
+| `maxScheduledDate` | `SCHEDULE_HORIZON_REACHED` | The furthest date allowed by the current plan |
+| `scope` | `POST_LIMIT_REACHED`, `SCHEDULED_POST_LIMIT_REACHED` | Present when the limit is connection-scoped (e.g., `"connection"`). When connection-scoped, top-level `used` and `remaining` are `null` — per-connection values are in `blockedPlatforms` only. |
+| `blockedPlatforms` | `POST_LIMIT_REACHED`, `SCHEDULED_POST_LIMIT_REACHED` | Array of objects with `platformSelection`, `used`, and `remaining` fields. Present when scope is connection-level |
+| `overLimitBy` | `CONNECTIONS_OVER_LIMIT` | Number of connections over the plan limit |
+| `disallowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platform names not available on the current plan |
+| `allowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platform names available on the current plan |
+
+Possible `code` values:
+
+| Code | Error value | Description |
+|------|-------------|-------------|
+| `POST_LIMIT_REACHED` | `"Post limit reached"` | Monthly post limit exceeded |
+| `SCHEDULED_POST_LIMIT_REACHED` | `"Scheduled post limit reached"` | Scheduled post limit exceeded |
+| `SCHEDULE_HORIZON_REACHED` | `"Schedule horizon reached"` | Scheduling too far in the future for current plan |
+| `CONNECTIONS_OVER_LIMIT` | `"Account over channel limit"` | Too many platform connections for current plan |
+| `PLATFORM_NOT_AVAILABLE` | `"Platform not available"` | Platform not available on current plan (e.g., Starter plan user posting to Twitter/X). Metric: `posts.platform_monthly`. |
+| `CHANNEL_LIMIT_REACHED` | `"Channel limit reached"` | Channel limit reached for current plan |
 
 ## Post Statuses
 
-After creation, the post goes through these states:
+After creation, the post group goes through these states:
 
 ```
-draft → scheduled → processing → published
-                                → failed
-                                → partially_published
+draft → scheduled → published
+                  → failed
+                  → partially_published
 ```
 
+**Post group statuses** (returned in `status` field):
 - **draft**: Saved but not scheduled
 - **scheduled**: Will be published at `scheduledTime`
-- **processing**: Currently being sent to platforms
 - **published**: Successfully posted on all platforms
 - **failed**: Failed on all platforms
 - **partially_published**: Succeeded on some, failed on others
+
+> **Note:** Individual platform records (ScheduledPost) have their own statuses including `pending` and `processing`, which reflect per-platform delivery state. The post group `status` field above is a rollup and does not include `processing`. A separate `processingStatus` field on the post group tracks whether the post is currently being processed. Possible `processingStatus` values are: `pending`, `processing`, `finished`.
+
+> **Note:** The `processingStatus` field is available in the [get-post](get-post.md) response but is **not** included in [list-posts](list-posts.md) responses.
 
 
 ---

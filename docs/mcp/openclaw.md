@@ -255,15 +255,15 @@ print('Image uploaded and attached to post:', post_group_id)
 
 | Platform | Characters | Images | Video | Special Features |
 |----------|------------|--------|-------|------------------|
-| LinkedIn | 3,000 | 20 | 200MB | Documents, carousels |
-| X/Twitter | 280 (25K premium) | 4 | 140s | Auto-threading |
+| LinkedIn | 3,000 | 20 | 500MB | Documents, carousels |
+| X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
 | Instagram | 2,200 | 10 | 90s | Reels supported |
 | Threads | 500 | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |
-| Facebook | 63,206 | 10 | 240min | Page posts, Reels |
-| Bluesky | 300 | 4 | N/A | Auto-facet detection |
-| Mastodon | 500* | 4 | 40MB | Instance-variable |
+| Facebook | 63,206 | 10 | 45min | Page posts, Reels |
+| Bluesky | 300 | 4 | 3 min / 100 MB | Auto-facet detection |
+| Mastodon | 500* | 4 | ~99 MB | Instance-variable |
 | Telegram | 4,096 (1,024 captions) | Unlimited | 2GB | Markdown/HTML |
 
 *Varies by instance

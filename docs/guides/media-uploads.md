@@ -16,6 +16,8 @@ The workflow has three steps:
 
 Media is automatically attached to the post group via the `postGroupId` you provide when requesting the upload URL.
 
+> **Note:** Pre-signed upload URLs expire after **1 hour**. If you do not complete the upload within that time, request a new URL via `POST /api/v1/get-upload-url`.
+
 ### Supported Formats
 
 | Type | Formats |
@@ -25,10 +27,10 @@ Media is automatically attached to the post group via the `postGroupId` you prov
 
 ### Limits
 
-- **Maximum file size:** 512 MB per file
-- **Per post:** Up to **4 images** OR **1 video** (not both)
+- **Maximum file size:** 512 MB per file. All uploads go through a 512 MB multer limit on the Publora server regardless of platform. While some platforms natively support larger files (e.g., YouTube 256 GB, Facebook 2 GB, Telegram 2 GB), Publora caps all uploads at 512 MB. Note: this limit is not enforced server-side via a `ContentLengthRange` condition on the presigned URL, but the 512 MB multer middleware limit applies to the upload URL request.
+- **Per post:** Up to **4 images** OR **1 video** (not both). Note: per-post media limits are validated at scheduling time (when the post moves to `scheduled` status), not at upload time
 - **Instagram carousels:** Up to **10 images** (exception to the 4-image limit)
-- **Threads carousels:** Up to **20 images or videos** (mixed media supported)
+- **Threads carousels:** Up to **10 images** (video items in carousels are not currently supported by Publora; standalone video posts work normally)
 
 ### Automatic Processing
 
@@ -78,7 +80,8 @@ const uploadUrlResponse = await fetch(`${BASE_URL}/get-upload-url`, {
   })
 });
 
-const { uploadUrl, fileUrl, mediaId } = await uploadUrlResponse.json();
+const { success, uploadUrl, fileUrl, mediaId } = await uploadUrlResponse.json();
+// Response: { success: true, uploadUrl: "...", fileUrl: "...", mediaId: "..." }
 
 // Step 3: Upload the file directly to S3
 const fileBuffer = await fs.promises.readFile('./product-photo.jpg');
@@ -740,7 +743,7 @@ console.log('Carousel post scheduled!');
 
 ## Best Practices
 
-1. **Validate file size before uploading.** The maximum is 512 MB per file. Check the size client-side to avoid wasted bandwidth on uploads that will be rejected.
+1. **Validate file size before uploading.** The documented maximum is 512 MB per file. While the server does not enforce this via a presigned URL condition, exceeding this size may cause issues with platform processing. Always check the size client-side.
 
 2. **Use the correct `contentType`.** The `contentType` you pass to `get-upload-url` must match the `Content-Type` header you send when uploading to S3. A mismatch will cause the upload to fail.
 
@@ -755,7 +758,7 @@ console.log('Carousel post scheduled!');
 | Problem | Cause | Solution |
 |---|---|---|
 | S3 upload returns `403 Forbidden` | Pre-signed URL expired or `Content-Type` mismatch | Request a fresh upload URL and ensure the `Content-Type` header matches exactly |
-| `400` when uploading media | Missing required fields (`fileName`, `contentType`, `postGroupId`) | Ensure all required fields are provided |
+| `400` when uploading media | Missing required fields (`fileName`, `contentType`, `postGroupId`) | Ensure all required fields are provided. Note: `type` (`"image"` or `"video"`) is effectively required -- while the API does not explicitly validate it, omitting it causes a downstream error during processing. Always include it. |
 | WebP image looks different after posting | Auto-conversion to JPEG for incompatible platforms | Upload as JPEG directly if quality consistency is critical |
 | Video post fails on TikTok | Video does not meet TikTok requirements (FPS, format, duration) | Check video metadata -- ensure proper FPS, supported codec, and acceptable duration |
 | Upload is slow for large files | File being read entirely into memory | Use streaming upload for large video files |

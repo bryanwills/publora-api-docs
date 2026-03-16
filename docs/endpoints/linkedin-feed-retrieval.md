@@ -1,8 +1,8 @@
-# LinkedIn Feed Retrieval API (Coming Soon)
+# LinkedIn Feed Retrieval API
+
+> **NOT YET AVAILABLE** -- These endpoints are **completely disabled** and return **HTTP 404 (Not Found)**. The underlying route handlers are commented out in the source code, so the routes do not exist. They require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. All request/response formats documented below are **planned and speculative** -- they are not based on a working implementation and may change when the feature is built. Do not attempt to call these endpoints; they will return a 404 error.
 
 Retrieve your LinkedIn posts, comments, and reactions via the Publora API.
-
-> **Status: NOT YET AVAILABLE** - These endpoints require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora. Contact LinkedIn Partner Support to request access.
 
 ## Endpoints
 
@@ -270,12 +270,12 @@ Content-Type: application/json
 
 | Type | Description | Emoji |
 |------|-------------|-------|
-| `LIKE` | Standard thumbs up | 👍 |
-| `PRAISE` | Clapping hands | 👏 |
-| `EMPATHY` | Heart/love | ❤️ |
-| `INTEREST` | Lightbulb (insightful) | 💡 |
-| `APPRECIATION` | Thank you | 🙏 |
-| `ENTERTAINMENT` | Funny/laughing | 😂 |
+| `LIKE` | Thumbs up | :+1: |
+| `PRAISE` | Celebrate | :fire: |
+| `EMPATHY` | Love / Heart | :heart: |
+| `INTEREST` | Insightful | :bulb: |
+| `APPRECIATION` | Support | :clap: |
+| `ENTERTAINMENT` | Funny | :smile: |
 
 ### cURL Example
 
@@ -333,15 +333,15 @@ The `cached` field in responses indicates if data was served from cache.
 
 ## Error Responses
 
-### Permission Denied (403)
+### Not Found (404)
 
 ```json
 {
-  "error": "Access denied. The r_member_social permission may not be approved for this application."
+  "error": "Not Found"
 }
 ```
 
-This error indicates the LinkedIn `r_member_social` permission is not approved. Contact LinkedIn Partner Support to request access.
+All feed retrieval endpoints currently return HTTP **404 Not Found** because the route handlers are commented out in the source code and the routes do not exist.
 
 ### Connection Not Found (404)
 
@@ -434,10 +434,8 @@ for post in posts_response.json()["posts"]:
 
 ## MCP Integration
 
-These endpoints are also available as MCP tools:
+> **NOT AVAILABLE:** The MCP tools listed below (`linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions`) are **commented out** in the source code and are **not registered**. They will not appear in MCP tool listings and cannot be invoked. They are listed here for reference only and will become available if/when the feed retrieval feature is implemented.
 
 - `linkedin_posts` - Retrieve your posts
 - `linkedin_post_comments` - Retrieve comments on a post
 - `linkedin_post_reactions` - Retrieve reactions on a post
-
-See [MCP Tools Reference](/mcp/tools-reference) for details.

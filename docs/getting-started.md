@@ -14,6 +14,8 @@ Publora API lets you schedule and publish social media posts across 10 platforms
 | **Pro** | $2.99/account | 100/account | All platforms |
 | **Premium** | $5.99/account | 500/account | All platforms |
 
+> **Note:** The Starter plan does not include API access (dashboard-only). To use the API, upgrade to Pro or Premium.
+
 See full details at [publora.com/pricing](https://publora.com/pricing)
 
 ## Step 1: Sign Up and Get an API Key

@@ -14,19 +14,20 @@ GET https://api.publora.com/api/v1/list-posts
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `mcp` for MCP integrations). Affects which access controls are checked. |
 
 ## Query Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `page` | number | `1` | Page number (1-indexed). Values less than 1 are silently clamped to 1. |
-| `limit` | number | `20` | Items per page. Values are silently clamped to the range 1-100. |
-| `status` | string | all | Filter by status: `draft`, `scheduled`, `published`, `failed`, `partially_published` |
-| `platform` | string | all | Filter by platform (case-insensitive prefix matching): `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram` |
+| `limit` | number | `20` | Items per page. Values are clamped to the range 1–100, with falsy values (0, NaN, empty) defaulting to 20. |
+| `status` | string | all | Filter by status: `draft`, `scheduled`, `published`, `failed`, `partially_published`. Note: `pending` and `processing` are valid per-platform ScheduledPost statuses (not ScheduledPostGroup statuses) and cannot be used as filter values here. |
+| `platform` | string | all | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram`, `pinterest`. Internally, the filter applies a case-insensitive regex against stored compound platform IDs (e.g., `twitter-123`). The filter uses a regex anchored to the start of the string (`^platform-`), so passing a bare platform name like `twitter` matches all Twitter connections. Passing a full compound ID like `twitter-123` would generate regex `^twitter-123-` which requires a trailing dash and will likely return no results — use bare platform names instead. No validation is performed on the value — invalid names (e.g., `?platform=foobar`) silently return an empty result set rather than an error. |
 | `sortBy` | string | `createdAt` | Sort field: `createdAt`, `scheduledTime`, `updatedAt` |
-| `sortOrder` | string | `desc` | Sort order: `asc` or `desc` |
-| `fromDate` | string | - | Filter posts scheduled after this ISO 8601 date |
-| `toDate` | string | - | Filter posts scheduled before this ISO 8601 date |
+| `sortOrder` | string | `desc` | Sort order: `asc` or `desc`. Invalid values silently default to `desc`. |
+| `fromDate` | string | - | Filter posts scheduled on or after this ISO 8601 date (inclusive, uses `$gte`). Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
+| `toDate` | string | - | Filter posts scheduled on or before this ISO 8601 date (inclusive, uses `$lte`). Filters on `scheduledTime` only — drafts without a `scheduledTime` are excluded when this parameter is used. |
 
 ## Response
 
@@ -53,7 +54,7 @@ GET https://api.publora.com/api/v1/list-posts
           "status": "scheduled"
         }
       ],
-      "mediaUrls": ["https://cdn.publora.com/media/abc123.jpg"]
+      "mediaUrls": ["https://your-media-url.example.com/images/abc123.jpg"]
     }
   ],
   "pagination": {
@@ -66,6 +67,10 @@ GET https://api.publora.com/api/v1/list-posts
   }
 }
 ```
+
+> **Note:** The `platformId` field in list-posts uses a compound format (e.g., `"twitter-123456789"`), combining the platform name with the raw ID. This differs from the [get-post](./get-post) endpoint, which returns only the raw platform ID (e.g., `"123456789"`).
+
+> **Note:** Filtering by `?status=published` returns only posts where all platforms published successfully. It does **not** include `partially_published` posts. This is an exact match and differs from dashboard behavior, which may group these statuses together.
 
 ## Pagination Fields
 
@@ -198,7 +203,7 @@ def fetch_posts_paginated(
 
     Args:
         api_key: Your Publora API key
-        status: Filter by status (draft, scheduled, published, failed)
+        status: Filter by status (draft, scheduled, published, failed, partially_published)
         platform: Filter by platform (twitter, linkedin, etc.)
         limit: Items per page (max 100)
 
@@ -399,9 +404,17 @@ echo "$ALL_POSTS" > scheduled_posts.json
 | 400 | `"Invalid sortBy. Must be one of: createdAt, updatedAt, scheduledTime"` | Invalid sortBy field |
 | 400 | `"Invalid fromDate format"` | fromDate is not a valid ISO 8601 date |
 | 400 | `"Invalid toDate format"` | toDate is not a valid ISO 8601 date |
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | The provided API key is not valid |
+| 401 | `"Invalid API key owner"` | API key exists but the associated workspace/user could not be resolved |
+| 403 | `"API access is not enabled for this account"` | The account does not have API access enabled |
+| 403 | `"MCP access is not enabled for this account"` | Returned when `x-publora-client: mcp` is set but MCP access is not enabled |
+| 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |
+| 500 | `"Failed to list posts"` | Internal server error |
 
-> **Note:** The `page` and `limit` parameters do not return errors for out-of-range values. Instead, they are silently clamped to valid ranges: `page` is clamped to a minimum of 1, and `limit` is clamped to the range 1-100.
+> **Note:** The `page` and `limit` parameters do not return errors for out-of-range values. Instead, they are silently clamped to valid ranges: `page` is clamped to a minimum of 1, and `limit` is clamped to the range 1–100 (with falsy values like 0 defaulting to 20).
 
 ## Best Practices
 

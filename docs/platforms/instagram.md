@@ -4,16 +4,16 @@ Post to Instagram programmatically using the Publora REST API. A simpler alterna
 
 ## Instagram API Overview
 
-Publora provides a unified REST API for publishing image posts, carousels, Reels, and Stories to Instagram through the Instagram Graph API. A business or creator account is required. No need to manage Facebook OAuth flows, handle the Instagram Content Publishing API complexity, or set up a Facebook Developer app.
+Publora provides a unified REST API for publishing image posts, carousels, Reels, and Stories to Instagram through the Instagram Graph API. A business or creator account is required. No need to manage OAuth flows, handle the Instagram Content Publishing API complexity, or set up a Facebook Developer app.
 
 ### Why Use Publora Instead of Instagram Graph API / Instagrapi?
 
 | Feature | Publora API | Instagram Graph API |
 |---------|-------------|---------------------|
-| Authentication | Single API key | Facebook OAuth 2.0 flow |
+| Authentication | Single API key | Instagram Business Login (OAuth 2.0) |
 | API access | Instant | Facebook app review |
 | Reels & Stories | Supported | Supported |
-| Multi-platform | Post to 10 platforms | Instagram only |
+| Multi-platform | Post to 11 platforms | Instagram only |
 | Setup time | 5 minutes | Days to weeks |
 | Carousel support | Yes | Yes |
 
@@ -25,16 +25,16 @@ Publora provides a unified REST API for publishing image posts, carousels, Reels
 instagram-{accountId}
 ```
 
-Where `{accountId}` is your Instagram Business or Creator account ID assigned during connection via Facebook OAuth.
+Where `{accountId}` is your Instagram Business account ID assigned during connection via Instagram OAuth.
 
 ## Requirements
 
-- An **Instagram Business** account (personal accounts are not supported by the Instagram API)
-- The Instagram account must be connected to a Facebook Page
-- Connected via OAuth through the Publora dashboard
+- An **Instagram Business** account is recommended (personal accounts are not supported)
+- Creator accounts may also work, but Business is the recommended account type
+- Connected via Instagram OAuth through the Publora dashboard
 - API key from Publora
 
-> **Important:** Creator accounts are NOT supported via the Instagram Graph API. You must use a Business account.
+> **Important:** Business accounts are recommended. Creator accounts may also work but have not been fully tested — Publora uses `instagram_business_*` OAuth scopes. Personal accounts are not supported.
 
 ## API Limits
 
@@ -50,7 +50,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 |-------|-------|
 | Max file size | 8 MB |
 | Max count (carousel) | 10 images (native app allows 20) |
-| **Formats** | **JPEG only** (PNG/GIF will fail via API) |
+| **Formats** | **JPEG only** per Instagram docs (PNG may work in practice — Publora does not convert PNG to JPEG) |
 
 > **Warning:** You cannot mix images and videos in the same carousel via the API.
 
@@ -71,7 +71,7 @@ These are critical limits specific to the Instagram Graph API (different from na
 
 The following features are **not available** via the Instagram Graph API:
 
-- Creator accounts (Business accounts only)
+- Personal accounts (Business recommended, Creator may also work)
 - Shopping tags
 - Branded content tags
 - Filters and effects
@@ -105,6 +105,7 @@ Instagram supports a `platformSettings` object to control video behavior:
 | Setting | Values | Default | Description |
 |---------|--------|---------|-------------|
 | `videoType` | `"REELS"`, `"STORIES"` | `"REELS"` | Determines how videos are published |
+| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. |
 
 ## Examples
 
@@ -456,8 +457,8 @@ console.log(response.data);
 ## Platform Quirks
 
 - **No text-only posts**: Instagram requires at least one image or video. Attempting to post text without media will return an error.
-- **Business account required**: Personal Instagram accounts cannot be used with the API. You must convert to a Business or Creator account.
-- **Facebook Page connection**: Your Instagram Business account must be linked to a Facebook Page. This is a requirement of the Instagram Graph API.
+- **Business account recommended**: Personal Instagram accounts cannot be used with the API. Business is recommended; Creator accounts may also work but are not fully tested.
+- **Direct Instagram connection**: Publora connects directly to Instagram via Instagram Business Login. No Facebook Page is required.
 - **Carousel limits**: Carousels require between 2 and 10 media items. A single image is posted as a regular photo post, not a carousel.
 - **Reel is the default**: When posting a video, Publora defaults to publishing it as a Reel. Set `videoType: "STORIES"` to post as a Story instead.
 - **Stories disappear**: Stories are ephemeral and will disappear after 24 hours. This is standard Instagram behavior.

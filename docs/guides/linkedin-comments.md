@@ -116,7 +116,7 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-comments',
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN the comment belongs to |
-| `commentId` | string | Yes | Comment URN to delete |
+| `commentId` | string | Yes | Comment URN or numeric comment ID (both formats accepted via the REST API) |
 | `platformId` | string | Yes | Your LinkedIn platform ID |
 
 ### JavaScript Example
@@ -157,6 +157,7 @@ const postedId = data.posts[0].postedId; // e.g., "urn:li:share:7434685316856377
 - **Character limit:** Comments are limited to 1,250 characters
 - **Network visibility:** You can only comment on posts visible to your LinkedIn account
 - **URN format:** Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format (not `urn:li:activity:xxx` from URLs)
+- **MCP tool note:** When using the Publora MCP tool for deleting comments, the tool description only mentions URN format for `commentId`. The REST API accepts both URN and numeric ID formats.
 
 ## Related Guides
 

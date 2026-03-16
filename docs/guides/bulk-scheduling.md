@@ -393,6 +393,63 @@ createWeeklyRecurring(
 
 ## Batch Operations
 
+### Retrieve Draft Post IDs
+
+Before performing batch operations, you can retrieve your existing posts (including drafts) using the `list-posts` endpoint:
+
+```javascript
+// List all draft posts
+const response = await fetch(`${BASE_URL}/list-posts?status=draft`, {
+  headers: { 'x-publora-key': PUBLORA_API_KEY }
+});
+
+const { posts } = await response.json();
+const draftIds = posts.map(pg => pg.postGroupId);
+console.log(`Found ${draftIds.length} drafts:`, draftIds);
+```
+
+```python
+# List all draft posts
+response = requests.get(
+    f'{BASE_URL}/list-posts',
+    headers={'x-publora-key': PUBLORA_API_KEY},
+    params={'status': 'draft'}
+)
+
+posts = response.json()['posts']
+draft_ids = [pg['postGroupId'] for pg in posts]
+print(f"Found {len(draft_ids)} drafts:", draft_ids)
+```
+
+> **Note:** Post group IDs (`postGroupId`) are MongoDB ObjectIds (e.g., `6626a1f5e4b0c91a2d3f4567`). The `list-posts` endpoint returns results in a `posts` array and supports the following query parameters:
+>
+> | Parameter | Type | Description |
+> |---|---|---|
+> | `status` | `string` | Filter by status: `draft`, `scheduled`, `published`, `failed`, `partially_published` |
+> | `platform` | `string` | Filter by platform (e.g., `twitter`, `linkedin`) |
+> | `page` | `number` | Page number (default: 1) |
+> | `limit` | `number` | Results per page (default: 20) |
+> | `fromDate` | `string` | Filter posts scheduled on or after this ISO 8601 date |
+> | `toDate` | `string` | Filter posts scheduled on or before this ISO 8601 date |
+> | `sortBy` | `string` | Field to sort by: `createdAt`, `updatedAt`, or `scheduledTime` |
+> | `sortOrder` | `string` | Sort direction: `asc` or `desc` |
+>
+> The response includes a `pagination` object alongside the `posts` array:
+> ```json
+> {
+>   "success": true,
+>   "posts": [...],
+>   "pagination": {
+>     "page": 1,
+>     "limit": 20,
+>     "totalItems": 47,
+>     "totalPages": 3,
+>     "hasNextPage": true,
+>     "hasPrevPage": false
+>   }
+> }
+> ```
+
 ### Batch Update Scheduled Times
 
 ```javascript
@@ -407,6 +464,7 @@ async function batchReschedule(postGroupIds, newBaseTime, intervalHours = 2) {
       method: 'PUT',
       headers,
       body: JSON.stringify({
+        status: 'scheduled',
         scheduledTime: newTime.toISOString()
       })
     });
@@ -423,13 +481,15 @@ async function batchReschedule(postGroupIds, newBaseTime, intervalHours = 2) {
 
 // Reschedule all posts starting from a new date
 batchReschedule(
-  ['pg_abc123', 'pg_def456', 'pg_ghi789'],
+  ['6626a1f5e4b0c91a2d3f4567', '6626a1f5e4b0c91a2d3f4568', '6626a1f5e4b0c91a2d3f4569'],
   new Date('2026-03-15T10:00:00Z'),
   2 // 2 hours apart
 );
 ```
 
 ### Batch Delete
+
+> **Note:** The `delete-post` endpoint returns `{ "success": true }` on success.
 
 ```javascript
 async function batchDelete(postGroupIds) {
@@ -559,16 +619,13 @@ async function scheduleWithRetry(post, maxRetries = 3) {
         return { success: true, data: await response.json() };
       }
 
-      if (response.status === 429) {
-        // Rate limited - wait and retry
-        const retryAfter = response.headers.get('Retry-After') || 5;
-        console.log(`Rate limited. Waiting ${retryAfter}s before retry ${attempt}/${maxRetries}`);
-        await new Promise(r => setTimeout(r, retryAfter * 1000));
-        continue;
-      }
-
       const error = await response.json();
-      return { success: false, error: error.error || error.message };
+
+      // Do not retry client errors (4xx) -- they will not succeed on retry
+      // Note: rate limit errors use 403 with a LimitExceededError format, not 429
+      if (response.status >= 400 && response.status < 500) {
+        return { success: false, error: error.error || error.message };
+      }
 
     } catch (error) {
       if (attempt === maxRetries) {
@@ -584,4 +641,4 @@ async function scheduleWithRetry(post, maxRetries = 3) {
 
 ---
 
-*[Publora](https://publora.com) — Social media API with free tier, paid plans from $2.99/account*
+*[Publora](https://publora.com) — Social media API with free Starter plan, paid plans from Pro ($2.99/mo billed yearly)*

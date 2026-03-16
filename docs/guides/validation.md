@@ -14,8 +14,9 @@ Validation runs automatically on these API calls:
 
 | Endpoint | Trigger |
 |---|---|
-| `POST /api/v1/create-post` | When creating a new post (draft or scheduled) |
-| `PUT /api/v1/update-post/:id` | When updating content, platforms, or media |
+| Dashboard update to `scheduled` status | When changing a post's status to `scheduled` in the dashboard |
+
+> **Note:** The `POST /api/v1/create-post` API endpoint does **not** run post validation (`postValidationService.validatePostGroup`). It only performs basic field presence checks (content, platforms, scheduledTime format). Full validation only runs in the dashboard flow when updating a post to `scheduled` status. The `PUT /api/v1/update-post/:id` endpoint also does **not** invoke the validation service -- it only accepts `status` and `scheduledTime` fields (for rescheduling or changing draft/scheduled status).
 
 If validation fails with blocking errors, the API returns a `400` status code with details about what needs to be fixed. Warnings are returned but do not block the operation.
 
@@ -37,7 +38,7 @@ Each platform has a maximum character limit. Some platforms also have minimum re
 | **Mastodon** | 500 | Instance-configurable (some allow 5,000+) |
 | **Bluesky** | 300 | Links do not count toward limit |
 | **Telegram** | 4,096 (users) / 1,024 (bot captions) | Bots limited to 1,024 for captions |
-| **Pinterest** | 100 (title) / 800 (description) | Optimal description: 220-232 chars |
+| **Pinterest** | 100 (title) / 800 (description) | Optimal description: 220-232 chars. *Pinterest is in the platform registry but publishing support is not yet fully available/tested.* |
 
 ### Media Requirements
 
@@ -63,7 +64,7 @@ Some platforms require media, while others support text-only posts.
 |---|---|---|---|
 | **Twitter/X** | 5 MB | 512 MB | 4 images OR 1 video |
 | **Instagram** | 8 MB | 300 MB | 10 (API carousel) |
-| **Threads** | 8 MB | 500 MB | 20 |
+| **Threads** | 8 MB | 500 MB | 10 |
 | **TikTok** | - | 4 GB | 1 video only |
 | **LinkedIn** | 5 MB | 500 MB | 20 images OR 1 video |
 | **YouTube** | - | 256 GB | 1 video only |
@@ -111,6 +112,8 @@ Some platforms require media, while others support text-only posts.
 
 ## Validation Response Format
 
+> **Note:** The structured validation response below (with `validation.errors[]`, `validation.warnings[]`, and `validation.summary`) is returned by the **dashboard validation endpoint** only. The REST API `create-post` endpoint does not run the full validation service and will not return this format (it only performs basic field presence checks). The REST API `update-post` endpoint and MCP `update_post` tool also do not invoke the validator.
+
 When validation errors occur, the API returns a `400` status code with a structured response:
 
 ```json
@@ -121,32 +124,32 @@ When validation errors occur, the API returns a `400` status code with a structu
     "errors": [
       {
         "platform": "instagram",
-        "platformId": "instagram-456",
         "code": "MEDIA_REQUIRED",
-        "message": "Instagram requires at least one image or video",
-        "field": "media"
+        "message": "Instagram posts require media",
+        "field": "media",
+        "severity": "error"
       },
       {
         "platform": "tiktok",
-        "platformId": "tiktok-789",
         "code": "VIDEO_REQUIRED",
-        "message": "TikTok requires a video",
-        "field": "media"
+        "message": "TikTok posts require a video",
+        "field": "video",
+        "severity": "error"
       }
     ],
     "warnings": [
       {
         "platform": "twitter",
-        "platformId": "twitter-123",
-        "code": "CONTENT_TRUNCATION_WARNING",
-        "message": "Content exceeds 280 characters. Consider using threading.",
-        "field": "content"
+        "code": "CONTENT_TOO_LONG",
+        "message": "Content exceeds Twitter/X's 280 character limit (currently 450)",
+        "field": "content",
+        "severity": "warning",
+        "constraint": "maxLength",
+        "currentValue": 450
       }
     ],
     "summary": {
-      "totalPlatforms": 3,
-      "validPlatforms": 1,
-      "invalidPlatforms": 2,
+      "affectedPlatforms": ["instagram", "tiktok", "twitter"],
       "errorCount": 2,
       "warningCount": 1
     }
@@ -161,9 +164,7 @@ When validation errors occur, the API returns a `400` status code with a structu
 | `valid` | boolean | `true` if all platforms pass validation, `false` otherwise |
 | `errors` | array | Blocking errors that must be fixed before scheduling |
 | `warnings` | array | Non-blocking issues that may affect publishing |
-| `summary.totalPlatforms` | number | Number of platforms in the post |
-| `summary.validPlatforms` | number | Platforms that passed validation |
-| `summary.invalidPlatforms` | number | Platforms that failed validation |
+| `summary.affectedPlatforms` | array | List of platform names with errors or warnings |
 | `summary.errorCount` | number | Total number of errors |
 | `summary.warningCount` | number | Total number of warnings |
 
@@ -172,10 +173,15 @@ When validation errors occur, the API returns a `400` status code with a structu
 | Field | Type | Description |
 |---|---|---|
 | `platform` | string | Platform name (e.g., "twitter", "instagram") |
-| `platformId` | string | The full platform ID from your request |
 | `code` | string | Machine-readable error code |
 | `message` | string | Human-readable error description |
-| `field` | string | The field that caused the error ("content", "media", "settings") |
+| `field` | string | The field that caused the error ("content", "media", "video", "settings") |
+| `severity` | string | Either `"error"` (blocking) or `"warning"` (non-blocking) |
+| `constraint` | string | (optional) String descriptor of the violated constraint (e.g., `"maxLength"`, `"maxCount"`, `"maxSize"`, `"maxDuration"`, `"requiredType"`) |
+| `currentValue` | number/string | (optional) The current value that exceeded the constraint |
+| `maxValue` | number/string | (optional) The maximum allowed value |
+| `minValue` | number/string | (optional) The minimum required value |
+| `suggestions` | string[] | (optional) Suggested fixes or alternative actions |
 
 ## Error Codes Reference
 
@@ -183,10 +189,12 @@ When validation errors occur, the API returns a `400` status code with a structu
 
 | Code | Description | Resolution |
 |---|---|---|
-| `CONTENT_TOO_LONG` | Content exceeds the platform's character limit | Shorten the content or use threading where supported |
+| `CONTENT_TOO_LONG` | Content exceeds the platform's character limit | Shorten the content or use threading where supported. **Note:** On threading-capable platforms (Twitter, Threads) with threading enabled, this is a **warning** (content will be auto-threaded). On other platforms or when threading is disabled, it is an **error**. |
 | `CONTENT_TOO_SHORT` | Content is below the minimum required length | Add more content |
 | `CONTENT_REQUIRED` | Text content is required but missing | Add text content to the post |
 | `CONTENT_OR_MEDIA_REQUIRED` | Either text or media is needed | Add content or attach media |
+| `THREAD_PART_TOO_LONG` | A single thread part exceeds the platform's per-part character limit | Break the thread part into smaller segments. (This code is defined in the `@publora/platform-limits` package. Threading validation may occur in a separate service.) |
+| `INVALID_PLATFORM_CONTENT` | Content contains elements not supported by the platform | Remove unsupported content elements. (This error code is defined in the codebase but not currently emitted by the validation service.) |
 
 ### Media Errors
 
@@ -216,6 +224,12 @@ When validation errors occur, the API returns a `400` status code with a structu
 | `PLATFORM_SETTING_REQUIRED` | A required platform-specific setting is missing | Provide the required setting |
 | `PLATFORM_SETTING_INVALID` | A platform-specific setting has an invalid value | Correct the setting value |
 
+### System Errors
+
+| Code | Description | Resolution |
+|---|---|---|
+| `VALIDATION_SYSTEM_ERROR` | An internal error occurred during validation | Retry the request; if persistent, contact support |
+
 ## Examples
 
 ### Validation Error: Missing Media for Instagram
@@ -241,17 +255,15 @@ When posting to Instagram without media:
     "errors": [
       {
         "platform": "instagram",
-        "platformId": "instagram-456",
         "code": "MEDIA_REQUIRED",
-        "message": "Instagram requires at least one image or video",
-        "field": "media"
+        "message": "Instagram posts require media",
+        "field": "media",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 2,
-      "validPlatforms": 1,
-      "invalidPlatforms": 1,
+      "affectedPlatforms": ["instagram"],
       "errorCount": 1,
       "warningCount": 0
     }
@@ -283,17 +295,15 @@ When posting an image to TikTok (video-only platform):
     "errors": [
       {
         "platform": "tiktok",
-        "platformId": "tiktok-789",
         "code": "VIDEO_REQUIRED",
-        "message": "TikTok requires a video. Images are not supported.",
-        "field": "media"
+        "message": "TikTok posts require a video",
+        "field": "video",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 1,
-      "validPlatforms": 0,
-      "invalidPlatforms": 1,
+      "affectedPlatforms": ["tiktok"],
       "errorCount": 1,
       "warningCount": 0
     }
@@ -305,6 +315,8 @@ When posting an image to TikTok (video-only platform):
 
 When content exceeds Twitter's 280 character limit:
 
+> **Threading note:** This example shows `CONTENT_TOO_LONG` as an `"error"` with `severity: "error"`. However, on threading-capable platforms (Twitter/X, Threads) with threading enabled, this would be a **warning** (`severity: "warning"`) instead, because the content will be automatically split into a thread. The example below assumes threading is disabled.
+
 **Response (400):**
 
 ```json
@@ -315,17 +327,15 @@ When content exceeds Twitter's 280 character limit:
     "errors": [
       {
         "platform": "twitter",
-        "platformId": "twitter-123",
         "code": "CONTENT_TOO_LONG",
-        "message": "Content is 450 characters. Twitter allows a maximum of 280 characters.",
-        "field": "content"
+        "message": "Content exceeds Twitter/X's 280 character limit (currently 450)",
+        "field": "content",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 1,
-      "validPlatforms": 0,
-      "invalidPlatforms": 1,
+      "affectedPlatforms": ["twitter"],
       "errorCount": 1,
       "warningCount": 0
     }
@@ -347,17 +357,15 @@ When uploading a PNG to Instagram (JPEG only via API):
     "errors": [
       {
         "platform": "instagram",
-        "platformId": "instagram-456",
         "code": "MEDIA_TYPE_NOT_SUPPORTED",
-        "message": "Instagram API only supports JPEG images. PNG files are not accepted.",
-        "field": "media"
+        "message": "Image format \"image/png\" is not supported on Instagram",
+        "field": "media",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 1,
-      "validPlatforms": 0,
-      "invalidPlatforms": 1,
+      "affectedPlatforms": ["instagram"],
       "errorCount": 1,
       "warningCount": 0
     }
@@ -379,24 +387,22 @@ When a video exceeds platform limits:
     "errors": [
       {
         "platform": "instagram",
-        "platformId": "instagram-456",
         "code": "VIDEO_DURATION_EXCEEDED",
-        "message": "Video is 180 seconds. Instagram Reels API allows a maximum of 90 seconds.",
-        "field": "media"
+        "message": "Video duration (3m 0s) exceeds Instagram's 1m 30s limit",
+        "field": "media",
+        "severity": "error"
       },
       {
         "platform": "twitter",
-        "platformId": "twitter-123",
         "code": "VIDEO_DURATION_EXCEEDED",
-        "message": "Video is 180 seconds. Twitter API allows a maximum of 120 seconds.",
-        "field": "media"
+        "message": "Video duration (3m 0s) exceeds Twitter/X's 2m 0s limit",
+        "field": "media",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 2,
-      "validPlatforms": 0,
-      "invalidPlatforms": 2,
+      "affectedPlatforms": ["instagram", "twitter"],
       "errorCount": 2,
       "warningCount": 0
     }
@@ -418,17 +424,15 @@ When an image exceeds Bluesky's strict 1 MB limit:
     "errors": [
       {
         "platform": "bluesky",
-        "platformId": "bluesky-abc",
         "code": "MEDIA_SIZE_EXCEEDED",
-        "message": "Image is 2.5 MB. Bluesky allows a maximum of 1 MB.",
-        "field": "media"
+        "message": "Image (2.5MB) exceeds Bluesky's 1.0MB limit",
+        "field": "media",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 1,
-      "validPlatforms": 0,
-      "invalidPlatforms": 1,
+      "affectedPlatforms": ["bluesky"],
       "errorCount": 1,
       "warningCount": 0
     }
@@ -450,31 +454,29 @@ When a single post has issues on multiple platforms:
     "errors": [
       {
         "platform": "instagram",
-        "platformId": "instagram-456",
         "code": "MEDIA_TYPE_NOT_SUPPORTED",
-        "message": "Instagram API only supports JPEG images. PNG files are not accepted.",
-        "field": "media"
+        "message": "Image format \"image/png\" is not supported on Instagram",
+        "field": "media",
+        "severity": "error"
       },
       {
         "platform": "bluesky",
-        "platformId": "bluesky-abc",
         "code": "MEDIA_SIZE_EXCEEDED",
-        "message": "Image is 2.5 MB. Bluesky allows a maximum of 1 MB.",
-        "field": "media"
+        "message": "Image (2.5MB) exceeds Bluesky's 1.0MB limit",
+        "field": "media",
+        "severity": "error"
       },
       {
         "platform": "tiktok",
-        "platformId": "tiktok-789",
         "code": "VIDEO_REQUIRED",
-        "message": "TikTok requires a video. Images are not supported.",
-        "field": "media"
+        "message": "TikTok posts require a video",
+        "field": "video",
+        "severity": "error"
       }
     ],
     "warnings": [],
     "summary": {
-      "totalPlatforms": 4,
-      "validPlatforms": 1,
-      "invalidPlatforms": 3,
+      "affectedPlatforms": ["instagram", "bluesky", "tiktok"],
       "errorCount": 3,
       "warningCount": 0
     }

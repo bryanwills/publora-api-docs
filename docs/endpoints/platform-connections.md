@@ -14,6 +14,7 @@ GET https://api.publora.com/api/v1/platform-connections
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `mcp`). Used for MCP access gating. |
 
 ## Response
 
@@ -23,7 +24,7 @@ GET https://api.publora.com/api/v1/platform-connections
   "connections": [
     {
       "platformId": "twitter-123456789",
-      "username": "@yourhandle",
+      "username": "yourhandle",
       "displayName": "Your Name",
       "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
       "profileUrl": "https://twitter.com/yourhandle",
@@ -69,24 +70,26 @@ GET https://api.publora.com/api/v1/platform-connections
 | Field | Type | Description |
 |-------|------|-------------|
 | `platformId` | string | Unique ID in format `platform-id`. Use this in the `platforms` array when creating posts. |
-| `username` | string | Platform username or handle |
-| `displayName` | string | Display name on the platform |
-| `profileImageUrl` | string | Profile image URL |
+| `username` | string | Platform username or handle. Note: the stored username may or may not include a `@` prefix depending on what was saved during OAuth. |
+| `displayName` | string/null | Display name on the platform. May be absent from the response (omitted, not `null`) if not set during OAuth, since the field lacks explicit null coercion. |
+| `profileImageUrl` | string/null | Profile image URL. May be absent from the response if not available. |
 | `profileUrl` | string/null | URL to the user's profile on the platform. Can be null if not available for the platform. |
 | `accessTokenExpiresAt` | string/null | Token expiration timestamp (null = no expiration) |
 | `tokenStatus` | string | Current token health: `valid`, `expiring_soon`, `expired`, or `unknown` |
-| `tokenExpiresIn` | string/null | Human-readable time until expiration (e.g., "7d 3h") |
+| `tokenExpiresIn` | string/null | Human-readable time until expiration. Possible formats: `"7d 3h"` (days and hours), `"5h"` (hours only, when less than one day remains), `"< 1h"` (less than one hour remaining), `"expired"` (token already expired), or `null` (no expiration). |
 | `lastSuccessfulPost` | string/null | Timestamp of last successful post to this platform |
-| `lastError` | object/null | Last error that occurred when posting to this platform |
+| `lastError` | object/null | Last error that occurred when posting to this platform. When present, contains: `message` (string — error description) and `occurredAt` (string — ISO 8601 timestamp of when the error occurred). |
 
 ## Token Status Values
 
 | Status | Meaning |
 |--------|---------|
-| `valid` | Token is valid and won't expire within 7 days |
-| `expiring_soon` | Token expires within 7 days - consider reconnecting |
+| `valid` | Token is valid and won't expire in less than 7 days |
+| `expiring_soon` | Token expires in less than 7 days (strictly less than) - consider reconnecting |
 | `expired` | Token has expired - reconnect required |
 | `unknown` | Platform doesn't use expiring tokens (e.g., Twitter, Bluesky) |
+
+> **Note:** Pinterest has OAuth connection routes in the dashboard, but no `test-connection` validator is implemented. Calling `test-connection` for a Pinterest connection will return `"Unknown platform: pinterest"`.
 
 ## Platform ID Format
 
@@ -104,6 +107,8 @@ The `platformId` follows the pattern `platform-id`:
 | Bluesky | `bluesky-did:plc:abc123` |
 | Mastodon | `mastodon-109876543210` |
 | Telegram | `telegram--1001234567890` |
+
+> **Note:** Bluesky platform IDs containing colons (e.g., `bluesky-did:plc:abc123`) are returned by this endpoint but cannot be used directly with `create-post`, which validates against a stricter regex that does not allow colons. Use the `test-connection` endpoint instead, which accepts these IDs.
 
 ## Examples
 
@@ -201,7 +206,7 @@ async function getConnections() {
       if (conn.accessTokenExpiresAt) {
         const expires = new Date(conn.accessTokenExpiresAt);
         const daysUntilExpiry = Math.floor((expires - now) / (1000 * 60 * 60 * 24));
-        if (daysUntilExpiry <= 7) {
+        if (daysUntilExpiry < 7) {
           console.warn(`⚠️  ${conn.platformId} token expires in ${daysUntilExpiry} days`);
         }
       }
@@ -242,7 +247,7 @@ def get_connections():
                     conn['accessTokenExpiresAt'].replace('Z', '+00:00')
                 )
                 days_until_expiry = (expires - now).days
-                if days_until_expiry <= 7:
+                if days_until_expiry < 7:
                     print(f"⚠️  {conn['platformId']} token expires in {days_until_expiry} days")
 
         return data['connections']
@@ -262,7 +267,15 @@ print(f"Connected to {len(platform_ids)} platforms: {platform_ids}")
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Invalid x-publora-user-id"` | `x-publora-user-id` header contains an invalid ObjectId |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | `x-publora-key` value is not a valid key |
+| 401 | `"Invalid API key owner"` | The API key's owner account could not be found |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
+| 403 | `"MCP access is not enabled for this account"` | MCP access is not enabled when `x-publora-client: mcp` is sent |
+| 403 | `"Workspace access is not enabled for this key"` | API key does not have workspace permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` user is not managed by this API key |
+| 500 | `"Internal server error"` | Unexpected error in middleware |
 | 500 | `"Failed to fetch platform connections"` | Server error while fetching connections |
 
 ## Connecting Accounts

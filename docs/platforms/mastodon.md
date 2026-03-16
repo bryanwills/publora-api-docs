@@ -29,7 +29,7 @@ Where `{accountId}` is your Mastodon account ID assigned during account connecti
 
 ## Requirements
 
-- A Mastodon account on the mastodon.social instance connected through the Publora dashboard
+- A Mastodon account on the mastodon.social instance connected through the Publora dashboard (OAuth scopes requested: `read`, `write`, `push`)
 - API key from Publora
 
 ## Supported Content
@@ -37,8 +37,8 @@ Where `{accountId}` is your Mastodon account ID assigned during account connecti
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 500 characters |
-| Images | Yes | JPEG, PNG, up to 4 per post |
-| Videos | Yes | MP4 format |
+| Images | Yes | JPEG, PNG, GIF, WebP, up to 4 per post |
+| Videos | Yes | MP4, WebM formats |
 | Visibility | Yes | Public by default |
 
 ## Visibility
@@ -267,11 +267,11 @@ console.log(response.data);
 
 ## Platform Quirks
 
-- **mastodon.social instance**: Publora currently connects to the mastodon.social instance. Support for other instances may be added in the future.
+- **mastodon.social only**: New connections are limited to the mastodon.social instance (the OAuth flow uses a hardcoded instance URL). However, the test-connection validator extracts the instance URL from the connection's `profileUrl` field, falling back to mastodon.social as default. Support for other instances may be added in the future.
 - **Public by default**: All posts made through Publora are published with public visibility. They will appear on the federated timeline.
-- **Up to 4 images**: A maximum of 4 images can be attached to a single post. Exceeding this limit will result in an error.
-- **Image formats**: Mastodon supports JPEG, PNG, GIF, and WebP image formats. Support may vary by instance.
-- **MP4 for videos**: Only MP4 video format is supported for media attachments.
+- **Up to 4 images**: A maximum of 4 images can be attached to a single post. Publora does not enforce this limit itself — it relies on the Mastodon API to reject posts that exceed the limit.
+- **Image formats**: Mastodon accepts JPEG, PNG, GIF, and WebP natively. Publora does not validate image formats on its end and does not perform any format conversion for Mastodon — all supported formats are passed through as-is.
+- **MP4 and WebM for videos**: Mastodon accepts MP4 and WebM video formats. Publora does not restrict video formats server-side for Mastodon, so both formats are passed through.
 - **500-character limit**: Mastodon enforces a strict 500-character limit. Publora will return an error if your content exceeds this. Unlike X/Twitter and Threads, Mastodon does not auto-thread.
 - **Hashtags**: Hashtags in Mastodon are part of the post body and count toward the character limit. They become clickable and searchable on the platform.
 - **Content warnings**: Mastodon supports content warnings (CW), but this feature is not currently available through the Publora API.
@@ -307,8 +307,9 @@ console.log(response.data);
 ### Additional Notes
 
 - Character limits vary by Mastodon instance; mastodon.social uses 500 characters, but some instances allow 5,000+
-- Publora currently connects to mastodon.social only
+- Publora currently connects to mastodon.social only (posting is hardcoded to this instance)
 - Unlike X/Twitter and Threads, Mastodon does not support auto-threading
+- Max image count (4) and video count (1) limits are not enforced by Publora — the Mastodon API will reject posts that exceed these limits
 
 ---
 

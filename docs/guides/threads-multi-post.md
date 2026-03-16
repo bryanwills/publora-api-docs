@@ -121,13 +121,13 @@ The tool doesn't matter. The work does. Stop optimizing, start shipping.`;
 You can include markers if you want them in your posts:
 
 ```javascript
-const content = `Hot take: Most "productivity" advice is procrastination in disguise. [1/4]
+const content = `Hot take: Most "productivity" advice is procrastination in disguise. (1/4)
 
-We spend hours optimizing systems instead of doing actual work. [2/4]
+We spend hours optimizing systems instead of doing actual work. (2/4)
 
-The most productive people have embarrassingly simple systems. [3/4]
+The most productive people have embarrassingly simple systems. (3/4)
 
-The tool doesn't matter. The work does. Start shipping. [4/4]`;
+The tool doesn't matter. The work does. Start shipping. (4/4)`;
 ```
 
 ## Character Limits
@@ -166,15 +166,27 @@ We're offering 50% off for early adopters. Link in bio!`,
 
 const { postGroupId } = await postResponse.json();
 
-// Step 2: Upload image carousel (goes to first post)
-const formData = new FormData();
-formData.append('file', screenshot1);
-formData.append('postGroupId', postGroupId);
-
-await fetch('https://api.publora.com/api/v1/upload-media', {
+// Step 2: Get upload URL for image
+const urlRes = await fetch('https://api.publora.com/api/v1/get-upload-url', {
   method: 'POST',
-  headers: { 'x-publora-key': 'YOUR_API_KEY' },
-  body: formData
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    fileName: 'screenshot.jpg',
+    contentType: 'image/jpeg',
+    type: 'image',
+    postGroupId
+  })
+});
+const { uploadUrl } = await urlRes.json();
+
+// Step 3: Upload file directly to S3
+await fetch(uploadUrl, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'image/jpeg' },
+  body: screenshotBuffer
 });
 ```
 
@@ -183,7 +195,7 @@ await fetch('https://api.publora.com/api/v1/upload-media', {
 | Type | Limit | Notes |
 |------|-------|-------|
 | Images | Up to 10 (carousel) | WebP auto-converted to JPEG |
-| Video | 1 | MP4 format required |
+| Video | 1 | MP4 or MOV format |
 | Carousel | Up to 10 items | Images only |
 
 ## Scheduling Threads Posts

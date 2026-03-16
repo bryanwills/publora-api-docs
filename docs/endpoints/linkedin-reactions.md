@@ -27,21 +27,29 @@ POST https://api.publora.com/api/v1/linkedin-reactions
 
 | Type | Emoji | Description |
 |------|-------|-------------|
-| `LIKE` | 👍 | Thumbs up |
-| `PRAISE` | 🔥 | Celebrate / Fire |
-| `EMPATHY` | ❤️ | Love / Heart |
-| `INTEREST` | 💡 | Insightful / Light bulb |
-| `APPRECIATION` | 👏 | Support / Clapping hands |
-| `ENTERTAINMENT` | 😄 | Funny / Laughing |
+| `LIKE` | :+1: | Thumbs up |
+| `PRAISE` | :fire: | Celebrate / Fire |
+| `EMPATHY` | :heart: | Love / Heart |
+| `INTEREST` | :bulb: | Insightful / Light bulb |
+| `APPRECIATION` | :clap: | Support / Clapping hands |
+| `ENTERTAINMENT` | :smile: | Funny / Laughing |
 
-### Response
+> **Note:** The `reactionType` parameter is **case-insensitive** — e.g., `"like"`, `"Like"`, and `"LIKE"` are all accepted.
+
+### Response (HTTP 201 Created)
 
 ```json
 {
   "success": true,
-  "reaction": { ... }
+  "reaction": { ... },
+  "urnTranslated": {
+    "from": "urn:li:share:7123456789012345678",
+    "to": "urn:li:activity:7123456789012345678"
+  }
 }
 ```
+
+> **Note:** Creating a reaction returns HTTP **201**, not 200. The `urnTranslated` field is an object `{ from, to }` showing the original and canonical URN when translation occurred (e.g., `urn:li:share:*` translated to `urn:li:activity:*`). It is absent/undefined when no translation was needed.
 
 ### Examples
 
@@ -128,6 +136,23 @@ DELETE https://api.publora.com/api/v1/linkedin-reactions
 | `postedId` | string | Yes | LinkedIn URN |
 | `platformId` | string | Yes | LinkedIn connection ID |
 
+> **Note:** Unlike creating a reaction, deleting does not require `reactionType`.
+
+### Response
+
+```json
+{
+  "success": true,
+  "reaction": null,
+  "urnTranslated": {
+    "from": "urn:li:share:7123456789012345678",
+    "to": "urn:li:activity:7123456789012345678"
+  }
+}
+```
+
+The `reaction` field contains the LinkedIn API response data, or `null`. The `urnTranslated` field follows the same format as the create response (object or absent).
+
 ### Examples
 
 #### JavaScript (fetch)
@@ -171,13 +196,44 @@ curl -X DELETE "https://api.publora.com/api/v1/linkedin-reactions?postedId=urn:l
 
 ## Errors
 
+### Create Reaction Errors (POST)
+
 | Status | Error | Cause |
 |--------|-------|-------|
-| 400 | `"postedId is required"` | Missing postedId |
-| 400 | `"Invalid postedId"` | Not a valid LinkedIn URN format |
-| 400 | `"Invalid reactionType"` | Not one of the 6 valid types |
+| 400 | `"postedId, reactionType, and platformId are required"` | Missing one or more required fields |
+| 400 | `"platformId must be a string"` | platformId is not a string type |
+| 400 | `"postedId must be a valid LinkedIn URN"` | Not a valid LinkedIn URN format |
+| 400 | `"reactionType must be one of: LIKE, PRAISE, EMPATHY, INTEREST, APPRECIATION, ENTERTAINMENT"` | Not one of the 6 valid types |
+| 400 | `"Invalid platformId"` | platformId format is invalid |
+| 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 401 | `"Invalid API key owner"` | API key owner user not found in database |
+| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
+| 500 | `"Failed to create LinkedIn reaction"` | Server error while adding reaction |
+
+> **Note:** The 500 error response includes `details` and `status` fields: `{ "error": "Failed to create LinkedIn reaction", "details": { ... }, "status": <HTTP status> }`. The `details` field contains the full LinkedIn API error response object, whose structure depends on what LinkedIn returns (e.g., it may include `message`, `status`, `serviceErrorCode`, etc.). The `status` field reflects the HTTP status code returned by the LinkedIn API.
+
+> **Note:** Error status codes from the LinkedIn API may be forwarded directly (e.g., 403, 429), so you may receive error codes other than those listed above.
+
+### Delete Reaction Errors (DELETE)
+
+| Status | Error | Cause |
+|--------|-------|-------|
+| 400 | `"postedId and platformId are required"` | Missing postedId or platformId |
+| 400 | `"platformId must be a string"` | platformId is not a string type |
+| 400 | `"postedId must be a valid LinkedIn URN"` | Not a valid LinkedIn URN format |
+| 400 | `"Invalid platformId"` | platformId format is invalid |
+| 401 | `"API key is required"` | No `x-publora-key` header provided |
+| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 401 | `"Invalid API key owner"` | API key owner user not found in database |
+| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
+| 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
+| 500 | `"Failed to delete LinkedIn reaction"` | Server error while removing reaction |
+
+> **Note:** The 500 error response includes `details` and `status` fields: `{ "error": "Failed to delete LinkedIn reaction", "details": { ... }, "status": <HTTP status> }`. The `details` field contains the full LinkedIn API error response object, whose structure depends on what LinkedIn returns (e.g., it may include `message`, `status`, `serviceErrorCode`, etc.). The `status` field reflects the HTTP status code returned by the LinkedIn API.
+
+> **Note:** Error status codes from the LinkedIn API may be forwarded directly (e.g., 403, 429), so you may receive error codes other than those listed above.
 
 
 ---

@@ -261,7 +261,7 @@ tomorrow at 9am (AI converts this, but tool needs ISO 8601)
 
 **Solutions:**
 
-1. **Verify the ID** — Post IDs look like `pg_abc123`
+1. **Verify the ID** — Post IDs are MongoDB ObjectIds (e.g., `67a1b2c3d4e5f6a7b8c9d0e1`)
 2. **List posts** — Use `list_posts` to see valid post IDs
 3. **Check filters** — The post might have a different status than expected
 
@@ -269,7 +269,7 @@ tomorrow at 9am (AI converts this, but tool needs ISO 8601)
 
 ## Session Issues
 
-### "Invalid or missing session"
+### "Invalid or missing session. Send a POST without mcp-session-id to start."
 
 **Cause:** MCP session expired or not initialized.
 
@@ -348,24 +348,22 @@ If persistent:
 
 ---
 
-## Rate Limiting
+## Plan Limit Errors
 
-### "Rate limit exceeded"
+### "Plan limit exceeded" (HTTP 403)
 
-**Cause:** Too many requests in a short period.
+**Cause:** You have exceeded a plan-based limit (monthly posts, connections, scheduled posts, or schedule horizon).
+
+**Note:** Publora uses HTTP `403 Forbidden` for plan limit errors, not `429 Too Many Requests`. Per-request API rate limiting is planned but not currently enforced.
 
 **Solutions:**
 
-1. **Wait and retry** — Rate limits reset after a short period
-2. **Reduce request frequency** — Space out your requests
-3. **Check your plan** — Higher tiers have higher rate limits
-
-**Rate limit headers:**
-```text
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 0
-X-RateLimit-Reset: 1709312400
-```
+1. **Check your plan limits:**
+   - **Starter (free):** 15 posts/month (dashboard only — `apiAccess: false`, `mcpAccess: false`). Starter users **cannot** use the API or MCP at all; attempting to do so returns a `403` error. Upgrade to Pro or Premium for API/MCP access.
+   - **Pro:** 100 posts/month per connection
+   - **Premium:** 500 posts/month per connection
+2. **Upgrade your plan** — Higher tiers have higher limits
+3. **Wait for the monthly reset** — Monthly post counts reset at the start of each billing cycle
 
 ---
 

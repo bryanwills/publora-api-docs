@@ -53,11 +53,13 @@ POST https://api.publora.com/api/v1/linkedin-profile-summary
 |-------|------|-------------|
 | `profile.followers.total` | integer | Total follower count |
 | `profile.followers.periodGrowth` | integer | Follower growth during date range (only present when `dateRange` is provided) |
-| `profile.posts.totalImpressions` | integer | Total post impressions |
-| `profile.posts.totalMembersReached` | integer | Total unique members who saw your posts |
-| `profile.posts.totalReactions` | integer | Total reactions across all posts |
-| `profile.posts.totalComments` | integer | Total comments across all posts |
-| `profile.posts.totalReshares` | integer | Total reshares across all posts |
+| `profile.posts.totalImpressions` | integer or null | Total post impressions (null if LinkedIn returns unavailable) |
+| `profile.posts.totalMembersReached` | integer or null | Total unique members who saw your posts (null if LinkedIn returns unavailable) |
+| `profile.posts.totalReactions` | integer or null | Total reactions across all posts (null if LinkedIn returns unavailable) |
+| `profile.posts.totalComments` | integer or null | Total comments across all posts (null if LinkedIn returns unavailable) |
+| `profile.posts.totalReshares` | integer or null | Total reshares across all posts (null if LinkedIn returns unavailable) |
+
+> **Note:** Metric fields become `null` only when LinkedIn explicitly returns `-1` for that metric. If an API call fails entirely, the field defaults to `0` in the profile output (and the failure is reported in the `errors` array).
 
 ### Partial Failure Response
 
@@ -73,20 +75,22 @@ When some data was fetched successfully but other requests failed:
     },
     "posts": {
       "totalImpressions": 25000,
+      "totalMembersReached": 0,
+      "totalReshares": 30,
       "totalReactions": 500,
-      "totalComments": 75,
-      "totalReshares": 30
+      "totalComments": 75
     }
   },
   "errors": [
-    { "metric": "followers", "error": "Failed to fetch followers" }
+    { "metric": "followersPeriod", "error": "Failed to fetch follower growth" },
+    { "metric": "post_MEMBERS_REACHED", "error": "Failed to fetch members_reached count" }
   ]
 }
 ```
 
 The `partialData: true` flag indicates some metrics are available despite the failure. Check the `errors` array for details on what failed. Each error object contains:
-- `metric`: The metric that failed to fetch
-- `error`: The error message describing what went wrong
+- `metric`: The metric that failed to fetch (uses prefixed format: `followersLifetime`, `followersPeriod`, `post_IMPRESSION`, `post_MEMBERS_REACHED`, `post_REACTION`, `post_COMMENT`, `post_RESHARE`)
+- `error`: The error message describing what went wrong. For post metrics, the format is `"Failed to fetch {metric} count"` where `{metric}` uses **lowercase with underscores** (e.g., `"Failed to fetch impression count"`, `"Failed to fetch members_reached count"`, `"Failed to fetch reaction count"`). For follower metrics, it is `"Failed to fetch follower count"` or `"Failed to fetch follower growth"`.
 
 ## Examples
 
@@ -238,11 +242,33 @@ if (data.partialData) {
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"platformId is required"` | Missing platformId in request body |
-| 400 | `"Invalid dateRange format"` | dateRange object has invalid structure |
+| 400 | `"platformId must be a string"` | platformId is not a string type |
+| 400 | `"Invalid platformId"` | platformId format is invalid |
+| 400 | `"dateRange must be an object"` | dateRange parameter was provided but is not an object type |
+| 400 | `"dateRange must have both 'start' and 'end' objects"` | dateRange provided but missing start or end |
+| 400 | `"dateRange.start and dateRange.end must have: year, month, day"` | dateRange start/end missing required fields |
+| 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 401 | `"Invalid API key owner"` | API key owner user not found in database |
+| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
-| 500 | `"Unexpected error"` | Server error |
-| 502 | `"All requests failed"` | Unable to fetch any data from LinkedIn |
+| 500 | `"Failed to fetch LinkedIn profile summary"` | Server error |
+| 502 | `"Failed to fetch LinkedIn profile data"` | Unable to fetch any data from LinkedIn |
+
+The 502 error response includes an `errors` array with details on each failed metric:
+
+```json
+{
+  "success": false,
+  "error": "Failed to fetch LinkedIn profile data",
+  "errors": [
+    { "metric": "followersLifetime", "error": "Failed to fetch follower count" },
+    { "metric": "post_IMPRESSION", "error": "Failed to fetch impression count" }
+  ]
+}
+```
+
+> **Note:** Error status codes from the LinkedIn API may be forwarded directly (e.g., 403, 429), so you may receive error codes other than those listed above.
 
 
 ---

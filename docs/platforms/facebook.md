@@ -13,7 +13,7 @@ Publora provides a unified REST API for publishing text posts, images (including
 | Authentication | Single API key | OAuth 2.0 flow |
 | API versioning | Handled | Manual updates required |
 | Multi-page support | Built-in | Manual implementation |
-| Multi-platform | Post to 10 platforms | Facebook only |
+| Multi-platform | Post to 11 platforms | Facebook only |
 | Setup time | 5 minutes | Hours (app setup) |
 | Media handling | Automatic | Manual upload |
 
@@ -30,21 +30,23 @@ Where `{pageId}` is your Facebook Page ID assigned during account connection via
 ## Requirements
 
 - A Facebook Page (not a personal profile) connected via OAuth through the Publora dashboard
-- Page admin permissions granted during OAuth
+- Page admin permissions granted during OAuth (OAuth scopes requested: `public_profile`, `pages_manage_posts`, `pages_show_list`, `pages_read_engagement`, `business_management`)
 - API key from Publora
 
 ## Supported Content
 
 | Type | Supported | Limits |
 |------|-----------|--------|
-| Text | Yes | No strict character limit (recommended under 63,206) |
+| Text | Yes | 2,200 characters (Publora frontend limit; see note below) |
 | Images | Yes | Multiple supported (carousel/album), WebP auto-converted to JPEG |
-| Videos | Yes | MP4 format |
+| Videos | Yes | MP4, MOV formats |
 | Multiple Pages | Yes | Each page has its own platform ID |
 
 ## Token Management
 
 Facebook page tokens have a **59-day lifespan**. Publora automatically handles token refresh so you do not need to manually reconnect your account. However, if the refresh fails (e.g., due to permission changes on Facebook), you will need to reconnect the page through the Publora dashboard.
+
+> **Note:** The auto-refresh mechanism is handled by a separate service and may not be visible in the core backend source code.
 
 ## Examples
 
@@ -283,17 +285,19 @@ console.log(response.data);
 - **Pages only, not profiles**: Publora posts to Facebook Pages, not personal profiles. The Facebook API does not allow posting to personal profiles via third-party apps.
 - **Multiple pages**: If you manage multiple Facebook Pages, each page is connected separately and gets its own `facebook-{pageId}` platform ID. You can post to multiple pages in a single API call.
 - **WebP auto-conversion**: WebP images are automatically converted to JPEG before uploading to Facebook. No action needed on your part.
-- **59-day token lifespan**: Facebook page access tokens expire after 59 days. Publora auto-refreshes these tokens, but if the refresh fails, you will need to reconnect the page.
+- **59-day token lifespan**: Facebook page access tokens expire after 59 days. Publora auto-refreshes these tokens, but if the refresh fails silently (e.g., due to permission changes on Facebook's side), posts will start failing without a specific token-related error. If you experience unexplained posting failures, try reconnecting the page through the Publora dashboard.
 - **Album behavior**: When posting multiple images, Facebook may display them as a carousel or an album depending on the count and the viewer's device.
-- **Video and images are separate**: A single post can contain either images or a video, but not both simultaneously.
+- **Video and images are separate**: A single post can contain either images or a video, but not both simultaneously. This is a Facebook platform limitation. Note that Publora's backend validation does **not** enforce this mixed media restriction for Facebook (it only does so for Instagram). If Facebook rejects mixed media, the error comes from the Facebook API itself, not from Publora's validation layer.
 - **Link previews**: If your text content includes a URL, Facebook will automatically generate a link preview. This is Facebook's behavior and is not controlled by Publora.
 
 ## Character Limits
 
 | Element | Limit |
 |---------|-------|
-| Post body | 63,206 characters (recommended) |
+| Post body | 2,200 characters (Publora frontend limit; see note below) |
 | Comment | 8,000 characters |
+
+> **Note:** The 2,200-character limit is enforced by the Publora frontend/editor only. The API does not enforce this limit — content up to Facebook's native 63,206-character limit will be accepted.
 
 ## API Limits
 
@@ -301,7 +305,7 @@ These limits apply when posting via the Facebook Graph API (and by extension, Pu
 
 ### Character Limit
 
-- **63,206 characters** maximum for post body
+- **2,200 characters** maximum for post body via the Publora frontend/editor. The API does not enforce this limit; content up to Facebook's native 63,206-character limit will be accepted.
 - Posts under 80 characters get 66% more engagement
 
 ### Image Limits (API)
@@ -309,7 +313,7 @@ These limits apply when posting via the Facebook Graph API (and by extension, Pu
 | Property | Limit |
 |----------|-------|
 | Max size | 10 MB (PNG recommended max 1 MB to avoid pixelation) |
-| Max count | 2-10 in multi-image posts |
+| Max count | Up to 10 images per post |
 | Formats | JPEG, PNG, GIF, BMP, TIFF |
 
 ### Video Limits (API)
@@ -334,7 +338,7 @@ These limits apply when posting via the Facebook Graph API (and by extension, Pu
 
 | Error Code | Description |
 |------------|-------------|
-| `Error 1363026` | Video exceeds 40 min duration |
+| `Error 1363026` | Video exceeds 45 min duration |
 | `Error 1363023` | File size exceeds 2 GB |
 | `Error 1363128` | Reels duration outside 3-90 second range |
 

@@ -1,6 +1,6 @@
 # Delete Post
 
-Delete a scheduled or draft post across all platforms where it was scheduled. This endpoint removes the entire post group and all associated platform-specific posts in a single operation.
+Delete a post across all platforms where it was created. This endpoint removes the entire post group and all associated platform-specific posts in a single operation, regardless of the post's current status.
 
 ## Endpoint
 
@@ -14,6 +14,7 @@ DELETE https://api.publora.com/api/v1/delete-post/:postGroupId
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `"mcp"`) |
 
 ## Path Parameters
 
@@ -22,6 +23,8 @@ DELETE https://api.publora.com/api/v1/delete-post/:postGroupId
 | `postGroupId` | string | The post group ID to delete |
 
 ## Response
+
+Returns HTTP **200** with the following JSON body on success:
 
 ```json
 {
@@ -33,16 +36,22 @@ DELETE https://api.publora.com/api/v1/delete-post/:postGroupId
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `success` | boolean | Whether the deletion succeeded |
+| `success` | boolean | Whether the deletion succeeded (only present on **200** responses) |
+
+> **Note:** The `success` field only appears on successful (200) responses. Error responses return an `error` string field instead (e.g., `{ "error": "Post group not found" }`).
 
 ## What Gets Deleted
 
-When you delete a post group, the following are removed:
+When you delete a post group, the following are removed (in this order):
 
-1. **The post group record** - The parent container for all platform posts
-2. **All platform-specific posts** - Twitter post, LinkedIn post, Instagram post, etc.
-3. **All media file records from database** - References to media in storage
-4. **All media files from S3 storage** - The actual image and video files are deleted from S3
+**Inside the database transaction:**
+1. **The post group record** - Find and delete the parent container for all platform posts
+2. **Find media files** - Locate all media file references associated with the post group
+3. **Delete media file records from database** - Remove media references from the database
+4. **All platform-specific posts** - Delete Twitter post, LinkedIn post, Instagram post, etc.
+
+**After the transaction commits:**
+5. **All media files from S3 storage** - The actual image and video files are deleted from S3
 
 ### Deletion Behavior
 
@@ -410,9 +419,19 @@ echo "Summary: $SUCCEEDED succeeded, $FAILED failed"
 
 | Status | Response | Cause |
 |--------|----------|-------|
-| 401 | `{ "error": "Invalid API key" }` | Bad or missing `x-publora-key` |
+| 400 | `{ "error": "Invalid x-publora-user-id" }` | The `x-publora-user-id` header value is not a valid ObjectId format |
+| 401 | `{ "error": "API key is required" }` | Missing `x-publora-key` header |
+| 401 | `{ "error": "Invalid API key" }` | `x-publora-key` value is incorrect or revoked |
+| 401 | `{ "error": "Invalid API key owner" }` | The API key exists but its owner account could not be found |
+| 403 | `{ "error": "API access is not enabled for this account" }` | No active subscription or API access not enabled |
+| 403 | `{ "error": "MCP access is not enabled for this account" }` | The account does not have MCP access enabled (MCP-only keys) |
+| 403 | `{ "error": "Workspace access is not enabled for this key" }` | The API key does not have workspace/managed-user permissions |
+| 403 | `{ "error": "User is not managed by key" }` | The `x-publora-user-id` references a user not managed by this API key |
 | 404 | `{ "error": "Post group not found" }` | The post group ID doesn't exist or belongs to another user |
 | 500 | `{ "error": "Failed to delete post group" }` | Server error during database transaction (deletion is rolled back) |
+| 500 | `{ "error": "Internal server error" }` | Unexpected server error in middleware |
+
+> **Note:** If `x-publora-user-id` matches the API key owner, no workspace check is triggered — the header is effectively a no-op in that case.
 
 ## Important Notes
 
@@ -430,12 +449,13 @@ DELETE /delete-post/507f1f77bcf86cd799439011
 → Deletes ALL THREE platform posts in one request
 ```
 
-### Deletion Restrictions
+### Malformed Post Group IDs
 
-- **Drafts** can be deleted at any time
-- **Scheduled posts** can be deleted before their scheduled time
-- **Published posts** cannot be deleted via API (they already exist on the platforms)
-- **Failed posts** can be deleted to clean up your post list
+If the `postGroupId` is not a valid MongoDB ObjectId format (e.g., too short, contains invalid characters), the server returns a **500** error instead of a **400** validation error. Ensure you pass only valid ObjectId strings received from the create-post or list-posts endpoints.
+
+### No Status Restrictions
+
+Any post can be deleted regardless of its current status (draft, scheduled, published, failed, or partially_published). Deleting a published post removes it from Publora but does not remove it from the platforms where it was already published.
 
 ### Media File Cleanup
 

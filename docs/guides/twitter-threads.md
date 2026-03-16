@@ -43,7 +43,7 @@ console.log('Thread posted:', data);
 
 This will automatically:
 - Split into 4+ tweets at sentence boundaries
-- Add `[1/N]` numbering to each tweet
+- Add `(1/N)` numbering to each tweet
 - Post each as a reply to the previous
 - Return all tweet IDs
 
@@ -55,17 +55,17 @@ With the official Twitter API, creating a thread requires multiple sequential re
 
 ```javascript
 // Step 1: Post first tweet
-const tweet1 = await client.v2.tweet({ text: "First tweet [1/3]" });
+const tweet1 = await client.v2.tweet({ text: "First tweet (1/3)" });
 
 // Step 2: Post reply to first tweet
 const tweet2 = await client.v2.tweet({
-  text: "Second tweet [2/3]",
+  text: "Second tweet (2/3)",
   reply: { in_reply_to_tweet_id: tweet1.data.id }
 });
 
 // Step 3: Post reply to second tweet
 const tweet3 = await client.v2.tweet({
-  text: "Third tweet [3/3]",
+  text: "Third tweet (3/3)",
   reply: { in_reply_to_tweet_id: tweet2.data.id }
 });
 ```
@@ -95,7 +95,7 @@ Content over 280 characters is automatically split:
 - At paragraph breaks (`\n\n`) first
 - At sentence endings (`. `, `! `, `? `) second
 - At word boundaries as fallback
-- `[1/N]` markers added automatically
+- `(1/N)` markers added automatically
 
 ### Manual Thread Parts with `---`
 
@@ -122,23 +122,23 @@ The fix? Treat it like a dev log, not a highlight reel. Your journey IS the cont
 ### Manual Thread Parts with Markers
 
 ```javascript
-const content = `Hook: Why most developers fail at Twitter. [1/5]
+const content = `Hook: Why most developers fail at Twitter. (1/5)
 
-Mistake #1: They only share finished work. [2/5]
+Mistake #1: They only share finished work. (2/5)
 
-Mistake #2: They don't engage with others. [3/5]
+Mistake #2: They don't engage with others. (3/5)
 
-Mistake #3: Inconsistency in posting schedule. [4/5]
+Mistake #3: Inconsistency in posting schedule. (4/5)
 
-The fix? Treat Twitter like a dev log, not a highlight reel. [5/5]`;
+The fix? Treat Twitter like a dev log, not a highlight reel. (5/5)`;
 ```
 
 ## Character Limits
 
 | Account Type | Per-Tweet Limit | Thread Marker Space |
 |-------------|-----------------|---------------------|
-| Standard | 280 characters | ~8 chars for `[X/N]` |
-| X Premium | 25,000 characters | ~8 chars for `[X/N]` |
+| Standard | 280 characters | ~8 chars for `(X/N)` |
+| X Premium | 25,000 characters | ~8 chars for `(X/N)` |
 
 Publora automatically reserves space for thread markers.
 
@@ -165,7 +165,7 @@ const postResponse = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: `Check out this new feature! 🎉
+    content: `Check out this new feature!
 
 ---
 
@@ -180,15 +180,27 @@ Try it out and let me know what you think!`,
 
 const { postGroupId } = await postResponse.json();
 
-// Step 2: Upload image (goes to first tweet)
-const formData = new FormData();
-formData.append('file', screenshotFile);
-formData.append('postGroupId', postGroupId);
-
-await fetch('https://api.publora.com/api/v1/upload-media', {
+// Step 2: Get upload URL for image (goes to first tweet)
+const urlRes = await fetch('https://api.publora.com/api/v1/get-upload-url', {
   method: 'POST',
-  headers: { 'x-publora-key': 'YOUR_API_KEY' },
-  body: formData
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    fileName: 'screenshot.jpg',
+    contentType: 'image/jpeg',
+    type: 'image',
+    postGroupId
+  })
+});
+const { uploadUrl } = await urlRes.json();
+
+// Step 3: Upload file directly to S3
+await fetch(uploadUrl, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'image/jpeg' },
+  body: screenshotFile
 });
 ```
 
@@ -196,10 +208,12 @@ await fetch('https://api.publora.com/api/v1/upload-media', {
 
 - **Images:** Up to 4 per tweet (first tweet only)
 - **Video:** 1 per tweet (first tweet only)
-- **Format:** PNG preferred, JPEG supported
+- **Format:** All images are auto-converted to PNG (1000px max width) before upload to Twitter
 - **Note:** Cannot mix images and video in the same tweet
 
 ## Scheduling Twitter Threads
+
+> **Note:** `scheduledTime` is **optional** in the REST API (omitting it creates a draft). However, in the MCP server schema, `scheduledTime` is **required**.
 
 Schedule a thread for optimal posting time:
 

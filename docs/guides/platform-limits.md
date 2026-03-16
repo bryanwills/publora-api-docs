@@ -1,12 +1,14 @@
 # Platform Limits Reference
 
-This comprehensive guide documents the limits for all 11 social media platforms supported by Publora. Understanding these limits is essential for building reliable integrations with the Publora API.
+This comprehensive guide documents the limits for all 10 social media platforms supported by Publora. Understanding these limits is essential for building reliable integrations with the Publora API.
 
 **Last Updated:** March 2026
 
 ## Overview
 
 When building applications with the Publora API, it is critical to understand that **API limits often differ from native app limits**. Social media platforms impose different restrictions depending on whether content is posted through their official apps, web interfaces, or third-party APIs.
+
+> **Note:** Publora defines 11 platform keys internally (including Pinterest), but only **10 platforms are actively supported**. Pinterest is listed for reference and is planned for a future release.
 
 Publora validates your content against these API-specific limits before scheduling. This guide covers:
 
@@ -52,7 +54,7 @@ All platforms have character limits for text content. Some platforms have differ
 | **Mastodon** | 500 characters | Instance-configurable | Some instances allow 5,000+ |
 | **Bluesky** | 300 characters | - | Links do not count toward limit |
 | **Telegram** | 4,096 characters | 1,024 (bot caption) | Bots limited to 1,024 for media captions |
-| **Pinterest** | 100 (title) / 800 (description) | 500 (ads) | Optimal description: 220-232 chars |
+| **Pinterest** | 100 (title) / 800 (description) | 500 (ads) | **Not currently supported** -- planned for a future release |
 
 ### Character Limit Best Practices
 
@@ -72,7 +74,7 @@ Image requirements vary significantly across platforms. Pay particular attention
 |----------|----------|-----------|-------------------|
 | **Twitter/X** | 5 MB | 4 | JPEG, PNG, GIF, WebP |
 | **Instagram** | 8 MB | 10 (API carousel) | **JPEG only (API)** |
-| **Threads** | 8 MB | 20 | JPEG, PNG |
+| **Threads** | 8 MB | 10 | JPEG, PNG |
 | **TikTok** | - | 0 | Video only platform |
 | **LinkedIn** | 5 MB | 20 (multi-image) | JPEG, PNG, GIF |
 | **YouTube** | - | 0 | Video only for uploads |
@@ -80,7 +82,7 @@ Image requirements vary significantly across platforms. Pay particular attention
 | **Mastodon** | 16 MB | 4 | JPEG, PNG, GIF, WebP (instance-configurable) |
 | **Bluesky** | 1 MB | 4 | JPEG, PNG, WebP (max 2000x2000 px) |
 | **Telegram** | 10 MB | 10 | JPEG, PNG, GIF, WebP, BMP |
-| **Pinterest** | 20 MB | 5 (carousel) | JPEG, PNG, TIFF, BMP, GIF, WebP |
+| **Pinterest** | 20 MB | 5 (carousel) | JPEG, PNG, TIFF, BMP, GIF, WebP | *Not currently supported* |
 
 ### Critical Image Notes
 
@@ -91,6 +93,15 @@ Image requirements vary significantly across platforms. Pay particular attention
 | **No Mixed Media** | Instagram | Cannot mix images and videos in the same carousel via API. |
 | **Strict Size Limit** | Bluesky | Hard 1 MB limit. Compress images to 80-85% JPEG quality before uploading. |
 | **No Organic Carousels** | LinkedIn | Organic swipeable carousels are NOT supported via API (only sponsored content). |
+
+### Server-Side Upload Limits
+
+The multipart upload endpoint enforces server-side limits in addition to platform-specific limits:
+
+- **Maximum 4 files** per upload request
+- **Maximum 512 MB** per file
+
+Presigned URL uploads bypass these server-side limits -- use presigned URLs for larger files.
 
 ### Image Processing in Publora
 
@@ -119,7 +130,7 @@ Video restrictions through APIs are often significantly more restrictive than na
 | **Mastodon** | No limit* | ~99 MB | MP4, MOV, WebM |
 | **Bluesky** | 3 min | 100 MB | MP4 |
 | **Telegram (Bot API)** | No limit | 50 MB | MP4, MOV, AVI, MKV, WebM |
-| **Pinterest** | 15 min | 1 GB | MP4, MOV |
+| **Pinterest** | 15 min | 1 GB | MP4, MOV | *Not currently supported* |
 
 *Mastodon video duration is limited only by file size (~99 MB default).
 
@@ -196,12 +207,13 @@ Different platforms have different requirements for media. Some platforms are te
 | **Mastodon** | No | No | Yes | No |
 | **Bluesky** | No | No | Yes | No |
 | **Telegram** | No | No | Yes | No |
-| **Pinterest** | Yes | No | No | No |
+| **Pinterest** | Yes | No | No | No | *Not currently supported* |
 
 ### Media Requirement Notes
 
 - **TikTok and YouTube** are video-only platforms. You cannot post images or text-only content.
-- **Instagram and Pinterest** require at least one image or video with every post.
+- **Instagram** requires at least one image or video with every post.
+- **Pinterest** is listed for reference but is **not currently supported** in Publora. Support is planned for a future release.
 - **Threading** allows long content to be automatically split into multiple connected posts (Twitter/X and Threads only).
 
 ---
@@ -220,7 +232,7 @@ Each platform enforces its own posting rate limits. Exceeding these limits will 
 | **Bluesky** | 25 videos/day | 3,000 requests/5 min |
 | **Mastodon** | 30 media uploads/30 min | 300 requests/5 min per account |
 | **Telegram** | 30 messages/second | 20 messages/minute per group |
-| **Pinterest** | 15-25 pins/day recommended | >50/day may trigger spam detection |
+| **Pinterest** | 15-25 pins/day recommended | *Not currently supported* |
 
 ### Rate Limit Best Practices
 
@@ -331,49 +343,6 @@ The Publora validation system returns standardized error codes when content does
 | `PLATFORM_SETTING_INVALID` | A platform-specific setting has an invalid value |
 
 ---
-
-## Usage Example
-
-The Publora validation library provides helper functions to check limits programmatically:
-
-```javascript
-const {
-  getCharacterLimit,
-  requiresMedia,
-  requiresVideo,
-  supportsThreading,
-  getVideoLimits,
-  validatePost,
-} = require('@publora/platform-limits');
-
-// Check character limits
-console.log(getCharacterLimit('twitter'));        // 280
-console.log(getCharacterLimit('tiktok'));         // 2200 (API limit)
-
-// Check video limits
-const tiktokVideo = getVideoLimits('tiktok');
-console.log(tiktokVideo.maxDurationSeconds);      // 600 (10 min API limit)
-
-// Check platform requirements
-console.log(requiresMedia('instagram'));          // true
-console.log(requiresVideo('tiktok'));             // true
-console.log(supportsThreading('twitter'));        // true
-
-// Validate a post before scheduling
-const result = validatePost({
-  content: 'Hello world!',
-  platforms: ['twitter-123', 'instagram-456'],
-  mediaFiles: [{
-    type: 'image',
-    mimeType: 'image/jpeg',  // Instagram API requires JPEG
-    sizeBytes: 1024 * 1024,
-  }],
-});
-
-console.log(result.valid);    // true or false
-console.log(result.errors);   // Array of validation errors
-console.log(result.warnings); // Array of non-blocking warnings
-```
 
 ---
 

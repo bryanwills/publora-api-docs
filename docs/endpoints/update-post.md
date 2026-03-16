@@ -14,6 +14,7 @@ PUT https://api.publora.com/api/v1/update-post/:postGroupId
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `"mcp"`) |
 | `Content-Type` | Yes | `application/json` |
 
 ## Path Parameters
@@ -29,7 +30,7 @@ At least one of `status` or `scheduledTime` must be provided.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `status` | string | No | `"draft"` or `"scheduled"` |
-| `scheduledTime` | string | No | New ISO 8601 UTC datetime (must be in the future) |
+| `scheduledTime` | string | No | New ISO 8601 UTC datetime |
 
 ### ISO 8601 DateTime Format
 
@@ -56,9 +57,20 @@ March 15, 2026              ✗ Not ISO 8601
 
 ### Timing Constraints
 
-- **Minimum:** Must be in the future (not in the past)
+- **Past times:** If the scheduled time is in the past, it is silently set to the current time
 - **Maximum:** Recommended within 2 months for best reliability
 - **Timezone:** Always use UTC (Z suffix or +00:00 offset)
+
+### Scheduling Limits
+
+When rescheduling a post (changing `scheduledTime`), the update flow performs two validations:
+
+1. **Platform availability check** (`assertPlatformsAllowed`): Verifies that all platforms targeted by the post are still available on the user's current plan. If a platform is no longer allowed, a `PLATFORM_NOT_AVAILABLE` error is returned.
+2. **Limits check**: Validates that the new time does not exceed the account's posting limits for the target time slot.
+
+If either check fails, the request returns a **403** error with a `LimitExceededError` message describing which limit was hit.
+
+> **Note:** The limits service may automatically adjust the `scheduledTime` to comply with minimum interval constraints between posts. If this happens, the limits service `scheduledTime` takes priority over the user-provided time. The response will contain the adjusted time in the `postGroup.scheduledTime` field — always use the returned value rather than assuming the requested time was used as-is.
 
 ### Helper Functions
 
@@ -233,13 +245,14 @@ async function updatePostSafely(postGroupId, updates) {
     if (!response.ok) {
       switch (response.status) {
         case 400:
-          if (data.error?.includes('past')) {
-            throw new Error('Cannot schedule in the past. Use a future date.');
-          }
           if (data.error?.includes('status')) {
-            throw new Error('Post already published or failed. Cannot update.');
+            throw new Error('Post is in a non-editable status. Cannot update.');
           }
           throw new Error(data.error || 'Invalid request');
+        case 401:
+          throw new Error('Authentication failed. Check your API key.');
+        case 403:
+          throw new Error('API access is not enabled for this account.');
         case 404:
           throw new Error('Post not found. It may have been deleted.');
         default:
@@ -272,11 +285,15 @@ def update_post_safely(post_group_id, updates):
 
         if response.status_code == 400:
             error = data.get('error', '')
-            if 'past' in error.lower():
-                raise ValueError('Cannot schedule in the past. Use a future date.')
             if 'status' in error.lower():
-                raise ValueError('Post already published or failed. Cannot update.')
+                raise ValueError('Post is in a non-editable status. Cannot update.')
             raise ValueError(error or 'Invalid request')
+
+        if response.status_code == 401:
+            raise ValueError('Authentication failed. Check your API key.')
+
+        if response.status_code == 403:
+            raise ValueError('API access is not enabled for this account.')
 
         if response.status_code == 404:
             raise ValueError('Post not found. It may have been deleted.')
@@ -293,14 +310,78 @@ def update_post_safely(post_group_id, updates):
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 400 | `"Either status or scheduledTime must be provided"` | Neither field was provided in the request |
+| 400 | `"Either status or scheduledTime must be provided"` | Neither field was provided in the request (see note below) |
 | 400 | `"Status must be either 'draft' or 'scheduled'"` | Invalid status value |
 | 400 | `"Invalid scheduled time format"` | Malformed datetime string |
-| 400 | `"Scheduled time cannot be in the past"` | Provided time is before current time |
-| 400 | `"Cannot update post: post is currently in {status} status"` | Post is in a status that cannot be updated (e.g., published, failed, pending, processing) |
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Cannot update post: post is currently in {status} status"` | Post is in any status other than `draft` or `scheduled` |
+| 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | `x-publora-key` value is incorrect or revoked |
+| 401 | `"Invalid API key owner"` | The API key exists but its owner account could not be found |
+| 403 | `"API access is not enabled for this account"` | No active subscription or API access not enabled |
+| 403 | `"MCP access is not enabled for this account"` | The account does not have MCP access enabled (MCP-only keys) |
+| 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |
+| 403 | `LimitExceededError` (structured JSON) | Rescheduling would exceed the account's posting limits for the target time slot (see below) |
 | 404 | `"Post group not found"` | Invalid ID or post belongs to another user |
-| 500 | `"Failed to update post"` | Server error during update operation |
+| 500 | `"Failed to update post"` | Malformed post group ID or internal server error |
+| 500 | `"Internal server error"` | Unexpected server error in middleware |
+
+> **Note:** The `status` field must be a **non-empty string**. The server uses a JavaScript falsy check, so empty strings (`""`), `null`, and `0` are all treated as absent. If both `status` and `scheduledTime` are falsy, you will receive the "Either status or scheduledTime must be provided" error.
+
+> **Note:** If `x-publora-user-id` matches the API key owner, no workspace check is triggered — the header is effectively a no-op in that case.
+
+> **Note:** If the `postGroupId` is not a valid MongoDB ObjectId format (e.g., too short, contains invalid characters), the server returns a **500** error (`"Failed to update post"`) instead of a **400** validation error. Ensure you pass only valid ObjectId strings received from the create-post or list-posts endpoints.
+
+### Limit Exceeded Error Format
+
+When a **403** limit error is returned, the response body is a structured JSON object (not a simple string):
+
+```json
+{
+  "error": "Post limit reached",
+  "code": "POST_LIMIT_REACHED",
+  "metric": "posts.platform_monthly",
+  "message": "Monthly post limit reached. Your Pro plan allows 50 platform posts per month.",
+  "limit": 50,
+  "used": 48,
+  "requested": 3,
+  "remaining": 2,
+  "periodStart": "2026-03-01T00:00:00.000Z",
+  "periodEnd": "2026-04-01T00:00:00.000Z",
+  "planName": "Pro"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `error` | string | Descriptive error string (see values below) |
+| `code` | string | Error code identifying which limit was hit (see values below) |
+| `metric` | string | Which limit metric was exceeded (see values below) |
+| `message` | string | Human-readable description of the limit violation |
+| `limit` | number | Maximum allowed value for this metric |
+| `used` | number/null | How many have been used in the current period (`null` for date-based limits) |
+| `requested` | number/null | How many were requested in this operation (`null` for date-based limits) |
+| `remaining` | number/null | How many are still available (`null` for date-based limits) |
+| `periodStart` | string | ISO 8601 start of the current billing/limit period |
+| `periodEnd` | string | ISO 8601 end of the current billing/limit period |
+| `planName` | string | The user's current plan name |
+
+**Error codes and their corresponding `error` and `metric` values:**
+
+| `code` | `error` | `metric` |
+|--------|---------|----------|
+| `POST_LIMIT_REACHED` | `"Post limit reached"` | `"posts.platform_monthly"` |
+| `SCHEDULED_POST_LIMIT_REACHED` | `"Scheduled post limit reached"` | `"posts.scheduled_active"` |
+| `SCHEDULE_HORIZON_REACHED` | `"Schedule horizon reached"` | `"posts.schedule_horizon_days"` |
+| `PLATFORM_NOT_AVAILABLE` | `"Platform not available"` | `"posts.platform_monthly"` |
+| `CONNECTIONS_OVER_LIMIT` | `"Account over channel limit"` | `"connections.total"` |
+
+> **Note:** For `SCHEDULE_HORIZON_REACHED`, the `used`, `requested`, and `remaining` fields are `null` since this limit is date-based rather than count-based.
+
+> **Note:** The response may include additional context fields depending on the error code. These can include `scheduledTime`, `scope`, `blockedPlatforms`, `channelBreakdown`, `disallowedPlatforms`, and `allowedPlatforms`. These fields are spread from the error context and provide extra details about why the limit was exceeded.
+
+> **Note (low priority):** When a `LimitExceededError` is triggered, the API also sends a limit-reached notification email to the account owner as a side effect. This is an internal behavior and does not affect the API response.
 
 
 ---

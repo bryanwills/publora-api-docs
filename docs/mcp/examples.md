@@ -29,7 +29,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 > - **Platform:** LinkedIn
 > - **Time:** Tomorrow at 9:00 AM EST
 > - **Content:** "Excited to announce our new feature!"
-> - **Post ID:** pg_abc123
+> - **Post ID:** 67a1b2c3d4e5f6a7b8c9d0e1
 
 ### Schedule with Specific Timezone
 
@@ -37,13 +37,13 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 > **Claude:** Scheduled! The post will publish on March 1, 2026 at 2:00 PM PST (10:00 PM UTC).
 >
-> Post ID: pg_def456
+> Post ID: 67b2c3d4e5f6a7b8c9d0e1f2
 
 ### Post to Multiple Platforms
 
-> **You:** Post "We're hiring senior engineers! Check our careers page" to Twitter, LinkedIn, and Bluesky
+> **You:** Post "We're hiring senior engineers! Check our careers page" to Twitter, LinkedIn, and Bluesky right now
 
-> **Claude:** I'll post that to all three platforms now.
+> **Claude:** I'll schedule that for immediate publishing. (To post immediately via MCP, I set `scheduledTime` to the current time -- the backend converts past/current times to immediate publishing.)
 >
 > Published successfully:
 > - **Twitter:** https://twitter.com/yourcompany/status/...
@@ -54,9 +54,9 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 > **You:** Create a draft post for Instagram: "Behind the scenes at our office today"
 
-> **Claude:** Draft created! You can edit it in the Publora dashboard or ask me to schedule it when ready.
+> **Claude:** I can't create a draft via MCP -- the `create_post` tool requires a `scheduledTime` (it's not optional). I'll need a specific date and time to schedule this post. When would you like it published?
 >
-> Draft ID: pg_xyz789
+> **Limitation:** The MCP `create_post` tool requires `scheduledTime` to be provided (it is not optional in the MCP schema). To create drafts without a scheduled time, use the REST API directly or the Publora dashboard.
 
 ### Schedule a Thread
 
@@ -72,7 +72,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 > - **Tweet 2:** "After months of development, we're ready to share..."
 > - **Tweet 3:** "Introducing our new AI-powered feature!"
 >
-> Post ID: pg_thread123
+> Post ID: 67d4e5f6a7b8c9d0e1f2a3b4
 
 ---
 
@@ -246,17 +246,19 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ### Batch Content Creation
 
-> **You:** Create 5 draft posts about our new feature for different platforms
+> **Important:** The MCP `create_post` tool requires `scheduledTime` -- it cannot create drafts. To create drafts without a scheduled time, use the [REST API](/endpoints/create-post) directly or the Publora dashboard.
 
-> **Claude:** I've created 5 draft posts:
+> **You:** Create 5 posts about our new feature for different platforms, scheduled hourly starting tomorrow at 9am
+
+> **Claude:** I've created and scheduled 5 platform-tailored posts:
 >
-> 1. **LinkedIn (long-form):** "We're excited to announce a major update that will change how you..."
-> 2. **Twitter (concise):** "Big news! Our new feature is here. Here's what it means for you..."
-> 3. **Bluesky (casual):** "Hey! We just shipped something cool..."
-> 4. **Instagram (visual focus):** "Swipe to see our latest feature in action..."
-> 5. **Threads (conversational):** "Want to know what we've been working on? Let me tell you..."
+> 1. **LinkedIn (9:00 AM):** "We're excited to announce a major update that will change how you..."
+> 2. **Twitter (10:00 AM):** "Big news! Our new feature is here. Here's what it means for you..."
+> 3. **Bluesky (11:00 AM):** "Hey! We just shipped something cool..."
+> 4. **Instagram (12:00 PM):** "Swipe to see our latest feature in action..."
+> 5. **Threads (1:00 PM):** "Want to know what we've been working on? Let me tell you..."
 >
-> All saved as drafts. Ready to schedule when you approve them!
+> All 5 posts scheduled for tomorrow. You can reschedule or cancel any of them.
 
 ---
 
@@ -454,7 +456,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ### Content Repurposing
 
-> **You:** Take my LinkedIn post pg_abc123 and adapt it for Twitter
+> **You:** Take my LinkedIn post 67a1b2c3d4e5f6a7b8c9d0e1 and adapt it for Twitter
 
 > **Claude:** Here's your LinkedIn post:
 > "We're thrilled to announce that our team has grown to 50 people! This milestone represents years of hard work and dedication. Thank you to everyone who believed in us from the start..."
@@ -527,7 +529,7 @@ Bad: "Schedule for sometime next week"
 ### Reference Posts Clearly
 
 ```text
-Good: "Delete post pg_abc123"
+Good: "Delete post 67a1b2c3d4e5f6a7b8c9d0e1"
 Good: "Reschedule my 9am LinkedIn post"
 Bad: "Delete that post" (which one?)
 ```

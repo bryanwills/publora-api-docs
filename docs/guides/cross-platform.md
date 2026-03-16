@@ -6,6 +6,10 @@ This guide covers how to publish a single post to multiple social media platform
 
 Publora lets you compose a single post and distribute it across multiple social media platforms in one API call. The API handles platform-specific formatting, character limits, and media requirements automatically.
 
+### Plan Restrictions
+
+> **Starter plan note:** The Starter plan (free, 15 posts/month) does not include API access (`apiAccess: false`, `mcpAccess: false`). You must be on the **Pro** plan or higher to use the API for cross-platform posting. Attempting to call the API with a Starter plan key will return a `403` error.
+
 ### Platform IDs
 
 Each connected social account is identified by a **platform ID** in the format:
@@ -28,6 +32,8 @@ For example:
 
 Retrieve your connected accounts and their platform IDs from the `GET /api/v1/platform-connections` endpoint.
 
+> **Pinterest:** Pinterest is registered in the platform registry (`SUPPORTED_PLATFORM_KEYS`) but publishing support is not yet fully available or tested. Pinterest support is on the roadmap.
+
 ### Character Limits by Platform
 
 | Platform | Character Limit |
@@ -35,7 +41,7 @@ Retrieve your connected accounts and their platform IDs from the `GET /api/v1/pl
 | Twitter / X | 280 |
 | LinkedIn | 3,000 |
 | Threads | 500 |
-| Telegram | 1,024 (text) / 4,096 (with media caption) |
+| Telegram | 4,096 (text) / 1,024 (media captions) |
 | Facebook | 63,206 |
 | Instagram | 2,200 |
 | TikTok | 2,200 |
@@ -49,17 +55,25 @@ When your content exceeds a platform's character limit, Publora adapts it automa
 
 - **Twitter / X:** Long text is split into a **thread** (multiple tweets chained together).
 - **Threads:** Long text is split into a **thread** (multiple posts chained together). ⚠️ *Temporarily unavailable - see note below.*
-- **Other platforms:** Content is truncated to fit the platform's limit, with an effort to break at natural word boundaries.
+- **Other platforms:** Content that exceeds the platform's character limit will return a validation error. Content is **not** auto-truncated for non-threading platforms.
 
 > **⚠️ Threads Notice:** Multi-part thread splitting on Threads is temporarily unavailable due to API access requirements. Keep Threads content under 500 characters or it will fail. Single posts and carousels work normally. Contact support@publora.com for updates.
 
 ### Platform-Specific Defaults
+
+`platformSettings` can be passed directly in the `create-post` request body. The API merges user-provided settings with defaults per platform.
+>
+> **⚠️ Important limitation:** The external API `update-post` endpoint only accepts `status` and `scheduledTime`. It does **not** accept `platformSettings`, `content`, or `platforms`. To modify platform-specific settings after creation, use the Publora dashboard or create a new post.
 
 Publora applies sensible defaults for platform-specific settings:
 
 - **TikTok:** Default privacy and interaction settings are applied automatically.
 - **Instagram:** Video posts are published as **Reels** by default.
 - **YouTube:** Videos are set to **public** visibility by default.
+
+### Response Status Code
+
+The `create-post` endpoint returns HTTP `200` (not `201`) on success. This applies to all post creation calls, including scheduled posts. Check `response.ok` or `response.status === 200` in your code.
 
 ## Examples
 
@@ -326,7 +340,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
       'linkedin-ABCDEF',  // Full text posted (under 3000 chars)
       'threads-111213',    // Will become a thread (exceeds 500 chars)
       'telegram-141516',   // Handled within Telegram limits
-      'bluesky-171819'     // Adapted for 300 char limit
+      'bluesky-171819'     // Bluesky: 300 char limit (no threading — content must fit within limit)
     ],
     scheduledTime: '2026-03-15T10:00:00.000Z'
   })
@@ -490,7 +504,7 @@ if (status.posts) {
 
 ## Best Practices
 
-1. **Keep text concise for multi-platform posts.** If you want the same text to appear identically on all platforms, keep it under 280 characters (the smallest common limit for Twitter/X). Otherwise, expect automatic threading or truncation.
+1. **Keep text concise for multi-platform posts.** If you want the same text to appear identically on all platforms, keep it under 280 characters (the smallest common limit for Twitter/X). Otherwise, expect automatic threading on supported platforms or a validation error on platforms that do not support threading.
 
 2. **Retrieve platform IDs dynamically.** Do not hardcode platform IDs. Use `GET /api/v1/platform-connections` to discover connected accounts, since users may add or remove connections.
 
@@ -509,8 +523,9 @@ if (status.posts) {
 | Post succeeds on some platforms but not others | Different requirements per platform (e.g., Instagram needs media) | Check which platforms need media and ensure your post includes it, or create separate post groups |
 | Twitter post appears as a thread | Text exceeds 280 characters | This is expected behavior -- Publora auto-threads long Twitter content |
 | `400` error with invalid platform ID | Platform ID does not match the `{platform}-{id}` format, or account is not connected | Verify the format and check `GET /api/v1/platform-connections` for valid IDs |
-| Content looks truncated on some platforms | Platform character limit is lower than your text length | Review the character limits table above and shorten content if exact wording matters |
+| Content rejected on some platforms | Platform character limit is lower than your text length and platform does not support threading | Shorten content to fit within the platform's limit, or post to those platforms separately with shorter text |
 | Video post fails on Instagram | Instagram requires specific video formats for Reels | Ensure your video is MP4, meets Instagram's aspect ratio requirements, and is within duration limits |
+| `403` `PLATFORM_NOT_AVAILABLE` when posting to Twitter | Starter plan does not include Twitter/X access | Upgrade to the Pro plan or higher to post to Twitter/X via the API |
 
 
 ---

@@ -55,17 +55,17 @@ When your content exceeds platform limits, Publora automatically:
    - Each subsequent post replies to the previous
    - Uses `reply_to_id` (Threads) or `in_reply_to_tweet_id` (X)
 
-3. **Adds numbering (X/Twitter only):**
-   - Appends `[1/N]`, `[2/N]`, etc. to each tweet
-   - Reserves ~8 characters for the marker
+3. **Adds numbering (X/Twitter and Threads):**
+   - Appends `(1/N)`, `(2/N)`, etc. to each post
+   - Reserves 10 characters for the marker
 
 ### Platform Limits
 
 | Platform | Character Limit | Thread Numbering |
 |----------|----------------|------------------|
-| X/Twitter (Standard) | 280 | Yes `[1/N]` |
-| X/Twitter (Premium) | 25,000 | Yes `[1/N]` |
-| Threads | 500 | No (optional) |
+| X/Twitter (Standard) | 280 | Yes `(1/N)` |
+| X/Twitter (Premium) | 25,000 | Yes `(1/N)` |
+| Threads | 500 | Yes (default) |
 
 ## Manual Thread Control
 
@@ -125,6 +125,8 @@ When explicit markers are detected:
 - Publora preserves them exactly as written
 - Content is split at marker positions
 - No additional numbering is added
+
+> **Note:** The `[n/m]` explicit marker and `---` separator behavior is handled by the content splitting service and cannot be independently verified from the core backend source. Thread numbering reserves approximately 10 characters for the `(n/m)` marker when calculating available space per part.
 
 ## Media in Threads
 
@@ -223,8 +225,8 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 ```
 
 Publora handles platform differences:
-- X/Twitter: 280 char limit, adds `[1/N]` markers
-- Threads: 500 char limit, no markers by default
+- X/Twitter: 280 char limit, adds `(1/N)` markers
+- Threads: 500 char limit, adds `(1/N)` markers by default
 
 ## Scheduling Threads
 
@@ -254,9 +256,13 @@ If a thread partially publishes (some posts succeed, others fail):
 ```json
 {
   "status": "partially_published",
-  "error": "Thread partially published: 2/5 tweets. Error: Rate limit exceeded",
-  "publishedIds": ["123", "456"],
-  "failedParts": [3, 4, 5]
+  "posts": [
+    { "platform": "twitter", "platformId": "123", "content": "Part 1 (1/5)", "status": "published", "postedId": "123" },
+    { "platform": "twitter", "platformId": "123", "content": "Part 2 (2/5)", "status": "published", "postedId": "456" },
+    { "platform": "twitter", "platformId": "123", "content": "Part 3 (3/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } },
+    { "platform": "twitter", "platformId": "123", "content": "Part 4 (4/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } },
+    { "platform": "twitter", "platformId": "123", "content": "Part 5 (5/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } }
+  ]
 }
 ```
 
@@ -282,27 +288,48 @@ The successfully posted parts remain live. You may need to:
 
 ## API Response
 
-Successful thread creation returns:
+The `create-post` endpoint returns only the post group reference, not the individual thread parts:
 
 ```json
 {
   "success": true,
-  "postGroupId": "pg_abc123",
+  "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d"
+}
+```
+
+To see the individual thread parts and their statuses, fetch the post group after it has been processed using `GET /api/v1/get-post/:postGroupId`. Each thread part appears as a separate entry in the `posts` array:
+
+```json
+{
+  "success": true,
+  "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d",
   "posts": [
     {
-      "platform": "twitter-123",
+      "platform": "twitter",
+      "platformId": "123",
+      "content": "First part (1/3)",
       "status": "published",
-      "isThread": true,
-      "postedId": "1234567890",
-      "threadParts": [
-        { "content": "First part [1/3]", "publishedId": "1234567890", "status": "published" },
-        { "content": "Second part [2/3]", "publishedId": "1234567891", "status": "published" },
-        { "content": "Third part [3/3]", "publishedId": "1234567892", "status": "published" }
-      ]
+      "postedId": "1234567890"
+    },
+    {
+      "platform": "twitter",
+      "platformId": "123",
+      "content": "Second part (2/3)",
+      "status": "published",
+      "postedId": "1234567891"
+    },
+    {
+      "platform": "twitter",
+      "platformId": "123",
+      "content": "Third part (3/3)",
+      "status": "published",
+      "postedId": "1234567892"
     }
   ]
 }
 ```
+
+The `postedId` field contains the platform-native post ID (not a full URL). If a thread partially publishes, some entries will have `status: "failed"` with an `error` field.
 
 ## Related Guides
 

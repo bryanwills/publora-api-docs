@@ -14,6 +14,7 @@ POST https://api.publora.com/api/v1/test-connection/:platformId
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `mcp`). Used for MCP access gating. |
 
 ## Path Parameters
 
@@ -68,9 +69,9 @@ POST https://api.publora.com/api/v1/test-connection/:platformId
 | `status` | string | `ok` or `error` |
 | `message` | string | Human-readable status message |
 | `permissions` | array | List of granted permissions/scopes |
-| `tokenExpiresIn` | string/null | Time until token expiry (e.g., "7d 3h") or "expired" |
+| `tokenExpiresIn` | string/null | Time until token expiry. Possible values: `"7d 3h"` (days and hours), `"5h"` (hours only, when less than one day remains), `"< 1h"` (less than one hour remaining), `"expired"` (token already expired), or `null` (no expiration). |
 | `lastSuccessfulPost` | string/null | Timestamp of last successful post |
-| `lastError` | object/null | Last error details if any |
+| `lastError` | object/null | Last error details if any. When present, contains: `message` (string — error description) and `occurredAt` (string — ISO 8601 timestamp of when the error occurred). |
 
 ## Examples
 
@@ -157,11 +158,37 @@ if (healthy) {
 }
 ```
 
+### Telegram MTProto Connections
+
+> **Note:** Telegram MTProto connections will always fail the test-connection check because the validator only checks `connectionType === "bot"` connections. MTProto connections fall through to the default failure case, returning a misleading `"Invalid bot token"` error.
+
+### Unknown Platform
+
+If the platform has no test-connection validator implemented (e.g., Pinterest), the endpoint returns HTTP 200 with an error status:
+
+```json
+{
+  "status": "error",
+  "message": "Unknown platform: pinterest"
+}
+```
+
+> **Note:** The internal dashboard test-connection endpoint may include an additional `message` field in 500 error responses that the public API endpoint does not return.
+
 ## Errors
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Invalid platformId format"` | `platformId` doesn't contain a dash or is malformed. **Note:** This endpoint uses a simple dash-split validation (not the stricter `PLATFORM_ID_REGEX` used by the create-post endpoint), so it may accept platform IDs with uppercase platform prefixes that create-post would reject. |
+| 400 | `"Invalid x-publora-user-id"` | `x-publora-user-id` header contains an invalid ObjectId |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | `x-publora-key` value is not a valid key |
+| 401 | `"Invalid API key owner"` | The API key's owner account could not be found |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
+| 403 | `"MCP access is not enabled for this account"` | MCP access is not enabled when `x-publora-client: mcp` is sent |
+| 403 | `"Workspace access is not enabled for this key"` | API key does not have workspace permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` user is not managed by this API key |
+| 500 | `"Internal server error"` | Unexpected error in middleware |
 | 404 | `"Connection not found"` | Invalid platformId or connection doesn't exist |
 | 500 | `"Failed to test connection"` | Server error during validation |
 

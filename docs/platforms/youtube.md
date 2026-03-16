@@ -13,7 +13,7 @@ Publora provides a unified REST API for uploading and publishing videos to YouTu
 | Authentication | Single API key | Complex Google OAuth 2.0 |
 | Video upload | Simple REST endpoint | Resumable upload protocol |
 | Quota management | Handled automatically | Manual quota tracking |
-| Multi-platform | Post to 10 platforms | YouTube only |
+| Multi-platform | Post to 11 platforms | YouTube only |
 | Setup time | 5 minutes | Hours (Google Cloud setup) |
 | Privacy controls | Full support | Full support |
 
@@ -33,13 +33,17 @@ Where `{channelId}` is your YouTube channel ID assigned during account connectio
 - API key from Publora
 - Video content is **required** (YouTube is a video platform)
 
+> **Refresh token lifespan:** YouTube refresh tokens in Publora's system default to approximately 6 months expiry. After that period, the user will need to re-authenticate via the Publora dashboard to reconnect their YouTube channel.
+
 ## Supported Content
 
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text only | No | YouTube requires a video |
 | Images | No | Not supported as standalone posts |
-| Videos | Yes | MP4 format |
+| Videos | Yes | MP4 or MOV format, single video only |
+
+> **Important:** YouTube posts through Publora support only a single video per post. If you attempt to attach multiple videos, the API will reject the request. To publish multiple videos, create separate posts for each.
 
 ## Platform-Specific Settings
 
@@ -59,7 +63,9 @@ YouTube supports a `platformSettings` object to control video privacy and title:
 | Setting | Values | Default | Description |
 |---------|--------|---------|-------------|
 | `privacy` | `"private"`, `"public"`, `"unlisted"` | `"public"` | Video visibility on YouTube |
-| `title` | string | First 70 characters of `content` | Title displayed on the video page |
+| `title` | string | `""` (empty string) | Title displayed on the video page. The publisher service may derive a title from the first 70 characters of the post content at publish time, but the API stores an empty string by default at post creation. |
+
+> **Note:** If no title is specified, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. To set a custom title, pass it explicitly via `platformSettings` in the `create-post` request body. The API merges user-provided settings with defaults per platform.
 
 ### Privacy Settings
 
@@ -71,7 +77,7 @@ YouTube supports a `platformSettings` object to control video privacy and title:
 
 ### Title Behavior
 
-If you do not specify a `title` in the platform settings, Publora automatically uses the first 70 characters of your `content` field as the video title. The full `content` is used as the video description.
+If you do not specify a `title` in the platform settings, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. The full `content` is used as the video description. Pass `platformSettings` directly in the `create-post` request body. The API merges user-provided settings with defaults per platform.
 
 ## Examples
 
@@ -271,7 +277,7 @@ console.log(response.data);
 
 ### Upload with Auto-Generated Title
 
-If you omit the `title` setting, Publora uses the first 70 characters of `content` as the title.
+If you omit the `title` setting, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. To set a custom title, include it in `platformSettings` when calling `create-post`.
 
 **JavaScript (fetch)**
 
@@ -289,7 +295,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 });
 
 const data = await response.json();
-// Title will be: "Weekly Vlog: What I learned shipping 3 features in 5 days. This week"
+// Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 // Description will be the full content
 console.log(data);
 ```
@@ -312,7 +318,7 @@ response = requests.post(
 )
 
 data = response.json()
-# Title will be: "Weekly Vlog: What I learned shipping 3 features in 5 days. This week"
+# Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 print(data)
 ```
 
@@ -343,15 +349,16 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
   }
 });
 
-// Title auto-generated from first 70 chars of content
+// Note: title defaults to an empty string at post creation — the publisher service may derive one from content at publish time. Include platformSettings.youtube.title to set a custom one
 console.log(response.data);
 ```
 
 ## Platform Quirks
 
 - **Video only**: YouTube does not support text-only or image-only posts through the API. A video file must always be included.
-- **MP4 required**: Only MP4 video format is supported. Convert your videos to MP4 before uploading.
-- **Auto-generated title**: When no `title` is specified in platform settings, Publora takes the first 70 characters of the `content` field. This may result in truncated titles, so it is recommended to explicitly set the title.
+- **MP4 or MOV recommended**: Publora does not validate video format before uploading — any file is passed through to the YouTube API. However, YouTube recommends MP4 or MOV for best compatibility. If you upload an unsupported format, the YouTube API will reject it.
+- **Single video only**: Publora supports uploading one video per post. If you attempt to attach multiple videos, the API will reject the request with an error.
+- **Default title is empty string**: When no `title` is specified in platform settings, the API defaults the title to an empty string `""` at post creation. The publisher service may derive a title from the first 70 characters of the post content at publish time. It is recommended to explicitly set the title via `platformSettings` in the `create-post` request for best results.
 - **Content becomes description**: The full `content` text is used as the YouTube video description, while the `title` (or auto-generated title) is used as the video title.
 - **Processing time**: After upload, YouTube processes the video before it becomes available. This can take from a few seconds to several minutes depending on video length and resolution.
 - **Daily upload quota**: YouTube enforces daily upload quotas. If you hit the quota, Publora will return the error from the YouTube API.
@@ -364,15 +371,15 @@ console.log(response.data);
 | Element | Limit |
 |---------|-------|
 | Video title | 100 characters |
-| Video description | 5,000 characters |
-| Auto-generated title | First 70 characters of content |
+| Video description | 1,000 characters (frontend validation only; YouTube allows up to 5,000) |
+| Default title | Empty string `""` at post creation (the publisher service may derive a title from the first 70 characters of post content at publish time) |
 | Visible description | First 150 characters (shown before "Show more") |
 
 ### Media Limits
 
 | Media Type | Max Size | Max Duration | Supported Formats |
 |------------|----------|--------------|-------------------|
-| Videos | 256 GB | 12 hours | MP4, MOV, AVI, WebM |
+| Videos | 256 GB | 12 hours | MP4, MOV (Publora accepts MP4 and MOV; YouTube natively accepts additional formats like AVI, WebM) |
 | Images | Not supported | - | - |
 
 ### Additional Notes
@@ -380,6 +387,8 @@ console.log(response.data);
 - YouTube is a video-only platform; images cannot be posted as standalone content
 - The first 150 characters of the description are visible without clicking "Show more"
 - Video processing time varies based on length and resolution
+- The size (256 GB) and duration (12 hours) limits listed above are YouTube's native limits. Publora does not independently enforce these; the YouTube API will reject files that exceed them.
+- Publora enforces a 1,000-character limit on video descriptions via frontend validation only. The API itself does not enforce this limit, so API users can send up to YouTube's native 5,000-character limit.
 
 ---
 

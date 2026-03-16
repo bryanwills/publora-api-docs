@@ -14,12 +14,17 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Set to `mcp` for MCP tool access |
+
+> **MCP access:** If the `x-publora-client: mcp` header is sent, the server validates `entitlements.features.mcpAccess` and returns `403 "MCP access is not enabled for this account"` if the feature is not enabled.
 
 ## Path Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `postGroupId` | string | The post group ID |
+
+> **Note:** Results are limited to the first 100 log entries per post group (sorted ascending by creation time, oldest first).
 
 ## Response
 
@@ -33,7 +38,6 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
       "postId": "507f1f77bcf86cd799439012",
       "platform": "linkedin",
       "event": "processing",
-      "retryCount": 0,
       "createdAt": "2026-02-22T14:30:00.000Z"
     },
     {
@@ -51,16 +55,12 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
       "postId": "507f1f77bcf86cd799439012",
       "platform": "linkedin",
       "event": "publish_succeeded",
-      "retryCount": 0,
       "createdAt": "2026-02-22T14:30:03.000Z"
     },
     {
       "_id": "65f8a1b2c3d4e5f6a7b8c9d3",
       "postGroupId": "507f1f77bcf86cd799439011",
-      "postId": "507f1f77bcf86cd799439013",
-      "platform": "threads",
       "event": "processing",
-      "retryCount": 0,
       "createdAt": "2026-02-22T14:30:00.000Z"
     },
     {
@@ -69,7 +69,7 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
       "postId": "507f1f77bcf86cd799439013",
       "platform": "threads",
       "event": "publish_attempted",
-      "retryCount": 0,
+      "retryCount": 1,
       "createdAt": "2026-02-22T14:30:01.000Z"
     },
     {
@@ -80,7 +80,7 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
       "event": "publish_failed",
       "error": "Error validating access token",
       "httpStatus": 401,
-      "retryCount": 0,
+      "retryCount": 1,
       "metadata": {
         "errorCode": "PLATFORM_AUTH_EXPIRED",
         "retryable": false
@@ -91,20 +91,24 @@ GET https://api.publora.com/api/v1/post-logs/:postGroupId
 }
 ```
 
+> **Note:** Response also includes `updatedAt` (auto-managed by Mongoose) and `__v` (Mongoose version key) fields, omitted from examples for brevity.
+
 ## Log Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `_id` | string | Unique log entry ID |
 | `postGroupId` | string | Parent post group ID |
-| `postId` | string | Individual platform post ID |
-| `platform` | string | Platform name (twitter, linkedin, etc.) |
+| `postId` | string/undefined | Individual platform post ID. May be absent for group-level events (e.g., initial `processing`). |
+| `platform` | string/undefined | Platform name (twitter, linkedin, etc.). May be absent for group-level events. |
 | `event` | string | Event type (see table below) |
-| `error` | string/null | Error message (for failed events) |
-| `httpStatus` | number/null | HTTP status code from platform |
-| `retryCount` | number | Number of retry attempts |
-| `metadata` | object/null | Additional event data |
+| `error` | string or absent | Error message (for failed events). Absent from the response when there is no error (not `null`). |
+| `httpStatus` | number or absent | HTTP status code from platform. Absent from the response when not applicable (not `null`). |
+| `retryCount` | number or absent | Number of retry attempts. Absent if no retries have occurred -- do not assume it defaults to 0. |
+| `metadata` | object or absent | Additional event data. Absent from the response when there is no metadata (not `null`). |
 | `createdAt` | string | Event timestamp |
+| `updatedAt` | string | Last update timestamp (auto-managed by Mongoose) |
+| `__v` | number | Mongoose version key. Present in responses but not part of the documented schema — can be safely ignored. |
 
 ## Event Types
 
@@ -213,10 +217,18 @@ async function debugFailedPost(postGroupId) {
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ID |
+| 401 | `"API key is required"` | `x-publora-key` header is missing entirely |
+| 401 | `"Invalid API key"` | `x-publora-key` is present but invalid |
+| 401 | `"Invalid API key owner"` | API key exists but the associated user account was not found |
+| 403 | `"API access is not enabled for this account"` | The user's account does not have API access enabled |
+| 403 | `"MCP access is not enabled for this account"` | The `x-publora-client: mcp` header was sent but `entitlements.features.mcpAccess` is not enabled |
+| 403 | `"Workspace access is not enabled for this key"` | API key does not have workspace access enabled |
+| 403 | `"User is not managed by key"` | Managed user does not belong to the API key owner's workspace |
 | 404 | `"Post group not found"` | Invalid ID or post belongs to another user |
 | 500 | `"Failed to get post logs"` | Server error |
 
+> **Note:** If an invalid ObjectId format is passed as `postGroupId` (e.g., a non-hex string or wrong length), the endpoint returns `500 "Failed to get post logs"` instead of `404 "Post group not found"`. This is because Mongoose throws a `CastError` for invalid ObjectIds, which is caught by the generic error handler before the post group lookup can return a 404.
 
 ---
 

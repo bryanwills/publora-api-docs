@@ -8,6 +8,8 @@ Detailed setup instructions for connecting Publora MCP to different AI clients.
 2. **API key** — Get from **API** in sidebar (starts with `sk_`)
 3. **Connected social account** — At least one platform connected
 
+> **Auth headers:** `x-publora-key: sk_...` is the required header for direct REST API calls to `api.publora.com`. The `Authorization: Bearer sk_...` format is only supported through the MCP proxy server, which translates it to `x-publora-key` internally. When making direct REST API calls, always use `x-publora-key`. The examples below use `Authorization: Bearer` for MCP client configurations, where it is the standard format.
+
 ---
 
 ## Claude Code (CLI)
@@ -105,7 +107,7 @@ Start a new conversation and ask:
 "What MCP tools do you have available?"
 ```
 
-Claude should list the 18 Publora tools.
+Claude should list the 15 active Publora tools (3 additional tools — `linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions` — are temporarily disabled pending LinkedIn approval).
 
 ---
 
@@ -529,13 +531,15 @@ Some clients support environment variable interpolation:
 1. **Restart your client** — MCP servers load on startup
 2. **Check JSON syntax** — Validate at [jsonlint.com](https://jsonlint.com)
 3. **Verify type is "http"** — Not "url" or "sse"
-4. **Check the URL** — Must be `https://mcp.publora.com` (no trailing slash)
+4. **Check the URL** — Use `https://mcp.publora.com` (recommended) or `https://mcp.publora.com/mcp` (both work)
 
 ### Authentication errors
 
 1. **Include "Bearer" prefix** — `Authorization: Bearer sk_...`
 2. **Check key format** — Should start with `sk_`
 3. **Generate new key** — At publora.com → **API** in sidebar
+
+> **Note:** `x-publora-key: sk_...` is the required header for direct REST API calls to `api.publora.com`. The `Authorization: Bearer sk_...` format is only supported through the MCP proxy server, which translates it to `x-publora-key` internally. For MCP client configurations, use the `Authorization: Bearer` format.
 
 ### Connection refused
 
@@ -547,6 +551,6 @@ Some clients support environment variable interpolation:
 
 ## Next Steps
 
-- [Tools Reference](./tools-reference.md) — All 18 tools with parameters
+- [Tools Reference](./tools-reference.md) — All 15 active tools with parameters
 - [Examples](./examples.md) — Real-world conversation examples
 - [Troubleshooting](./troubleshooting.md) — Common issues and solutions

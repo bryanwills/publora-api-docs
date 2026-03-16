@@ -13,7 +13,7 @@ Publora provides a unified REST API for professional content publishing to Linke
 | Authentication | Single API key | Complex OAuth 2.0 flow |
 | API access | Instant | LinkedIn partner approval |
 | Analytics | Built-in | Separate API calls |
-| Multi-platform | Post to 10 platforms | LinkedIn only |
+| Multi-platform | Post to 11 platforms | LinkedIn only |
 | Setup time | 5 minutes | Weeks (partner approval) |
 | Reactions | Full support | Full support |
 
@@ -30,7 +30,9 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 ## Requirements
 
 - A LinkedIn account connected via OAuth through the Publora dashboard
-- API key from Publora
+- API key from Publora (Pro or Premium plan required)
+
+> **Note:** The Starter plan has `apiAccess: false`. API key authentication requires a Pro or Premium plan.
 
 ## Supported Content
 
@@ -56,8 +58,8 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 | Property | Limit |
 |----------|-------|
 | Max size | 5 MB |
-| Max count | 10 (multi-image posts) |
-| Formats | JPEG, PNG, GIF |
+| Max count | 20 (multi-image posts) |
+| Formats | JPEG, PNG, GIF, WebP (WebP images are auto-converted to JPEG before upload to LinkedIn) |
 
 > **Important:** Organic carousels (swipeable multi-image posts) are NOT supported via the API. The API only supports multi-image grid layouts. Swipeable carousels are only available for sponsored content.
 
@@ -217,6 +219,7 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-reactions'
 });
 
 const data = await response.json();
+// HTTP 201 Created
 console.log(data);
 // {
 //   success: true,
@@ -224,9 +227,12 @@ console.log(data);
 //     id: "urn:li:reaction:(urn:li:person:xxx,urn:li:ugcPost:xxx)",
 //     reactionType: "INTEREST",
 //     ...
-//   }
+//   },
+//   urnTranslated: { from: "original-urn", to: "translated-urn" }  // present when URN translation was needed
 // }
 ```
+
+> **Note:** The create reaction endpoint returns HTTP **201** (not 200). The response may include an `urnTranslated` field when the provided URN needed to be translated to a different format for the LinkedIn API.
 
 **cURL**
 ```bash
@@ -260,6 +266,8 @@ curl -X DELETE https://api.publora.com/api/v1/linkedin-reactions \
   }'
 ```
 
+> **Note:** The delete reaction response may also include an `urnTranslated` field (`{ from: "original-urn", to: "translated-urn" }`) when URN translation was needed.
+
 ## Comments
 
 Publora supports creating and deleting comments on LinkedIn posts programmatically.
@@ -291,17 +299,20 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-comments',
 });
 
 const data = await response.json();
+// HTTP 201 Created
 console.log(data);
 // {
 //   success: true,
 //   comment: {
 //     id: "7434695495614312448",
 //     commentUrn: "urn:li:comment:(urn:li:activity:xxx,7434695495614312448)",
-//     message: { text: "Great post! Thanks for sharing." },
+//     message: "Great post! Thanks for sharing.",
 //     ...
 //   }
 // }
 ```
+
+> **Note:** The create comment endpoint returns HTTP **201** (not 200).
 
 **cURL**
 ```bash
@@ -322,7 +333,7 @@ curl -X POST https://api.publora.com/api/v1/linkedin-comments \
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN the comment belongs to |
-| `commentId` | string | Yes | Comment URN to delete |
+| `commentId` | string | Yes | Comment URN to delete (also accepts plain numeric IDs, e.g., `7434695495614312448`) |
 | `platformId` | string | Yes | Your LinkedIn platform ID |
 
 **JavaScript**
@@ -527,25 +538,74 @@ console.log(response.data);
 
 ### Check Post Analytics
 
-**JavaScript (fetch)**
+**Endpoint:** `POST /api/v1/linkedin-post-statistics`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123` or `urn:li:ugcPost:123`) |
+| `platformId` | string | Yes | Your LinkedIn platform ID (e.g., `linkedin-ABC123`) |
+| `queryType` | string | No | Single metric to retrieve. Valid values: `IMPRESSION`, `MEMBERS_REACHED`, `RESHARE`, `REACTION`, `COMMENT`. `ALL` is only valid when used with the `queryTypes` array parameter, not with the singular `queryType` parameter. At least one of `queryType` or `queryTypes` is required. Without this parameter (and without `queryTypes`), the API returns 400: `queryType or queryTypes is required`. |
+| `queryTypes` | array of strings | No | Multiple metrics to retrieve in one request. Same valid values as `queryType`. At least one of `queryType` or `queryTypes` is required. |
+
+> **Response format differs by request type:**
+> - **Single metric** (using `queryType`): Returns `{ success: true, count: 123, cached: true/false }`
+> - **Multiple metrics** (using `queryTypes`): Returns `{ success: true/false, metrics: { IMPRESSION: 4521, ... }, cached: true/false, cachedMetrics: [...], errors: [...] }`
+>
+> **Multi-metric response fields:**
+> - `cached` (boolean): Whether any metrics were served from cache.
+> - `cachedMetrics` (array): Only present when non-empty. Lists which metrics came from cache.
+> - `errors` (array): Present when some metrics failed to fetch.
+> - `success` is `false` when one or more metrics failed to fetch (i.e., `errors` array is non-empty). The `metrics` object is still populated with `null` for failed metrics.
+
+**JavaScript (fetch) — multiple metrics**
 
 ```javascript
-const response = await fetch('https://api.publora.com/api/v1/post-analytics?postId=post-abc123&platform=linkedin-987654321', {
-  method: 'GET',
+const response = await fetch('https://api.publora.com/api/v1/linkedin-post-statistics', {
+  method: 'POST',
   headers: {
+    'Content-Type': 'application/json',
     'x-publora-key': 'YOUR_API_KEY'
-  }
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    platformId: 'linkedin-987654321',
+    queryTypes: ['IMPRESSION', 'MEMBERS_REACHED', 'RESHARE', 'REACTION', 'COMMENT']
+  })
 });
 
 const analytics = await response.json();
 console.log(analytics);
 // {
-//   impressions: 4521,
-//   membersReached: 3200,
-//   reshares: 12,
-//   reactions: 89,
-//   comments: 15
+//   success: true,
+//   metrics: {
+//     IMPRESSION: 4521,
+//     MEMBERS_REACHED: 3200,
+//     RESHARE: 12,
+//     REACTION: 89,
+//     COMMENT: 15
+//   }
 // }
+```
+
+**JavaScript (fetch) — single metric**
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-post-statistics', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7434685316856377344',
+    platformId: 'linkedin-987654321',
+    queryType: 'IMPRESSION'
+  })
+});
+
+const analytics = await response.json();
+console.log(analytics);
+// { success: true, count: 4521, cached: false }
 ```
 
 **Python (requests)**
@@ -553,14 +613,16 @@ console.log(analytics);
 ```python
 import requests
 
-response = requests.get(
-    'https://api.publora.com/api/v1/post-analytics',
+response = requests.post(
+    'https://api.publora.com/api/v1/linkedin-post-statistics',
     headers={
+        'Content-Type': 'application/json',
         'x-publora-key': 'YOUR_API_KEY'
     },
-    params={
-        'postId': 'post-abc123',
-        'platform': 'linkedin-987654321'
+    json={
+        'postedId': 'urn:li:share:7434685316856377344',
+        'platformId': 'linkedin-987654321',
+        'queryTypes': ['IMPRESSION', 'MEMBERS_REACHED', 'RESHARE', 'REACTION', 'COMMENT']
     }
 )
 
@@ -571,10 +633,14 @@ print(analytics)
 **cURL**
 
 ```bash
-curl -G https://api.publora.com/api/v1/post-analytics \
+curl -X POST https://api.publora.com/api/v1/linkedin-post-statistics \
+  -H "Content-Type: application/json" \
   -H "x-publora-key: YOUR_API_KEY" \
-  -d "postId=post-abc123" \
-  -d "platform=linkedin-987654321"
+  -d '{
+    "postedId": "urn:li:share:7434685316856377344",
+    "platformId": "linkedin-987654321",
+    "queryTypes": ["IMPRESSION", "MEMBERS_REACHED", "RESHARE", "REACTION", "COMMENT"]
+  }'
 ```
 
 **Node.js (axios)**
@@ -582,25 +648,34 @@ curl -G https://api.publora.com/api/v1/post-analytics \
 ```javascript
 const axios = require('axios');
 
-const response = await axios.get('https://api.publora.com/api/v1/post-analytics', {
+const response = await axios.post('https://api.publora.com/api/v1/linkedin-post-statistics', {
+  postedId: 'urn:li:share:7434685316856377344',
+  platformId: 'linkedin-987654321',
+  queryTypes: ['IMPRESSION', 'MEMBERS_REACHED', 'RESHARE', 'REACTION', 'COMMENT']
+}, {
   headers: {
+    'Content-Type': 'application/json',
     'x-publora-key': 'YOUR_API_KEY'
-  },
-  params: {
-    postId: 'post-abc123',
-    platform: 'linkedin-987654321'
   }
 });
 
 console.log(response.data);
 ```
 
+## Additional Analytics Endpoints
+
+Beyond post-level statistics, Publora provides additional LinkedIn analytics endpoints:
+
+- **Followers Statistics** (`POST /api/v1/linkedin-followers`) — Retrieve follower demographics and growth data for your LinkedIn account. See the [LinkedIn Followers](../endpoints/linkedin-followers.md) endpoint docs.
+- **Account Statistics** (`POST /api/v1/linkedin-account-statistics`) — Get aggregate account-level statistics including total impressions, engagement, and reach. See the [LinkedIn Statistics](../endpoints/linkedin-statistics.md) endpoint docs.
+- **Profile Summary** (`POST /api/v1/linkedin-profile-summary`) — Retrieve your LinkedIn profile summary information. See the [LinkedIn Profile Summary](../endpoints/linkedin-profile-summary.md) endpoint docs.
+
 ## Platform Quirks
 
 - **URN formats differ**: LinkedIn URLs use `urn:li:activity:xxx` but the API requires `urn:li:share:xxx` or `urn:li:ugcPost:xxx`. For posts created via Publora, use the `postedId` from the `get-post` endpoint. For external posts, you may need to look up the correct URN format.
 - **WebP auto-conversion**: If you provide a WebP image URL, Publora automatically converts it to JPEG before uploading to LinkedIn. No action needed on your part.
 - **3,000-character limit**: LinkedIn enforces a strict 3,000-character limit for post text. Publora will return an error if your content exceeds this.
-- **Multiple images**: LinkedIn supports posting multiple images at once. They will appear as a carousel or multi-image post depending on the count.
+- **Multiple images**: LinkedIn supports posting multiple images at once. They will appear as a multi-image grid layout (not a swipeable carousel — organic carousels are not supported via the API).
 - **Rich text not supported via API**: LinkedIn's API does not support bold, italic, or other rich text formatting. Use plain text or Unicode characters for emphasis.
 - **Analytics delay**: LinkedIn analytics may take up to 24 hours to fully populate. Querying immediately after posting will return partial data.
 - **Hashtags**: LinkedIn hashtags are supported in the content body. They are treated as plain text but become clickable on the platform.
@@ -611,7 +686,7 @@ console.log(response.data);
 | Element | Limit |
 |---------|-------|
 | Post body | 3,000 characters |
-| Comment | 1,250 characters |
+| Comment | 1,250 characters (validated by Publora; returns 400 error: `"message cannot exceed 1250 characters"`) |
 
 
 ---

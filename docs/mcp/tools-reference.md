@@ -1,6 +1,8 @@
 # MCP Tools Reference
 
-Complete reference for all 18 Publora MCP tools with parameters, examples, and code snippets.
+Complete reference for all 15 active Publora MCP tools with parameters, examples, and code snippets. Three additional tools (`linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions`) are temporarily disabled pending LinkedIn approval of the `r_member_social` permission — see [LinkedIn Feed Retrieval Tools](#linkedin-feed-retrieval-tools-coming-soon--requires-linkedin-approval) below.
+
+> **Note:** Most MCP tool responses return the full `{ success, ... }` API response wrapper as shown in the examples below. A few tools — `list_connections`, `list_workspace_users`, and `create_workspace_user` — strip the wrapper and return the inner data directly (e.g., just the `connections` array). The response examples below reflect the actual format returned by each tool.
 
 ## Posts Tools
 
@@ -13,13 +15,13 @@ List posts with optional filters for status, platform, and date range.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `status` | string | No | Filter by status: `draft`, `scheduled`, `published`, `failed`, `partially_published` |
-| `platform` | string | No | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram` |
-| `fromDate` | string | No | Start date (ISO 8601): `2026-02-01T00:00:00Z` |
-| `toDate` | string | No | End date (ISO 8601): `2026-02-28T23:59:59Z` |
+| `platform` | string | No | Filter by platform: `twitter`, `linkedin`, `instagram`, `threads`, `tiktok`, `youtube`, `facebook`, `bluesky`, `mastodon`, `telegram`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
+| `fromDate` | string | No | Start date (ISO 8601): `2026-02-01T00:00:00Z`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
+| `toDate` | string | No | End date (ISO 8601): `2026-02-28T23:59:59Z`. *Accepted but not currently implemented — the backend silently ignores this parameter.* |
 | `page` | number | No | Page number (default: 1) |
 | `limit` | number | No | Results per page (default: 20, max: 100) |
-| `sortBy` | string | No | Sort field: `createdAt`, `updatedAt`, `scheduledTime` (default: createdAt) |
-| `sortOrder` | string | No | Sort direction: `asc` or `desc` (default: desc) |
+| `sortBy` | string | No | Sort field: `createdAt`, `updatedAt`, `scheduledTime` (default: createdAt). *Accepted but not currently implemented — the backend hardcodes sort order.* |
+| `sortOrder` | string | No | Sort direction: `asc` or `desc` (default: desc). *Accepted but not currently implemented — the backend hardcodes sort order.* |
 
 **Example prompts:**
 
@@ -59,18 +61,33 @@ asyncio.run(list_scheduled_posts())
 
 ```json
 {
+  "success": true,
   "posts": [
     {
-      "id": "pg_abc123",
+      "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
       "content": "Excited to share our latest update!",
       "status": "scheduled",
       "scheduledTime": "2026-02-20T14:00:00Z",
-      "platforms": ["linkedin-123456"]
+      "platforms": [
+        {
+          "platformId": "linkedin-123456",
+          "platform": "linkedin",
+          "status": "scheduled"
+        }
+      ],
+      "createdAt": "2026-02-19T10:30:00Z",
+      "updatedAt": "2026-02-19T10:30:00Z",
+      "mediaUrls": []
     }
   ],
-  "total": 1,
-  "page": 1,
-  "limit": 20
+  "pagination": {
+    "totalItems": 1,
+    "totalPages": 1,
+    "page": 1,
+    "limit": 20,
+    "hasNextPage": false,
+    "hasPrevPage": false
+  }
 }
 ```
 
@@ -88,12 +105,13 @@ Create and schedule a post to one or more platforms.
 | `platforms` | string[] | Yes | Array of platform connection IDs (from `list_connections`) |
 | `scheduledTime` | string | Yes | When to publish (ISO 8601): `2026-03-01T14:00:00Z` |
 
+> **MCP vs REST difference:** `scheduledTime` is required in the MCP schema to ensure AI agents always specify a publish time. In the REST API, this field is optional — omitting it creates a draft post instead.
+
 **Example prompts:**
 
 ```text
 "Schedule 'Hello world!' to LinkedIn for tomorrow at 9am"
 "Post 'We're hiring!' to Twitter and LinkedIn right now"
-"Create a draft post for Instagram"
 "Schedule this announcement to all my accounts for Monday"
 ```
 
@@ -150,18 +168,22 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 
 | Platform | Characters | Images | Video | Special Features |
 |----------|------------|--------|-------|------------------|
-| LinkedIn | 3,000 | 20 | 200MB | Documents, carousels, @mentions |
-| X/Twitter | 280 (25K premium) | 4 | 140s | Auto-threading |
+| LinkedIn | 3,000 | 20 | 500MB | Documents, @mentions |
+| X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
 | Instagram | 2,200 | 10 | 90s | Reels supported |
 | Threads | 500 | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |
-| Facebook | 63,206 | 10 | 240min | Page posts, Reels |
-| Bluesky | 300 | 4 | N/A | Auto-facet detection |
-| Mastodon | 500* | 4 | 40MB | Instance-variable |
+| Facebook | 63,206 | 10 | 45min | Page posts, Reels |
+| Bluesky | 300 | 4 | 3 min / 100 MB | Auto-facet detection |
+| Mastodon | 500* | 4 | ~99 MB | Instance-variable |
 | Telegram | 4,096 (1,024 captions) | Unlimited | 2GB | Markdown/HTML support |
 
 *Varies by instance
+
+> **Note:** LinkedIn's "20 images" is the multi-image upload limit, not a carousel. Organic carousels on LinkedIn are **not** supported via the API (carousels are only available for sponsored/ad content). To share multi-page content organically, use LinkedIn document (PDF) posts instead.
+
+> **Note:** Multi-threaded nested posts on Threads are temporarily unavailable. Single posts and carousel posts to Threads continue to work normally.
 
 ---
 
@@ -173,12 +195,12 @@ Get details of a specific post group.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `postGroupId` | string | Yes | Post group ID (e.g., `pg_abc123`) |
+| `postGroupId` | string | Yes | Post group ID (e.g., `67a1b2c3d4e5f6a7b8c9d0e1`) |
 
 **Example prompts:**
 
 ```text
-"Show me the details of post pg_abc123"
+"Show me the details of post 67a1b2c3d4e5f6a7b8c9d0e1"
 "What's the status of my last scheduled post?"
 "Get info about my recent post"
 ```
@@ -194,7 +216,7 @@ async def get_post_details():
             await session.initialize()
 
             result = await session.call_tool("get_post", {
-                "postGroupId": "pg_abc123"
+                "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1"
             })
             print(result.content[0].text)
 ```
@@ -216,7 +238,7 @@ Reschedule or change post status.
 **Example prompts:**
 
 ```text
-"Reschedule post pg_abc123 to Friday at 3pm"
+"Reschedule post 67a1b2c3d4e5f6a7b8c9d0e1 to Friday at 3pm"
 "Change my draft to scheduled"
 "Move tomorrow's post to next week"
 "Update the post to publish at 10am instead"
@@ -233,11 +255,27 @@ async def reschedule_post():
             await session.initialize()
 
             result = await session.call_tool("update_post", {
-                "postGroupId": "pg_abc123",
+                "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
                 "scheduledTime": "2026-03-01T15:00:00Z"
             })
             print(result.content[0].text)
 ```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "message": "Post updated successfully",
+  "postGroup": {
+    "_id": "67a1b2c3d4e5f6a7b8c9d0e1",
+    "status": "scheduled",
+    "scheduledTime": "2026-03-01T15:00:00Z"
+  }
+}
+```
+
+> **Note:** Only posts with status `draft` or `scheduled` can be updated. Attempting to update a post in any other status (e.g., `published`, `failed`, `partially_published`) returns a `400` error: `"Cannot update post: post is currently in {status} status"`.
 
 ---
 
@@ -254,7 +292,7 @@ Delete a post from all platforms.
 **Example prompts:**
 
 ```text
-"Delete post pg_abc123"
+"Delete post 67a1b2c3d4e5f6a7b8c9d0e1"
 "Cancel my scheduled post for tomorrow"
 "Remove all my draft posts"
 ```
@@ -270,7 +308,7 @@ async def delete_post():
             await session.initialize()
 
             result = await session.call_tool("delete_post", {
-                "postGroupId": "pg_abc123"
+                "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1"
             })
             print(result.content[0].text)
 ```
@@ -311,14 +349,17 @@ async def upload_image_to_post():
 
             # Get upload URL
             result = await session.call_tool("get_upload_url", {
-                "postGroupId": "pg_abc123",
+                "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
                 "fileName": "product-photo.jpg",
                 "contentType": "image/jpeg",
                 "type": "image"
             })
 
-            # Parse the upload URL from response
-            upload_url = result.content[0].text  # Contains presigned S3 URL
+            # Parse the response - contains uploadUrl, fileUrl, and mediaId
+            # Response: { "success": true, "uploadUrl": "https://...", "fileUrl": "https://...", "mediaId": "..." }
+            import json
+            data = json.loads(result.content[0].text)
+            upload_url = data["uploadUrl"]
 
             # Upload file using the presigned URL
             async with aiohttp.ClientSession() as http:
@@ -365,21 +406,31 @@ asyncio.run(list_connections())
 
 ```json
 {
+  "success": true,
   "connections": [
     {
       "platformId": "twitter-123456789",
       "username": "@yourcompany",
       "displayName": "Your Company",
       "profileImageUrl": "https://pbs.twimg.com/profile_images/...",
-      "tokenStatus": "unknown"
+      "profileUrl": null,
+      "tokenStatus": "unknown",
+      "tokenExpiresIn": null,
+      "accessTokenExpiresAt": null,
+      "lastSuccessfulPost": null,
+      "lastError": null
     },
     {
       "platformId": "linkedin-Tz9W5i6ZYG",
       "username": "Your Company Page",
       "displayName": "Your Company",
       "profileImageUrl": "https://media.licdn.com/...",
+      "profileUrl": "https://www.linkedin.com/company/your-company",
       "tokenStatus": "valid",
-      "tokenExpiresIn": "82d 4h"
+      "tokenExpiresIn": "82d 4h",
+      "accessTokenExpiresAt": "2026-06-15T12:00:00.000Z",
+      "lastSuccessfulPost": "2026-03-10T09:30:00.000Z",
+      "lastError": null
     }
   ]
 }
@@ -393,8 +444,12 @@ asyncio.run(list_connections())
 | `username` | string | Platform username or handle |
 | `displayName` | string | Display name on the platform |
 | `profileImageUrl` | string | Profile image URL |
+| `profileUrl` | string/null | URL to the profile on the platform |
 | `tokenStatus` | string | Token health: `valid`, `expiring_soon`, `expired`, `unknown` |
 | `tokenExpiresIn` | string/null | Human-readable time until expiration (e.g., "7d 3h") |
+| `accessTokenExpiresAt` | string/null | ISO 8601 timestamp when the access token expires |
+| `lastSuccessfulPost` | string/null | ISO 8601 timestamp of the last successful post via this connection |
+| `lastError` | object/null | Last error details: `{ message: string, occurredAt: string }` |
 
 ---
 
@@ -410,7 +465,7 @@ Get engagement metrics for a specific LinkedIn post.
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123456`) |
 | `platformId` | string | Yes | Platform connection ID |
-| `queryTypes` | string[] | No | Metrics to fetch: `IMPRESSION`, `MEMBERS_REACHED`, `RESHARE`, `REACTION`, `COMMENT` |
+| `queryTypes` | string[] | No | Metrics to fetch: `IMPRESSION`, `REACTION`, `COMMENT`, `SHARE` (the backend may accept additional types) |
 
 **Example prompts:**
 
@@ -434,7 +489,7 @@ async def get_linkedin_post_stats():
             result = await session.call_tool("linkedin_post_stats", {
                 "postedId": "urn:li:share:7123456789",
                 "platformId": "linkedin-abc123",
-                "queryTypes": ["IMPRESSION", "MEMBERS_REACHED", "RESHARE", "REACTION", "COMMENT"]
+                "queryTypes": ["IMPRESSION", "REACTION", "COMMENT", "SHARE"]
             })
             print(result.content[0].text)
 ```
@@ -653,6 +708,8 @@ Remove a reaction from a LinkedIn post.
 
 ---
 
+## LinkedIn Comment Tools
+
 ### linkedin_create_comment
 
 Post a comment on a LinkedIn post.
@@ -746,7 +803,7 @@ async def delete_comment():
 
 ---
 
-## LinkedIn Feed Retrieval Tools (Coming Soon)
+## LinkedIn Feed Retrieval Tools (Coming Soon — Requires LinkedIn Approval)
 
 > **Status: DISABLED** - These tools are not yet available. They require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora.
 

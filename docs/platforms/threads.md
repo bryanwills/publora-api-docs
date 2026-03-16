@@ -15,7 +15,7 @@ Publora provides a unified REST API for publishing text posts, images, videos, c
 | Authentication | Single API key | Meta OAuth 2.0 flow |
 | API access | Instant | Requires Meta app review |
 | Thread creation | Automatic splitting | Manual implementation |
-| Multi-platform | Post to 10 platforms | Threads only |
+| Multi-platform | Post to 11 platforms | Threads only |
 | Setup time | 5 minutes | Days to weeks |
 | Carousel support | Yes | Yes |
 
@@ -39,9 +39,9 @@ Where `{accountId}` is your Threads account ID assigned during connection via Me
 | Type | Supported | Limits |
 |------|-----------|--------|
 | Text | Yes | 500 characters |
-| Images | Yes | Up to 20 per carousel, WebP auto-converted |
-| Videos | Yes | MP4 format, up to 20 per carousel |
-| Carousels | Yes | 2-20 images, videos, or mixed media |
+| Images | Yes | Up to 10 per carousel, WebP auto-converted |
+| Videos | Yes | MP4, MOV formats, 1 per post (video carousels not supported by Publora) |
+| Carousels | Yes | 2-10 items; images supported, video support in carousels is limited (see Platform Quirks) |
 | Threads | Yes | Auto-split for long content |
 | Hashtags | Yes | Maximum 1 hashtag per post |
 
@@ -86,20 +86,49 @@ And this is my third post!
 
 **Method 2: Explicit markers**
 ```
-First part of the thread [1/3]
+First part of the thread (1/3)
 
-Second part of the thread [2/3]
+Second part of the thread (2/3)
 
-Third and final part [3/3]
+Third and final part (3/3)
 ```
 
-When explicit `[n/m]` markers are detected, Publora preserves them exactly as written and splits at those points.
+When explicit `(n/m)` markers are detected, Publora preserves them exactly as written and splits at those points.
 
 ### Media in Threads
 
 - **Carousel/Images:** Attached to the first post only
 - **Video:** Attached to the first post only
 - Subsequent posts in the thread are text-only
+
+## Platform-Specific Settings
+
+Threads supports a `replyControl` setting that controls who can reply to your posts:
+
+```json
+{
+  "platformSettings": {
+    "threads": {
+      "replyControl": ""
+    }
+  }
+}
+```
+
+### Reply Control
+
+| Value | Description |
+|-------|-------------|
+| `"everyone"` | Anyone can reply. This is a valid enum value in the schema but is distinct from the default `""`. When explicitly set, it is sent to the Threads API. |
+| `""` (empty string) | **Default.** No `replyControl` value is sent to the Threads API — the platform's own default behavior applies (anyone can reply). This is NOT included in the API's default platform settings. |
+| `"accounts_you_follow"` | Only accounts you follow can reply |
+| `"mentioned_only"` | Only accounts mentioned in the post can reply |
+
+## Reply Management
+
+Threads supports reply management through the Publora dashboard. The `getReplies` endpoint retrieves replies to a Threads post, and the `manageReply` endpoint allows you to hide or unhide individual replies. These endpoints are accessible via the dashboard API routes.
+
+> **Note:** Reply management requires the `threads_manage_replies` OAuth scope. The current OAuth flow requests this scope automatically, but older connections established before this scope was added may lack it. If reply management returns permission errors, disconnect and reconnect your Threads account to obtain the updated scopes.
 
 ## Examples
 
@@ -177,7 +206,7 @@ console.log(response.data);
 
 ### Post with an Image Carousel
 
-Carousels require 2-20 images or videos. The workflow is: create a draft post, upload images, then schedule.
+Carousels require 2-10 images or videos. The workflow is: create a draft post, upload images, then schedule.
 
 **JavaScript (fetch)**
 
@@ -201,7 +230,7 @@ const postResponse = await fetch(`${BASE_URL}/create-post`, {
 
 const { postGroupId } = await postResponse.json();
 
-// Step 2: Upload each image (2-20 images supported)
+// Step 2: Upload each image (2-10 images supported)
 const images = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
 
 for (const fileName of images) {
@@ -272,7 +301,7 @@ post_response = requests.post(
 
 post_group_id = post_response.json()['postGroupId']
 
-# Step 2: Upload each image (2-20 images supported)
+# Step 2: Upload each image (2-10 images supported)
 images = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg']
 
 for file_name in images:
@@ -323,7 +352,7 @@ POST_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/create-post \
 
 POST_GROUP_ID=$(echo "$POST_RESPONSE" | jq -r '.postGroupId')
 
-# Step 2: Upload each image (2-20 images supported)
+# Step 2: Upload each image (2-10 images supported)
 for FILE in photo1.jpg photo2.jpg photo3.jpg; do
   UPLOAD_RESPONSE=$(curl -s -X POST https://api.publora.com/api/v1/get-upload-url \
     -H "Content-Type: application/json" \
@@ -451,7 +480,8 @@ Publora will automatically split this into multiple thread posts, each staying w
 - **Auto-threading**: Content exceeding 500 characters is automatically split into a thread. Publora splits at sentence boundaries to keep posts readable.
 - **Manual thread parts**: You can use `---` as a separator in your content to explicitly define where thread breaks should occur.
 - **No edit support**: Once posted, Threads posts cannot be edited via the API. You would need to delete and repost.
-- **MP4 for videos**: Only MP4 video format is supported. Other formats will be rejected.
+- **MP4 and MOV for videos**: MP4 and MOV video formats are supported. Other formats will be rejected.
+- **Carousel video support is limited**: While the Threads API supports videos in carousels, Publora's current implementation only supports IMAGE type items in carousels. Standalone video posts work normally, but VIDEO items within carousels are not yet supported by Publora.
 
 ## Character Limits
 
@@ -459,7 +489,7 @@ Publora will automatically split this into multiple thread posts, each staying w
 |---------|-------|
 | Post body | 500 characters |
 | Hashtags | 1 per post |
-| Carousel items | 2-20 images or videos |
+| Carousel items | 2-10 items (images supported; video in carousels not yet supported by Publora) |
 | Thread parts | No fixed limit on number of parts |
 
 ## API Limits
@@ -469,7 +499,6 @@ Publora will automatically split this into multiple thread posts, each staying w
 | Element | Limit |
 |---------|-------|
 | Post body | 500 characters |
-| Post body (with text attachment) | 10,000 characters |
 | Links per post | 5 |
 | Hashtags | 1 per post |
 
@@ -477,8 +506,8 @@ Publora will automatically split this into multiple thread posts, each staying w
 
 | Media Type | Max Size | Max Count | Supported Formats |
 |------------|----------|-----------|-------------------|
-| Images | 8 MB | 20 per carousel | JPEG, PNG |
-| Videos | 500 MB | 20 per carousel | MP4, MOV |
+| Images | 8 MB | 10 per carousel | JPEG, PNG |
+| Videos | 500 MB | 1 per post (video carousels not supported by Publora) | MP4, MOV |
 
 | Video Constraint | Limit |
 |------------------|-------|

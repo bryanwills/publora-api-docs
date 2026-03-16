@@ -1,16 +1,16 @@
 # Publora MCP Server
 
-Control Publora directly from AI assistants like Claude Code, Claude Desktop, Cursor, and any MCP-compatible client. No coding required — just describe what you want in plain English.
+Control Publora directly from AI assistants like Claude Code, Claude Desktop, Cursor, and any MCP-compatible client. No coding required -- just describe what you want in plain English.
 
 ## Overview
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets AI assistants connect to external tools and services. Publora provides a remote MCP server at `mcp.publora.com` — one-time setup, then just talk to your AI.
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard that lets AI assistants connect to external tools and services. Publora provides a remote MCP server at `mcp.publora.com` -- one-time setup, then just talk to your AI.
 
 **Perfect for:**
-- **Marketers** — schedule campaigns, check analytics, manage multiple accounts
-- **Content creators** — post to all platforms at once without leaving your AI chat
-- **Business owners** — delegate social media tasks to your AI assistant
-- **Developers** — integrate Publora into AI-powered workflows
+- **Marketers** -- schedule campaigns, check analytics, manage multiple accounts
+- **Content creators** -- post to all platforms at once without leaving your AI chat
+- **Business owners** -- delegate social media tasks to your AI assistant
+- **Developers** -- integrate Publora into AI-powered workflows
 
 **Just describe what you want:**
 
@@ -23,7 +23,7 @@ Control Publora directly from AI assistants like Claude Code, Claude Desktop, Cu
 
 ### 1. Get Your API Key
 
-Log in to [Publora](https://publora.com) → **API** in the sidebar → Copy your key (`sk_...`). Click **MCP** in the sidebar for additional setup instructions.
+Log in to [Publora](https://publora.com) -> **API** in the sidebar -> Copy your key (`sk_...`). Click **MCP** in the sidebar for additional setup instructions.
 
 ### 2. Configure Your MCP Client
 
@@ -43,9 +43,11 @@ Add Publora to your MCP configuration:
 }
 ```
 
+> **Note:** Both `https://mcp.publora.com/` and `https://mcp.publora.com/mcp` work as the MCP endpoint URL.
+
 ### 3. Restart Your Client
 
-After restarting, you'll have access to 16 Publora tools. Try asking:
+After restarting, you'll have access to 18 Publora tools. Try asking:
 
 > "List my connected social media accounts"
 
@@ -75,7 +77,7 @@ Restart Claude Code. Verify with `/mcp` command.
 
 ### Claude Desktop
 
-1. Open Claude Desktop → **Settings** → **Developer** → **Edit Config**
+1. Open Claude Desktop -> **Settings** -> **Developer** -> **Edit Config**
 2. Add the Publora server configuration (same JSON as above)
 3. Restart Claude Desktop
 
@@ -99,7 +101,7 @@ Create `.cursor/mcp.json` in your project:
 
 ### Using with Other MCP Servers
 
-MCP servers don't conflict — Claude loads all servers and merges their tools. Example with Context7:
+MCP servers don't conflict -- Claude loads all servers and merges their tools. Example with Context7:
 
 ```json
 {
@@ -121,7 +123,7 @@ MCP servers don't conflict — Claude loads all servers and merges their tools. 
 
 ---
 
-## Available Tools (16)
+## Available Tools (18)
 
 ### Posts
 
@@ -140,7 +142,7 @@ MCP servers don't conflict — Claude loads all servers and merges their tools. 
 |------|-------------|
 | `list_connections` | List all connected social media accounts |
 
-### LinkedIn Analytics
+### LinkedIn Analytics & Engagement
 
 | Tool | Description |
 |------|-------------|
@@ -150,6 +152,8 @@ MCP servers don't conflict — Claude loads all servers and merges their tools. 
 | `linkedin_profile_summary` | Combined profile overview (followers + stats) |
 | `linkedin_create_reaction` | React to a post (LIKE, PRAISE, EMPATHY, etc.) |
 | `linkedin_delete_reaction` | Remove a reaction |
+| `linkedin_create_comment` | Post a comment on a LinkedIn post |
+| `linkedin_delete_comment` | Delete a comment from a LinkedIn post |
 
 ### Workspace (B2B)
 
@@ -337,4 +341,4 @@ Use MCP for conversational workflows. Use REST API for production integrations.
 
 ---
 
-*[Publora](https://publora.com) — Social media API with free tier, paid plans from $2.99/account*
+*[Publora](https://publora.com) -- Social media API with free Starter plan, paid plans from Pro ($2.99/mo billed yearly)*

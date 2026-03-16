@@ -25,6 +25,8 @@ POST https://api.publora.com/api/v1/linkedin-followers
 
 ### Date Range Format
 
+> **Note:** The `period` parameter is **case-insensitive** — e.g., `"daily"`, `"Daily"`, and `"DAILY"` are all accepted.
+
 When using `period="daily"`, you must provide a `dateRange` object:
 
 ```json
@@ -65,7 +67,7 @@ When `period="daily"`, returns daily follower growth data:
 }
 ```
 
-Results are cached for improved performance. `cached: true` means the data was served from cache.
+Results are cached for 30 minutes. `cached: true` means the data was served from cache.
 
 ## Examples
 
@@ -192,11 +194,23 @@ curl -X POST https://api.publora.com/api/v1/linkedin-followers \
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"platformId is required"` | Missing platformId in request body |
-| 400 | `"Invalid period"` | period is not "lifetime" or "daily" |
+| 400 | `"platformId must be a string"` | platformId is not a string type |
+| 400 | `"Invalid platformId"` | platformId is a string but has an invalid format (empty or unrecognized) |
+| 400 | `"period must be a string"` | period parameter is not a string type |
+| 400 | `"Invalid period. Must be one of: lifetime, daily"` | period is not "lifetime" or "daily" |
 | 400 | `"dateRange is required for daily period"` | period is "daily" but dateRange is missing |
+| 400 | `"dateRange must have both 'start' and 'end' objects"` | dateRange provided but missing start or end |
+| 400 | `"dateRange.start and dateRange.end must have: year, month, day"` | dateRange start/end missing required fields |
+| 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 401 | `"Invalid API key owner"` | API key owner user not found in database |
+| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
-| 500 | `"Failed to fetch followers statistics"` | LinkedIn API error or internal server error |
+| 500 | `"Failed to fetch LinkedIn followers statistics"` | LinkedIn API error or internal server error |
+
+> **Note:** The "Invalid platformId" error only triggers for empty or unrecognized string values. Non-string values are caught earlier by the `"platformId must be a string"` check. Any non-empty string passes validation — the format is not checked against a strict pattern (unlike `create-post`, which uses a regex). This applies to all LinkedIn analytics endpoints (statistics, followers, reactions, comments, profile summary).
+
+> **Note:** Error status codes from the LinkedIn API may be forwarded directly (e.g., 403, 429), so you may receive error codes other than those listed above.
 
 
 ---

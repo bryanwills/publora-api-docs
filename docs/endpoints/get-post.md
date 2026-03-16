@@ -14,6 +14,7 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
 |--------|----------|-------------|
 | `x-publora-key` | Yes | Your API key |
 | `x-publora-user-id` | No | Managed user ID (workspace only) |
+| `x-publora-client` | No | Client identifier (e.g., `"mcp"`) |
 
 ## Path Parameters
 
@@ -29,22 +30,32 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
   "postGroupId": "507f1f77bcf86cd799439011",
   "posts": [
     {
+      "_id": "663a1b2c3d4e5f6a7b8c9d01",
       "platform": "twitter",
       "platformId": "123456789",
       "content": "Excited to share our new product launch! 🚀",
       "status": "published",
-      "postedId": "1234567890123456789"
+      "postedId": "1234567890123456789",
+      "error": null
     },
     {
+      "_id": "663a1b2c3d4e5f6a7b8c9d02",
       "platform": "linkedin",
       "platformId": "ABC123",
       "content": "Excited to share our new product launch! 🚀",
       "status": "published",
-      "postedId": "urn:li:share:7654321"
+      "postedId": "urn:li:share:7654321",
+      "error": null
     }
   ]
 }
 ```
+
+> **Note:** For non-failed posts, the `error` field may be absent from the JSON response entirely rather than explicitly `null`. Always check for both cases (e.g., `if (post.error)` rather than `if (post.error !== null)`). When a post has failed, the `error` field is present and contains an error object.
+
+> **Note:** For draft and scheduled posts, the `postedId` field will be absent from the response since the post has not yet been published to the platform. Only published posts include a `postedId`.
+
+> **Note:** The `platformId` field returns the raw platform ID (e.g., `"123456789"`), not the compound format used by list-posts (e.g., `"twitter-123456789"`). See the [list-posts](./list-posts) endpoint for details on this difference.
 
 ### Failed Post Response
 
@@ -56,6 +67,7 @@ When a post fails, the response includes detailed error information:
   "postGroupId": "507f1f77bcf86cd799439011",
   "posts": [
     {
+      "_id": "663a1b2c3d4e5f6a7b8c9d03",
       "platform": "threads",
       "platformId": "17841412345678",
       "content": "Check out our new feature!",
@@ -84,6 +96,8 @@ When a post fails, the response includes detailed error information:
 | `published` | Successfully posted |
 | `failed` | Publishing failed (see `error` object for details) |
 
+> **Note:** The statuses above apply to **individual platform posts**. The post **group** itself can also have a status of `partially_published`, which occurs when some platform posts in the group succeeded while others failed. For example, if a post group targets Twitter, LinkedIn, and Threads, and the Threads post fails while the others succeed, the group status will be `partially_published`. Query individual posts within the group to determine which platforms succeeded or failed.
+
 ## Error Codes
 
 When `status` is `failed`, the `error` object contains:
@@ -92,7 +106,7 @@ When `status` is `failed`, the `error` object contains:
 |-------|------|-------------|
 | `code` | string | Error classification code (see table below) |
 | `message` | string | Human-readable error message |
-| `platformStatusCode` | number/null | HTTP status code from the platform API |
+| `platformStatusCode` | number/undefined | HTTP status code from the platform API (field may be absent rather than explicitly `null`) |
 | `platformError` | string/null | Raw error message from the platform |
 | `failedAt` | string | Timestamp when the failure occurred |
 | `retryable` | boolean | Whether the error might succeed on retry |
@@ -107,6 +121,8 @@ When `status` is `failed`, the `error` object contains:
 | `NETWORK_ERROR` | Could not reach platform API | Yes |
 | `TIMEOUT_ERROR` | Request timed out | Yes |
 | `UNKNOWN_ERROR` | Unclassified error | Maybe |
+
+> **Note:** The error codes listed above are not exhaustive. The schema does not validate error codes, so additional codes beyond these eight may appear in the response. Always handle unknown codes gracefully.
 
 ## Examples
 
@@ -169,8 +185,21 @@ console.log(`All published: ${allPublished}`);
 
 | Status | Error | Cause |
 |--------|-------|-------|
-| 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
+| 400 | `"Invalid x-publora-user-id"` | The `x-publora-user-id` header value is not a valid ObjectId format |
+| 401 | `"API key is required"` | Missing `x-publora-key` header |
+| 401 | `"Invalid API key"` | The provided API key is not valid |
+| 401 | `"Invalid API key owner"` | The API key exists but its owner account could not be found |
+| 403 | `"API access is not enabled for this account"` | The account does not have API access enabled |
+| 403 | `"MCP access is not enabled for this account"` | The account does not have MCP access enabled (MCP-only keys) |
+| 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
+| 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |
 | 404 | `"Post group not found"` | Invalid ID or post belongs to another user |
+| 500 | `"Failed to fetch post group"` | Malformed post group ID or internal server error |
+| 500 | `"Internal server error"` | Unexpected server error in middleware |
+
+> **Note:** If `x-publora-user-id` matches the API key owner, no workspace check is triggered — the header is effectively a no-op in that case.
+
+> **Note:** If the `postGroupId` is not a valid MongoDB ObjectId format (e.g., too short, contains invalid characters), the server returns a **500** error (`"Failed to fetch post group"`) instead of a **400** validation error. Ensure you pass only valid ObjectId strings received from the create-post or list-posts endpoints.
 
 
 ---

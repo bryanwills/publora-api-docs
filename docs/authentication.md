@@ -50,10 +50,10 @@ In the Publora dashboard, connect the social platforms you want to post to:
 |---------|------------------|--------------|
 | Expiration | Never expires | Typically 1 hour |
 | Refresh needed | No | Yes (refresh token flow) |
-| How to get | Dashboard → Settings | OAuth authorization flow |
-| Format | `sk_kzq5mjw.a1b2c3...` | `eyJhbG...` (JWT) |
+| How to get | Dashboard → API | OAuth authorization flow |
+| Format | `sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...` (~70 chars) | `eyJhbG...` (JWT) |
 
-**Key point:** You can generate multiple API keys from the dashboard. Each key works independently and never expires.
+**Key point:** You can generate up to 10 active API keys from the dashboard. Each key works independently and never expires.
 
 ## Getting Your API Key
 
@@ -66,11 +66,13 @@ Once you have an account with connected social platforms:
 
 ### Why No Programmatic Key Generation?
 
-Unlike OAuth providers that offer token exchange APIs, Publora API keys are **only created through the dashboard** for security reasons:
+Technically, a REST endpoint exists (`POST /auth/api-keys`) for creating API keys, but it requires **dashboard session authentication** — not API key auth. This means you cannot use an existing API key to create new API keys; you must be logged in through the browser. The endpoint powers the dashboard's "Generate API Key" button.
 
-| Concern | Why Dashboard-Only |
+This is intentional for security reasons:
+
+| Concern | Why Session-Auth-Only |
 |---------|-------------------|
-| **Key theft prevention** | No API endpoint means compromised code can't generate new keys |
+| **Key theft prevention** | API key auth cannot generate new keys — compromised code can't escalate access |
 | **Human verification** | Dashboard login ensures a human authorized the key |
 | **Audit trail** | All key generation is logged with user/IP information |
 | **Accidental exposure** | Prevents automated systems from creating excess keys |
@@ -88,16 +90,38 @@ aws secretsmanager create-secret --name publora-api-key --secret-string "sk_..."
 kubectl create secret generic publora --from-literal=api-key="sk_..."
 ```
 
+### API Key Management Endpoints
+
+These endpoints manage API keys and require **dashboard session authentication** (not API key auth). They power the dashboard UI and cannot be called with an API key.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/auth/api-keys` | List all API keys for the authenticated user |
+| POST | `/auth/api-keys` | Create a new API key |
+| PATCH | `/auth/api-keys/:keyId` | Update an API key (e.g., rename) |
+| DELETE | `/auth/api-keys/:keyId` | Revoke (soft-delete) an API key |
+
+**Key name handling:**
+- Names are HTML-sanitized to prevent XSS
+- If no name is provided (or the name is empty), the key defaults to `"Default"`
+- Maximum name length: 100 characters
+
 ### Key Format
 
 ```
-sk_kzq5mjw.a1b2c3d4e5f6g7h8i9j0...
+sk_kzq5mjw_a1b2c3d4e5f6g7h8i9j0.k1l2m3n4o5p6...
 ```
 
 - Starts with `sk_` prefix
-- Contains a timestamp segment
-- Followed by a random hex string
-- Total length: ~50 characters
+- Contains a base36-encoded timestamp segment
+- Followed by an underscore and a random hex string
+- Then a dot separator and another random hex string
+- Format: `sk_<timestamp_base36>_<random_hex>.<random_hex>`
+- Total length: ~70 characters
+- Maximum of **10 active API keys** per user
+- **Name length:** Maximum 100 characters (enforced by the API)
+
+> **Note:** The authentication middleware does **not** enforce the `sk_` prefix — it performs a two-step verification: first a prefix lookup against stored key prefixes, then a bcrypt comparison of the full key. Legacy keys created before the `sk_` format was introduced will still work. Client-side validation of the `sk_` prefix (shown below) is a best practice but not strictly required.
 
 ### Key Validation (Before Making Requests)
 
@@ -150,7 +174,7 @@ For direct HTTP calls to `api.publora.com`:
 
 ```bash
 curl https://api.publora.com/api/v1/platform-connections \
-  -H "x-publora-key: sk_kzq5mjw.a1b2c3d4e5f6..."
+  -H "x-publora-key: sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
 ```
 
 ```javascript
@@ -179,7 +203,7 @@ For MCP clients connecting to `mcp.publora.com`:
       "type": "http",
       "url": "https://mcp.publora.com",
       "headers": {
-        "Authorization": "Bearer sk_kzq5mjw.a1b2c3d4e5f6..."
+        "Authorization": "Bearer sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
       }
     }
   }
@@ -188,20 +212,45 @@ For MCP clients connecting to `mcp.publora.com`:
 
 **Why different headers?** The REST API uses a custom header (`x-publora-key`) for simplicity. The MCP server uses the standard `Authorization: Bearer` header because MCP clients expect OAuth-style headers.
 
+### MCP Client Identification
+
+MCP clients send an additional header `x-publora-client: mcp` to identify themselves. This triggers an `mcpAccess` entitlement check on the server side. If the account does not have MCP access enabled, the server responds with `403 "MCP access is not enabled for this account"`.
+
+You do not need to set this header manually — MCP-compatible clients (Claude Desktop, Cursor, etc.) send it automatically.
+
+The `x-publora-client` header value is stored as `req.apiUser.client` in the request context (defaults to `"api"` when not set). This value is available to all downstream route handlers for client-specific logic or logging.
+
+### Internal Request Context (`req.apiUser`)
+
+After successful authentication, the middleware attaches a `req.apiUser` object with the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | `ObjectId` | The effective user ID (target user if workspace, otherwise key owner) |
+| `ownerId` | `ObjectId` | The billing owner's user ID (may differ from the direct key owner for managed workspace users, resolved via `resolveWorkspaceEntitlementsByActor`) |
+| `ownerUser` | `Object` | Subset of the `actorUser` document (the user whose API key was used, resolved via workspace entitlements) containing `{ _id, permissions, isAdmin }` |
+| `billingOwnerUser` | `Object` | The user responsible for billing. Contains `{ _id, permissions, isAdmin, entitlements }`. May differ from `ownerUser` in workspace setups |
+| `keyPrefix` | `string` | The prefix portion of the API key used for lookup |
+| `isWorkspace` | `boolean` | `true` if acting on behalf of a managed user via `x-publora-user-id` |
+| `client` | `string` | Client identifier — `"mcp"` or `"api"` (default) |
+| `entitlements` | `Object` | Feature flags and plan capabilities for the billing owner |
+
+> **Note:** These fields are internal to the server — they are not returned in API responses. They are documented here for contributors and advanced integrators who may encounter them in error messages or logs.
+
 ## Complete Authentication Workflow
 
 ### Step 1: Store Your Key Securely
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export PUBLORA_API_KEY="sk_kzq5mjw.a1b2c3d4e5f6..."
+export PUBLORA_API_KEY="sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
 ```
 
 Or use a `.env` file (add to `.gitignore`):
 
 ```bash
 # .env
-PUBLORA_API_KEY=sk_kzq5mjw.a1b2c3d4e5f6...
+PUBLORA_API_KEY=sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...
 ```
 
 ### Step 2: Verify Your Key Works
@@ -298,20 +347,24 @@ console.log(`Found ${posts.length} posts`);
 
 ## Workspace Authentication
 
-For B2B workspaces managing multiple users, add the user ID header:
+For B2B workspaces managing multiple users, add the user ID header. There is no separate "workspace API key" — you use the same API key. The middleware checks `actorUser` (resolved via workspace entitlements), which may differ from the direct key owner for managed users.
 
 | Header | Value | Purpose |
 |--------|-------|---------|
-| `x-publora-key` | Your workspace API key | Authenticates your workspace |
-| `x-publora-user-id` | Managed user's ID | Specifies which user to act as |
+| `x-publora-key` | Your API key | Authenticates your account |
+| `x-publora-user-id` | Managed user's ObjectId | Specifies which user to act as |
+
+The target user must have their `parentUser` field set to the API key owner. This `parentUser` relationship is what authorizes the key owner to act on behalf of that user. Without it, the request will be rejected with a 403 error.
+
+> **Note:** Passing your own user ID as `x-publora-user-id` is a no-op — the middleware detects the self-reference and skips the workspace/parentUser check entirely. The request proceeds as if the header were not set.
 
 ```javascript
 const response = await fetch('https://api.publora.com/api/v1/create-post', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-publora-key': process.env.PUBLORA_WORKSPACE_KEY,
-    'x-publora-user-id': '507f1f77bcf86cd799439011'  // Managed user
+    'x-publora-key': process.env.PUBLORA_API_KEY,
+    'x-publora-user-id': '507f1f77bcf86cd799439011'  // Managed user (must have parentUser set to key owner)
   },
   body: JSON.stringify({
     content: 'Posted on behalf of managed user',
@@ -326,9 +379,23 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 | Status | Error | Cause | Solution |
 |--------|-------|-------|----------|
-| 401 | `"Invalid API key"` | Key is wrong, missing, or deleted | Generate a new key at API in sidebar |
-| 403 | `"Subscription required"` | No active subscription | Subscribe at publora.com/pricing |
-| 403 | `"Workspace access not enabled"` | Used `x-publora-user-id` without workspace | Enable workspace or remove header |
+| 400 | `"Invalid x-publora-user-id"` | `x-publora-user-id` header is not a valid ObjectId | Provide a valid 24-character hex ObjectId |
+| 401 | `"API key is required"` | Missing `x-publora-key` header | Include the `x-publora-key` header with your API key |
+| 401 | `"Invalid API key"` | Key is wrong or has been revoked | Generate a new key at API in sidebar |
+| 401 | `"Invalid API key owner"` | User associated with the key could not be found | Contact support; the key owner account may be deleted |
+| 403 | `"API access is not enabled for this account"` | Account lacks the API access entitlement | Upgrade your plan at publora.com/pricing |
+| 403 | `"Your current plan does not include API access"` | Plan does not include API access (returned by key management endpoints) | Upgrade your plan at publora.com/pricing |
+| 403 | `"MCP access is not enabled for this account"` | Account lacks MCP access entitlement (sent via MCP client) | Upgrade your plan to include MCP access |
+| 403 | `"Workspace access is not enabled for this key"` | Used `x-publora-user-id` but key owner does not have `workspacesEnabled` | Enable workspace access on your account or remove the header |
+| 403 | `"User is not managed by key"` | Target user's `parentUser` is not set to the key owner | Ensure the managed user has `parentUser` set to your user ID |
+| 400 | `"Maximum of 10 active API keys allowed"` | Attempted to create an API key when 10 active keys already exist | Delete an existing key before creating a new one |
+| 400 | `"Name must be a string with maximum 100 characters"` | POST `/auth/api-keys` — name is not a string or exceeds 100 characters | Provide a valid name under 100 characters |
+| 404 | `"User not found"` | POST `/auth/api-keys` — authenticated user could not be found in the database | Contact support; the account may be deleted |
+| 400 | `"Name is required"` | PATCH `/auth/api-keys/:keyId` — name field is missing or empty | Provide a non-empty name |
+| 400 | `"Name must be maximum 100 characters"` | PATCH `/auth/api-keys/:keyId` — name exceeds 100 characters | Shorten the name to 100 characters or fewer |
+| 400 | `"Invalid key ID format"` | PATCH `/auth/api-keys/:keyId` — keyId is not a valid ObjectId | Provide a valid 24-character hex ObjectId |
+| 404 | `"API key not found"` | DELETE or PATCH `/auth/api-keys/:keyId` — the specified key doesn't exist or has been revoked | Verify the key ID is correct and the key has not already been deleted |
+| 500 | `"Internal server error"` | Unexpected error during authentication middleware | Retry the request; if persistent, contact support |
 
 ### Handling Auth Errors in Code
 
@@ -355,8 +422,8 @@ async function publoraRequest(endpoint, options = {}) {
 
   if (response.status === 403) {
     const data = await response.json();
-    if (data.error?.includes('Subscription')) {
-      throw new Error('Subscription required. Subscribe at publora.com/pricing');
+    if (data.error?.includes('API access is not enabled')) {
+      throw new Error('API access not enabled. Upgrade at publora.com/pricing');
     }
     throw new Error(data.error || 'Access denied');
   }
@@ -397,8 +464,8 @@ def publora_request(endpoint, method='GET', **kwargs):
 
     if response.status_code == 403:
         data = response.json()
-        if 'Subscription' in data.get('error', ''):
-            raise PubloraAuthError('Subscription required. Subscribe at publora.com/pricing')
+        if 'API access is not enabled' in data.get('error', ''):
+            raise PubloraAuthError('API access not enabled. Upgrade at publora.com/pricing')
         raise PubloraAuthError(data.get('error', 'Access denied'))
 
     response.raise_for_status()
@@ -480,7 +547,7 @@ async function publoraRequestWithRetry(endpoint, options = {}, maxRetries = 3) {
 - Commit keys to version control
 - Share keys in chat, email, or public forums
 - Use keys in client-side JavaScript (browsers)
-- Log full API keys (mask them: `sk_kzq...****`)
+- Log full API keys (mask them: `sk_kzq5mjw_a1b2...****`)
 
 ### Key Storage
 
@@ -489,7 +556,7 @@ async function publoraRequestWithRetry(endpoint, options = {}, maxRetries = 3) {
 const apiKey = process.env.PUBLORA_API_KEY;
 
 // Bad: Hardcoded
-const apiKey = 'sk_kzq5mjw.a1b2c3d4e5f6...'; // Never do this!
+const apiKey = 'sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...'; // Never do this!
 ```
 
 ### Managing API Keys
@@ -503,6 +570,8 @@ You can generate multiple API keys — useful for different environments or appl
 3. Click **Generate API Key** to create a new one
 4. Update your environment variables with the new key
 
+> **Note:** Key deletion is a soft-delete — it sets a `revokedAt` timestamp rather than removing the key from the database. Revoked keys immediately stop working but remain in the audit trail.
+
 ## Quick Reference
 
 | What | Value |
@@ -511,8 +580,9 @@ You can generate multiple API keys — useful for different environments or appl
 | MCP Server URL | `https://mcp.publora.com` |
 | REST API Header | `x-publora-key: sk_...` |
 | MCP Header | `Authorization: Bearer sk_...` |
-| Key Format | `sk_` + timestamp + random hex |
-| Key Expiration | Never (until deleted) |
+| Key Format | `sk_<timestamp_base36>_<random_hex>.<random_hex>` (~70 chars) |
+| Key Expiration | Never (until revoked) |
+| Max Keys | 10 active keys per user |
 | Get Key | publora.com → API |
 
 ---

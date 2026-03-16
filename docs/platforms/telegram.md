@@ -4,7 +4,7 @@ Post to Telegram channels and groups programmatically using the Publora REST API
 
 ## Telegram API Overview
 
-Publora provides a unified REST API for publishing content to Telegram channels and groups via bot connection. Supports rich text formatting with markdown syntax, images, and videos. No need to manage Telegram bot tokens directly, handle MTProto complexity, or implement message queuing.
+Publora provides a unified REST API for publishing content to Telegram channels and groups via bot or MTProto connection. Supports rich text formatting with markdown syntax, images, and videos. No need to manage Telegram bot tokens directly, handle MTProto complexity, or implement message queuing. Publora supports two connection types: **bot** (using a BotFather token) and **mtproto** (using a user session), each with different capabilities and limits.
 
 ### Why Use Publora Instead of Telegram Bot API / Telethon / Pyrogram?
 
@@ -13,7 +13,7 @@ Publora provides a unified REST API for publishing content to Telegram channels 
 | Authentication | Single API key | Bot token + channel setup |
 | Message formatting | Markdown support | Markdown/HTML support |
 | Media handling | Automatic | Manual upload |
-| Multi-platform | Post to 10 platforms | Telegram only |
+| Multi-platform | Post to 11 platforms | Telegram only |
 | Setup time | 5 minutes | 15-30 minutes |
 | Rate limiting | Handled | Manual implementation |
 
@@ -31,10 +31,14 @@ Where `{chatId}` is your Telegram channel or group chat ID assigned during bot c
 
 - A Telegram bot created via [@BotFather](https://t.me/BotFather)
 - The bot's token and target channel/group name provided during setup
-- The bot must be added as an **administrator** of the target channel or group
+- The bot must be added as an **administrator** of the target channel or group with the **`can_post_messages`** permission explicitly enabled (being an admin alone is not enough)
 - API key from Publora
 
-## Connection Setup
+## Connection Types
+
+Publora supports two connection types for Telegram:
+
+### Bot Connection (Default)
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) on Telegram
 2. Copy the bot token provided by BotFather
@@ -42,12 +46,20 @@ Where `{chatId}` is your Telegram channel or group chat ID assigned during bot c
 4. In the Publora dashboard, provide the bot token and channel name (e.g., `@mychannel`)
 5. Publora will verify the connection and assign a platform ID
 
+### MTProto Connection
+
+MTProto connections use a Telegram **user session** instead of a bot, enabling higher limits (4,096-character captions, 4 GB file uploads). MTProto requires a **Telegram Premium** subscription on the service user account.
+
+**Service user concept:** The MTProto connection operates through a dedicated Telegram user account (the "service user") that acts on behalf of your organization. This user must be an admin of the target channel/group. Because the service user is a regular Telegram account (not a bot), it benefits from the higher user-tier limits. The service user's session is stored encrypted by Publora in the connection record and decrypted at runtime.
+
+> **Note:** MTProto connections require the service user to have an active Telegram Premium subscription. Without Premium, certain features (such as the extended 4,096-character caption limit) will not be available. For self-hosted deployments, the `TELEGRAM_MT_ALLOW_NON_PREMIUM` environment variable can be set to bypass the Premium requirement for MTProto connections.
+
 ## Supported Content
 
 | Type | Supported | Limits |
 |------|-----------|--------|
-| Text | Yes | 1,024 characters (bot API), 4,096 characters (MTProto) |
-| Images | Yes | JPEG (WebP auto-converted) |
+| Text | Yes | 4,096 characters (text-only messages, both bot and MTProto); 1,024 characters (captions with media, bot API) |
+| Images | Yes | JPEG, PNG, GIF, BMP, WebP (WebP auto-converted to JPEG) |
 | Videos | Yes | MP4 format |
 | Formatting | Yes | Bold, italic, code, links, blockquotes |
 
@@ -57,7 +69,7 @@ Telegram supports markdown-style formatting in message text. You can use the fol
 
 | Syntax | Result | Example |
 |--------|--------|---------|
-| `**text**` | **Bold** | `**important**` |
+| `*text*` | **Bold** | `*important*` |
 | `_text_` | _Italic_ | `_emphasis_` |
 | `` `code` `` | `Inline code` | `` `variable` `` |
 | ```` ```code``` ```` | Code block | ```` ```print("hello")``` ```` |
@@ -66,7 +78,7 @@ Telegram supports markdown-style formatting in message text. You can use the fol
 
 ## Caption vs. Message
 
-When posting with media (images or videos), the text content is sent as a **caption** attached to the media. Captions have a stricter limit of 1,024 characters when using the bot API. Text-only messages support up to 4,096 characters via MTProto.
+When posting with media (images or videos), the text content is sent as a **caption** attached to the media. Captions have a stricter limit of 1,024 characters when using the bot API (MTProto supports 4,096-character captions). Text-only messages (without media) support up to 4,096 characters for both bot API and MTProto connections.
 
 ## Examples
 
@@ -82,7 +94,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: '**Product Update v2.5**\n\nWe have shipped the following improvements:\n\n- _Faster API response times_ (avg 45ms)\n- New `batch` endpoint for bulk operations\n- Improved error messages with `error_code` field\n\n> This update is backward compatible. No migration needed.\n\nFull changelog: [docs.example.com/changelog](https://docs.example.com/changelog)',
+    content: '*Product Update v2.5*\n\nWe have shipped the following improvements:\n\n- _Faster API response times_ (avg 45ms)\n- New `batch` endpoint for bulk operations\n- Improved error messages with `error_code` field\n\n> This update is backward compatible. No migration needed.\n\nFull changelog: [docs.example.com/changelog](https://docs.example.com/changelog)',
     platforms: ['telegram-1001234567890']
   })
 });
@@ -96,7 +108,7 @@ console.log(data);
 ```python
 import requests
 
-content = """**Product Update v2.5**
+content = """*Product Update v2.5*
 
 We have shipped the following improvements:
 
@@ -131,7 +143,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
   -H "x-publora-key: YOUR_API_KEY" \
   -d '{
-    "content": "**Product Update v2.5**\n\nWe have shipped the following improvements:\n\n- _Faster API response times_ (avg 45ms)\n- New `batch` endpoint for bulk operations\n- Improved error messages with `error_code` field\n\n> This update is backward compatible. No migration needed.\n\nFull changelog: [docs.example.com/changelog](https://docs.example.com/changelog)",
+    "content": "*Product Update v2.5*\n\nWe have shipped the following improvements:\n\n- _Faster API response times_ (avg 45ms)\n- New `batch` endpoint for bulk operations\n- Improved error messages with `error_code` field\n\n> This update is backward compatible. No migration needed.\n\nFull changelog: [docs.example.com/changelog](https://docs.example.com/changelog)",
     "platforms": ["telegram-1001234567890"]
   }'
 ```
@@ -141,7 +153,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 ```javascript
 const axios = require('axios');
 
-const content = `**Product Update v2.5**
+const content = `*Product Update v2.5*
 
 We have shipped the following improvements:
 
@@ -178,7 +190,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: '**New Dashboard Preview**\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
+    content: '*New Dashboard Preview*\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
     platforms: ['telegram-1001234567890']
   })
 });
@@ -199,7 +211,7 @@ response = requests.post(
         'x-publora-key': 'YOUR_API_KEY'
     },
     json={
-        'content': '**New Dashboard Preview**\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
+        'content': '*New Dashboard Preview*\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
         'platforms': ['telegram-1001234567890']
     }
 )
@@ -215,7 +227,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
   -H "x-publora-key: YOUR_API_KEY" \
   -d '{
-    "content": "**New Dashboard Preview**\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.",
+    "content": "*New Dashboard Preview*\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.",
     "platforms": ["telegram-1001234567890"]
   }'
 ```
@@ -226,7 +238,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 const axios = require('axios');
 
 const response = await axios.post('https://api.publora.com/api/v1/create-post', {
-  content: '**New Dashboard Preview**\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
+  content: '*New Dashboard Preview*\n\nHere is a sneak peek at our redesigned analytics dashboard. Key improvements include real-time data refresh and customizable widgets.',
   platforms: ['telegram-1001234567890']
 }, {
   headers: {
@@ -252,7 +264,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: '**Feature Demo**\n\nWatch our 60-second demo of the new collaboration tools.',
+    content: '*Feature Demo*\n\nWatch our 60-second demo of the new collaboration tools.',
     platforms: ['telegram-1001234567890']
   })
 });
@@ -273,7 +285,7 @@ response = requests.post(
         'x-publora-key': 'YOUR_API_KEY'
     },
     json={
-        'content': '**Feature Demo**\n\nWatch our 60-second demo of the new collaboration tools.',
+        'content': '*Feature Demo*\n\nWatch our 60-second demo of the new collaboration tools.',
         'platforms': ['telegram-1001234567890']
     }
 )
@@ -289,7 +301,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
   -H "x-publora-key: YOUR_API_KEY" \
   -d '{
-    "content": "**Feature Demo**\n\nWatch our 60-second demo of the new collaboration tools.",
+    "content": "*Feature Demo*\n\nWatch our 60-second demo of the new collaboration tools.",
     "platforms": ["telegram-1001234567890"]
   }'
 ```
@@ -300,7 +312,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 const axios = require('axios');
 
 const response = await axios.post('https://api.publora.com/api/v1/create-post', {
-  content: '**Feature Demo**\n\nWatch our 60-second demo of the new collaboration tools.',
+  content: '*Feature Demo*\n\nWatch our 60-second demo of the new collaboration tools.',
   platforms: ['telegram-1001234567890']
 }, {
   headers: {
@@ -314,12 +326,15 @@ console.log(response.data);
 
 ## Platform Quirks
 
-- **Bot must be admin**: The Telegram bot must be added as an administrator to the target channel or group before Publora can post. Without admin permissions, posts will fail.
-- **Caption character limit**: When posting with media (images or videos), the text is sent as a caption with a limit of 1,024 characters via the bot API. Text-only messages support up to 4,096 characters via MTProto.
+- **Bot must be admin**: The Telegram bot must be added as an administrator to the target channel or group with `can_post_messages` permission. The admin permission check happens at **connection time**, not at posting time — if the bot is not an admin with `can_post_messages`, the connection will be rejected during setup.
+- **Caption overflow behavior**: When posting with media, the text is sent as a caption (1,024-character limit via bot API). If the content exceeds 1,024 characters and media is attached, the text is sent as a separate reply message to the media post rather than being truncated or rejected. Text-only messages support up to 4,096 characters via MTProto.
 - **WebP auto-conversion**: WebP images are automatically converted to JPEG before sending to Telegram.
-- **Markdown formatting**: Telegram supports a subset of markdown. Use `**bold**`, `_italic_`, `` `code` ``, `[text](url)`, and `> blockquote`. Not all markdown features are supported (e.g., headers are not rendered as headers).
-- **Channel name format**: When setting up the connection, provide the channel name with the `@` prefix (e.g., `@mychannel`). Private channels require the numeric chat ID instead.
-- **Bot token security**: Your bot token is stored securely by Publora and is never exposed in API responses. Treat your bot token like a password.
+- **Markdown formatting**: Telegram supports a subset of markdown. Publora's `safeParseMarkdown` uses single asterisks for bold: `*bold*`, `_italic_`, `` `code` ``, `[text](url)`, and `> blockquote`. Note that this differs from standard Markdown where `**double asterisks**` denote bold. Not all markdown features are supported (e.g., headers are not rendered as headers).
+- **Mixed media types not supported**: A single post cannot contain both images and videos. Attempting to send mixed media types will result in an error. Note that Publora's backend validation does **not** enforce mixed media type restrictions for Telegram (it only does so for Instagram). If Telegram rejects mixed media, the error comes from the Telegram API itself, not from Publora's validation layer.
+- **Bot connection media group limitations**: Bot connections support either a single video OR multiple photos in a media group, but not multiple videos. Multi-video posts are not supported for bot connections. If you need to post multiple videos, create separate posts for each video.
+- **Channel name format**: When setting up the connection, provide the channel name with the `@` prefix (e.g., `@mychannel`). The `channelName` field also accepts a numeric chat ID, which is required for private channels that do not have a public `@username`.
+- **Bot token security**: Your bot token is stored by Publora in the connection record and is never exposed in API responses. Treat your bot token like a password. Note: encryption at rest for bot tokens is planned but not yet implemented. MTProto sessions, however, ARE encrypted at rest (the service user's session is stored encrypted and decrypted at runtime).
+- **MTProto test-connection limitation**: The `test-connection` endpoint always fails for MTProto connections. The validator checks `connectionType === 'bot'` before validating the bot token. MTProto connections have `connectionType: 'mtproto'`, so they skip the bot validation block entirely and fall through to the default failure response with a misleading `'Invalid bot token'` error. This is a known limitation; MTProto connections work correctly for posting despite failing the test-connection check.
 - **Silent messages**: Telegram supports silent message delivery, but this feature is not currently available through the Publora API.
 - **Message editing**: Once posted, Telegram messages can be edited, but this capability is not currently exposed through the Publora API.
 
