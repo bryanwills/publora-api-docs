@@ -170,7 +170,7 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 |----------|------------|--------|-------|------------------|
 | LinkedIn | 3,000 | 20 | 500MB | Documents, @mentions |
 | X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
-| Instagram | 2,200 | 10 | 90s | Reels supported |
+| Instagram | 2,200 | 10 | 3min | Reels supported |
 | Threads | 500 | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |

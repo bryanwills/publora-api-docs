@@ -97,7 +97,7 @@ Some platforms require media, while others support text-only posts.
 | Platform | Min Duration | Max Duration (API) | Notes |
 |---|---|---|---|
 | **Twitter/X** | - | 2 min (120s) | Native allows 2:20 |
-| **Instagram Reels** | - | 90 seconds | Native allows 15-20 min |
+| **Instagram Reels** | - | 3 min (180s) | Native allows 15-20 min |
 | **Instagram Carousel** | - | 60s per video | - |
 | **Threads** | - | 5 min | - |
 | **TikTok** | 3 seconds | 10 min | Native allows 60 min |
@@ -501,7 +501,7 @@ When a single post has issues on multiple platforms:
 
 3. **Compress images for Bluesky.** Bluesky has a strict 1 MB limit. Use JPEG compression at 80-85% quality to stay under the limit.
 
-4. **Check video durations before uploading.** Instagram Reels API maxes out at 90 seconds, Twitter at 2 minutes, TikTok at 10 minutes. Trim videos accordingly.
+4. **Check video durations before uploading.** Instagram Reels API maxes out at 3 minutes (180s), Twitter at 2 minutes, TikTok at 10 minutes. Trim videos accordingly.
 
 5. **Use separate media for different platform groups.** If posting to both image and video platforms, consider creating separate posts:
    - Image posts for Instagram, Twitter, LinkedIn
@@ -525,7 +525,7 @@ When a single post has issues on multiple platforms:
 | TikTok post fails with `VIDEO_REQUIRED` | Posting images to a video-only platform | Use a video file instead |
 | Bluesky post fails with `MEDIA_SIZE_EXCEEDED` | Image over 1 MB | Compress to 80-85% JPEG quality |
 | Twitter post fails with `CONTENT_TOO_LONG` | Content over 280 characters | Shorten content or use threading |
-| Instagram Reels fails with `VIDEO_DURATION_EXCEEDED` | Video over 90 seconds | Trim video to under 90 seconds |
+| Instagram Reels fails with `VIDEO_DURATION_EXCEEDED` | Video over 3 minutes | Trim video to under 3 minutes (180s) |
 | Multiple platforms fail with different errors | Content not optimized for all targets | Create platform-specific posts or fix each error |
 | Validation passes but publish fails | Platform-side issues (rate limits, account restrictions) | Check platform-specific error messages in the post status |
 

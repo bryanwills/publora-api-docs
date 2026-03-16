@@ -30,7 +30,7 @@ The following table highlights the most significant differences between API and 
 | Platform | API Restriction | Native App Allows | Impact |
 |----------|-----------------|-------------------|--------|
 | **Twitter/X** | 2 min video max | 2:20 (140s) video | Videos over 2 min will fail |
-| **Instagram** | 90s Reels, 10 carousel items, JPEG only | 15-20 min Reels, 20 items, PNG/GIF | PNG images will be rejected |
+| **Instagram** | 3 min Reels, 10 carousel items, JPEG only | 15-20 min Reels, 20 items, PNG/GIF | PNG images will be rejected |
 | **TikTok** | 10 min video, 2,200 char captions | 60 min video, 4,000 chars | Long captions truncated or rejected |
 | **Facebook** | 45 min video, 2 GB files | 240 min video, 4 GB files | Large files will fail |
 | **LinkedIn** | 500 MB video | 5 GB video | Videos over 500 MB will fail |
@@ -119,7 +119,7 @@ Video restrictions through APIs are often significantly more restrictive than na
 | Platform | Max Duration | Max Size | Supported Formats |
 |----------|--------------|----------|-------------------|
 | **Twitter/X (API)** | 2 min (120s) | 512 MB | MP4, MOV |
-| **Instagram Reels (API)** | 90 seconds | 300 MB | MP4, MOV |
+| **Instagram Reels (API)** | 3 minutes (180s) | 300 MB | MP4, MOV |
 | **Instagram Carousel** | 60s per video | 300 MB | MP4, MOV |
 | **Threads** | 5 min | 500 MB | MP4, MOV |
 | **TikTok (API)** | 10 min | 4 GB | MP4, MOV, WebM |
@@ -140,7 +140,7 @@ Video restrictions through APIs are often significantly more restrictive than na
 
 | Restriction | API Limit | Native App Limit |
 |-------------|-----------|------------------|
-| Reels duration | 90 seconds | 15-20 minutes |
+| Reels duration | 3 minutes (180s) | 15-20 minutes |
 | Image format | JPEG only | PNG, GIF also supported |
 | Carousel items | 10 | 20 |
 | Account type | Business accounts only | Creator accounts supported |
@@ -276,7 +276,7 @@ When posts fail, the platform returns specific error messages. Understanding the
 |-------|---------|------------|
 | `Error 1363026` | Video exceeds 40 min duration | Trim video to under 45 minutes |
 | `Error 1363023` | File size exceeds 2 GB | Compress video to under 2 GB |
-| `Error 1363128` | Reels duration outside 3-90 second range | Adjust Reel to 3-90 seconds |
+| `Error 1363128` | Reels duration outside 3-180 second range | Adjust Reel to 3-180 seconds (3 min max) |
 
 ### LinkedIn Errors
 
