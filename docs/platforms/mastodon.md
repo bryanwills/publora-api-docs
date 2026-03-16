@@ -12,7 +12,7 @@ Publora provides a unified REST API for publishing text posts and media content 
 |---------|-------------|--------------|
 | Authentication | Single API key | OAuth 2.0 per instance |
 | Instance support | mastodon.social | Any instance |
-| Multi-platform | Post to 10 platforms | Mastodon/Fediverse only |
+| Multi-platform | Post to 11 platforms | Mastodon/Fediverse only |
 | Setup time | 5 minutes | Varies by instance |
 | Media handling | Automatic | Manual upload |
 | Federation | Automatic | Automatic |
@@ -270,7 +270,7 @@ console.log(response.data);
 - **mastodon.social instance**: Publora currently connects to the mastodon.social instance. Support for other instances may be added in the future.
 - **Public by default**: All posts made through Publora are published with public visibility. They will appear on the federated timeline.
 - **Up to 4 images**: A maximum of 4 images can be attached to a single post. Exceeding this limit will result in an error.
-- **JPEG and PNG only**: Mastodon supports JPEG and PNG image formats. Other formats may not be accepted.
+- **Image formats**: Mastodon supports JPEG, PNG, GIF, and WebP image formats. Support may vary by instance.
 - **MP4 for videos**: Only MP4 video format is supported for media attachments.
 - **500-character limit**: Mastodon enforces a strict 500-character limit. Publora will return an error if your content exceeds this. Unlike X/Twitter and Threads, Mastodon does not auto-thread.
 - **Hashtags**: Hashtags in Mastodon are part of the post body and count toward the character limit. They become clickable and searchable on the platform.
