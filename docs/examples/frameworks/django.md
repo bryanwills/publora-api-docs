@@ -92,11 +92,12 @@ class PubloraService:
     def delete_post(self, post_group_id):
         return self._request('DELETE', f'/delete-post/{post_group_id}')
 
-    def get_upload_url(self, file_name, content_type, post_group_id):
+    def get_upload_url(self, file_name, content_type, post_group_id, media_type='image'):
         return self._request('POST', '/get-upload-url', {
             'fileName': file_name,
             'contentType': content_type,
             'postGroupId': post_group_id,
+            'type': media_type,  # 'image' or 'video'
         })
 
     def get_linkedin_stats(self, platform_id, posted_id):

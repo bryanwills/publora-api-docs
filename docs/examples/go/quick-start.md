@@ -104,12 +104,12 @@ import "fmt"
 
 type APIError struct {
 	StatusCode int    `json:"-"`
-	Error      string `json:"error,omitempty"`
+	ErrorText  string `json:"error,omitempty"`
 	Message    string `json:"message,omitempty"`
 }
 
 func (e *APIError) Error() string {
-	msg := e.Error
+	msg := e.ErrorText
 	if msg == "" {
 		msg = e.Message
 	}
