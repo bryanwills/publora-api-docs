@@ -333,7 +333,7 @@ Get a presigned URL to upload media files.
 | Type | Formats |
 |------|---------|
 | Images | JPEG, PNG, GIF, WebP |
-| Videos | MP4, MOV, AVI, WebM |
+| Videos | MP4, MOV, AVI, MKV, WebM |
 
 **Python example:**
 

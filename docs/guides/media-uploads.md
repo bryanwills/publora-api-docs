@@ -23,7 +23,7 @@ Media is automatically attached to the post group via the `postGroupId` you prov
 | Type | Formats |
 |---|---|
 | Images | JPEG, PNG, GIF, WebP |
-| Videos | MP4, MOV |
+| Videos | MP4, MOV, AVI, MKV, WebM |
 
 ### Limits
 
