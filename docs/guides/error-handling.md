@@ -48,7 +48,6 @@ or
 | `401` | `"Invalid API key owner"` | Workspace resolution failed for the API key (the key exists but its owner account could not be resolved) | Verify the API key is associated with a valid account, or regenerate the key |
 | `403` | `"API access is not enabled for this account"` | Your account is on the Starter plan, which does not include API access | Upgrade to Pro or Premium to use the API |
 | `403` | `"Workspace access is not enabled for this key"` | The API key does not have workspace-level access enabled | Verify the API key has the correct permissions, or generate a new key with workspace access |
-| `403` | `"Subscription required"` | Your account does not have an active subscription. Response includes `message: "No active plan entitlements found for this account."` | Subscribe to a paid plan |
 | `403` | `"Account on hold"` | Your account has been placed on hold. Response includes `message: "Your account is temporarily on hold. Please contact support."`, `holdExpiresAt` (ISO 8601 timestamp), and `holdReason` fields | Wait until the hold expires or contact support to resolve the issue |
 | `403` | `"Account inactive"` | Your account has been deactivated. Response includes `message: "Your account is inactive."` | Contact support@publora.com to reactivate your account |
 | `403` | Limit exceeded (structured) | You have exceeded a usage limit for your plan. Response uses `LimitExceededError` format with fields: `code`, `error` (short label), `message` (long text), `metric`, `limit`, `used`, `requested`, `remaining`, `periodStart`, `periodEnd`, `planName`, plus context-specific fields (see below) | Wait for the current period to reset, reduce usage, or upgrade your plan |
@@ -208,7 +207,7 @@ try {
         break;
       case 403:
         console.error('Access denied:', error.message);
-        // Could be "Subscription required", limit exceeded, or account hold
+        // Could be limit exceeded, account hold, or account inactive
         break;
       case 400:
         console.error('Bad request:', error.message);
