@@ -60,7 +60,7 @@ MTProto connections use a Telegram **user session** instead of a bot, enabling h
 |------|-----------|--------|
 | Text | Yes | 4,096 characters (text-only messages, both bot and MTProto); 1,024 characters (captions with media, bot API) |
 | Images | Yes | JPEG, PNG, GIF, BMP, WebP (WebP auto-converted to JPEG) |
-| Videos | Yes | MP4, MOV formats |
+| Videos | Yes | MP4, MOV, AVI, MKV, WebM |
 | Formatting | Yes | Bold, italic, code, links, blockquotes |
 
 ## Text Formatting

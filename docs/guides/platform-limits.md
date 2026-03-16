@@ -129,7 +129,7 @@ Video restrictions through APIs are often significantly more restrictive than na
 | **Facebook Reels (API)** | 90 seconds | 1 GB | MP4, MOV |
 | **Mastodon** | No limit* | ~99 MB | MP4, MOV, WebM |
 | **Bluesky** | 3 min | 100 MB | MP4 |
-| **Telegram (Bot API)** | No limit | 50 MB | MP4, MOV |
+| **Telegram (Bot API)** | No limit | 50 MB | MP4, MOV, AVI, MKV, WebM |
 | **Pinterest** | 15 min | 1 GB | MP4, MOV | *Not currently supported* |
 
 *Mastodon video duration is limited only by file size (~99 MB default).
