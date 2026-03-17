@@ -166,16 +166,23 @@ if (healthy) {
 
 ### Unknown Platform
 
-If the platform has no test-connection validator implemented (e.g., Pinterest), the endpoint returns HTTP 200 with an error status:
+If the platform has no test-connection validator implemented (e.g., Pinterest), the endpoint returns HTTP 200 with a full response structure but error status:
 
 ```json
 {
+  "platform": "pinterest",
+  "platformId": "pinterest-abc123",
+  "username": "unknown",
   "status": "error",
-  "message": "Unknown platform: pinterest"
+  "message": "Unknown platform: pinterest",
+  "permissions": [],
+  "tokenExpiresIn": null,
+  "lastSuccessfulPost": null,
+  "lastError": null
 }
 ```
 
-> **Note:** The internal dashboard test-connection endpoint may include an additional `message` field in 500 error responses that the public API endpoint does not return.
+> **Note:** The public API route returns only `{ error: "Failed to test connection" }` for 500 errors without a `message` field. The internal dashboard endpoint may include an additional `message` field in error responses.
 
 ## Errors
 

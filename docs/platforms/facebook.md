@@ -39,7 +39,7 @@ Where `{pageId}` is your Facebook Page ID assigned during account connection via
 |------|-----------|--------|
 | Text | Yes | 2,200 characters (Publora frontend limit; see note below) |
 | Images | Yes | Multiple supported (carousel/album), WebP auto-converted to JPEG |
-| Videos | Yes | MP4, MOV formats |
+| Videos | Yes | MP4, MOV, AVI, MKV, WebM formats |
 | Multiple Pages | Yes | Each page has its own platform ID |
 
 ## Token Management

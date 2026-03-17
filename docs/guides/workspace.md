@@ -728,6 +728,7 @@ client = onboard_client('acme-corp', 'Acme Corp')
 
 | Problem | Cause | Solution |
 |---|---|---|
+| `400` "Email is required" | The `username` field is missing or empty in the create-user request body | Include a non-empty `username` field in the request body |
 | `409` "User with this email already exists" | A managed user with the same `username` (email) already exists in the workspace | Use a different email or retrieve the existing user via `GET /api/v1/workspace/users` |
 | `403` "Workspace access is not enabled for this key" | Workspace feature not enabled for your account | Contact serge@publora.com to enable Workspace API access |
 | `401` when using workspace endpoints | Invalid workspace API key | Verify the `x-publora-key` value is your workspace-level API key |

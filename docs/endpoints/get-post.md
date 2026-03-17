@@ -35,8 +35,7 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
       "platformId": "123456789",
       "content": "Excited to share our new product launch! 🚀",
       "status": "published",
-      "postedId": "1234567890123456789",
-      "error": null
+      "postedId": "1234567890123456789"
     },
     {
       "_id": "663a1b2c3d4e5f6a7b8c9d02",
@@ -44,14 +43,13 @@ GET https://api.publora.com/api/v1/get-post/:postGroupId
       "platformId": "ABC123",
       "content": "Excited to share our new product launch! 🚀",
       "status": "published",
-      "postedId": "urn:li:share:7654321",
-      "error": null
+      "postedId": "urn:li:share:7654321"
     }
   ]
 }
 ```
 
-> **Note:** The `error` field is always present in the response (included via `.select()`). For non-failed posts, its value will be `null` rather than absent. When a post has failed, the `error` field contains an error object with details about the failure.
+> **Note:** With `.lean()`, the `error` field may be **absent** (undefined) for non-failed posts if the error subdocument was never populated — it will not necessarily be `null`. When a post has failed, the `error` field contains an error object with details about the failure.
 
 > **Note:** For draft and scheduled posts, the `postedId` field will be absent from the response since the post has not yet been published to the platform. Only published posts include a `postedId`.
 

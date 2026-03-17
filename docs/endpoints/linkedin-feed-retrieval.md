@@ -335,13 +335,7 @@ The `cached` field in responses indicates if data was served from cache.
 
 ### Not Found (404)
 
-```json
-{
-  "error": "Not Found"
-}
-```
-
-All feed retrieval endpoints currently return HTTP **404 Not Found** because the route handlers are commented out in the source code and the routes do not exist.
+All feed retrieval endpoints currently return HTTP **404 Not Found** because the route handlers are commented out in the source code and the routes do not exist. Express returns its default HTML 404 response (e.g., `Cannot POST /api/v1/linkedin-posts`), **not** a JSON body.
 
 ### Connection Not Found (404)
 

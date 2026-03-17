@@ -66,7 +66,7 @@ Some platforms require media, while others support text-only posts.
 | **Instagram** | 8 MB | 300 MB | 10 (API carousel) |
 | **Threads** | 8 MB | 500 MB | 10 |
 | **TikTok** | - | 4 GB | 1 video only |
-| **LinkedIn** | 5 MB | 500 MB | 20 images OR 1 video |
+| **LinkedIn** | 5 MB | 500 MB | 10 images OR 1 video |
 | **YouTube** | - | 256 GB | 1 video only |
 | **Facebook** | 10 MB | 2 GB (API) | 10 images OR 1 video |
 | **Mastodon** | 16 MB | ~99 MB | 4 |

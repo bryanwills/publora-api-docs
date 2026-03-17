@@ -56,7 +56,7 @@ This ensures media is fully uploaded before the scheduler processes your post. S
 
 ## Default Platform Settings
 
-When creating via the API, these defaults are applied automatically:
+When creating via the API, these defaults are applied automatically. If you provide a `platformSettings` object in the request body, your values are **merged** with these defaults on a per-platform basis — user-provided fields override the corresponding default fields, while any default fields you omit are preserved. See [Default Platform Settings](#default-platform-settings) for the full list.
 
 ```json
 {

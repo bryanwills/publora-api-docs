@@ -26,15 +26,15 @@ POST https://api.publora.com/api/v1/get-upload-url
 | `fileName` | string | Yes | Name of the file (e.g., `photo.jpg`). The filename is sanitized before use: whitespace is trimmed, spaces are replaced with underscores, and special characters (except underscores, dots, and hyphens) are removed. For example, `my photo (1).jpg` becomes `my_photo_1.jpg`. |
 | `contentType` | string | Yes | MIME type (e.g., `image/jpeg`, `video/mp4`). The API route does **not** validate this parameter — any MIME type string is accepted. |
 | `postGroupId` | string | Yes | The post group to attach this media to. **Security note:** The API does not verify that the `postGroupId` belongs to the requesting user. This is a known limitation. |
-| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` will store `undefined` in the database, which may cause unexpected behavior. The S3 key prefix is also derived from this field, so omitting it means neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
+| `type` | string | No | Media type: `"image"` or `"video"`. Determines the S3 key prefix. **Warning:** Omitting `type` means the field will be absent from the media record, which causes the AWS SDK `PutObjectCommand` to fail with an error. The S3 key prefix is also derived from this field, so omitting it means neither the `"image"` nor `"video"` branch executes. Always include this parameter. |
 
 ## Response
 
 ```json
 {
   "success": true,
-  "uploadUrl": "https://your-bucket.s3.amazonaws.com/images/...",
-  "fileUrl": "https://your-bucket.s3.amazonaws.com/images/1710500000000-product-photo.jpg",
+  "uploadUrl": "https://brandcraft-media.s3.amazonaws.com/images/...",
+  "fileUrl": "https://brandcraft-media.s3.amazonaws.com/images/1710500000000-product-photo.jpg",
   "mediaId": "65f8a1b2c3d4e5f6a7b8c9d0"
 }
 ```

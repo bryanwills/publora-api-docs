@@ -281,8 +281,8 @@ console.log(response.data);
 
 - **mastodon.social only**: New connections are limited to the mastodon.social instance (the OAuth flow uses a hardcoded instance URL). The test-connection validator attempts to extract the instance URL from the connection's `profileUrl` field, but `profileUrl` is never set during Mastodon connection creation, so it always falls back to mastodon.social. Support for other instances may be added in the future.
 - **Public by default**: All posts made through Publora are published with public visibility. They will appear on the federated timeline.
-- **Up to 4 images**: A maximum of 4 images can be attached to a single post. Publora does not enforce this limit itself — it relies on the Mastodon API to reject posts that exceed the limit.
-- **Image formats**: Mastodon accepts JPEG, PNG, GIF, and WebP natively. Publora does not validate image formats on its end and does not perform any format conversion for Mastodon — all supported formats are passed through as-is.
+- **Up to 4 images**: A maximum of 4 images can be attached to a single post. Publora enforces this limit at scheduling time via `postValidationService.js` and will reject posts that exceed it before they reach the Mastodon API.
+- **Image formats**: Mastodon accepts JPEG, PNG, GIF, and WebP natively. Publora validates image formats via `postValidationService.js` to ensure only supported formats are attached. No format conversion is performed — all supported formats are passed through as-is.
 - **MP4, WebM, and MOV for videos**: Mastodon accepts MP4, WebM, and MOV video formats. Publora accepts all three as input, but the scheduler currently reports the MIME type as `video/mp4` to Mastodon regardless of the actual format. MP4 uploads work correctly; WebM and MOV files may experience processing issues due to the mismatched MIME type.
 - **500-character limit**: Mastodon enforces a strict 500-character limit. Publora will return an error if your content exceeds this. Unlike X/Twitter and Threads, Mastodon does not auto-thread.
 - **Hashtags**: Hashtags in Mastodon are part of the post body and count toward the character limit. They become clickable and searchable on the platform.
@@ -321,7 +321,7 @@ console.log(response.data);
 - Character limits vary by Mastodon instance; mastodon.social uses 500 characters, but some instances allow 5,000+
 - Publora currently connects to mastodon.social only (posting is hardcoded to this instance)
 - Unlike X/Twitter and Threads, Mastodon does not support auto-threading
-- Max image count (4) and video count (1) limits are not enforced by Publora — the Mastodon API will reject posts that exceed these limits
+- Max image count (4) and video count (1) limits are enforced by Publora at scheduling time via `postValidationService.js`
 
 ---
 

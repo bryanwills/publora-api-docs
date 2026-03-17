@@ -268,13 +268,13 @@ curl -X DELETE https://api.publora.com/api/v1/linkedin-reactions \
   }'
 ```
 
-> **Note:** The delete reaction response includes the `reaction` field containing the reaction type that was deleted. It may also include an `urnTranslated` field (`{ from: "original-urn", to: "translated-urn" }`) when URN translation was needed.
+> **Note:** The delete reaction response includes the `reaction` field set to `null` (not the deleted reaction type). It may also include an `urnTranslated` field (`{ from: "original-urn", to: "translated-urn" }`) when URN translation was needed.
 
 **Response example:**
 ```json
 {
   "success": true,
-  "reaction": "LIKE",
+  "reaction": null,
   "urnTranslated": { "from": "original-urn", "to": "translated-urn" }
 }
 ```

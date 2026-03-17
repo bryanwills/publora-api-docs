@@ -43,13 +43,13 @@ POST https://api.publora.com/api/v1/linkedin-reactions
   "success": true,
   "reaction": { ... },
   "urnTranslated": {
-    "from": "urn:li:share:7123456789012345678",
-    "to": "urn:li:activity:7123456789012345678"
+    "from": "urn:li:activity:7123456789012345678",
+    "to": "urn:li:ugcPost:7123456789012345678"
   }
 }
 ```
 
-> **Note:** Creating a reaction returns HTTP **201**, not 200. The `urnTranslated` field is an object `{ from, to }` showing the original and canonical URN when translation occurred (e.g., `urn:li:share:*` translated to `urn:li:activity:*`). It is absent/undefined when no translation was needed.
+> **Note:** Creating a reaction returns HTTP **201**, not 200. The `urnTranslated` field is an object `{ from, to }` showing the original and canonical URN when translation occurred (e.g., `urn:li:activity:*` translated to `urn:li:ugcPost:*`). It is absent/undefined when no translation was needed.
 
 ### Examples
 
@@ -145,8 +145,8 @@ DELETE https://api.publora.com/api/v1/linkedin-reactions
   "success": true,
   "reaction": null,
   "urnTranslated": {
-    "from": "urn:li:share:7123456789012345678",
-    "to": "urn:li:activity:7123456789012345678"
+    "from": "urn:li:activity:7123456789012345678",
+    "to": "urn:li:ugcPost:7123456789012345678"
   }
 }
 ```

@@ -339,7 +339,7 @@ WEBHOOK_SECRET = os.environ['PUBLORA_WEBHOOK_SECRET']
 def verify_signature(payload, signature, secret):
     expected = hmac.new(
         secret.encode(),
-        json.dumps(payload).encode(),
+        json.dumps(payload, separators=(',', ':')).encode(),
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(signature, expected)

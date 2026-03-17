@@ -243,7 +243,7 @@ tomorrow at 9am (AI converts this, but tool needs ISO 8601)
 | Twitter/X | 280 |
 | LinkedIn | 3,000 |
 | Instagram | 2,200 |
-| Threads | 500 |
+| Threads | 500 (10,000 with text attachment) |
 | Bluesky | 300 |
 | Mastodon | 500 |
 | Telegram | 4,096 |

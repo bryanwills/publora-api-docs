@@ -116,10 +116,12 @@ Create and schedule a post to one or more platforms.
 >   "platformSettings": {
 >     "tiktok": {
 >       "viewerSetting": "string",
->       "commercialContent": {
->         "brandOrganic": "boolean",
->         "brandedContent": "boolean"
->       }
+>       "commercialContent": "boolean",
+>       "brandOrganic": "boolean",
+>       "brandedContent": "boolean",
+>       "allowComments": "boolean",
+>       "allowDuet": "boolean",
+>       "allowStitch": "boolean"
 >     },
 >     "instagram": {
 >       "videoType": "REELS | STORIES"  // default: "REELS"
@@ -208,7 +210,7 @@ You can @mention people and companies in LinkedIn posts using this syntax in you
 | LinkedIn | 3,000 | 10 | 500MB | Documents, @mentions |
 | X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
 | Instagram | 2,200 | 10 | 3 min (180s) Reels, 60s carousel | Reels & Stories supported |
-| Threads | 500 | 10 | 5min | Auto-threading |
+| Threads | 500 (10,000 with text attachment) | 10 | 5min | Auto-threading |
 | TikTok | 2,200 | N/A | 10min | Video-only platform |
 | YouTube | 5,000 desc | N/A | 12h | Shorts support |
 | Facebook | 63,206 | 10 | 45min | Page posts, Reels |
