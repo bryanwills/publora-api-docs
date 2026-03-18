@@ -80,6 +80,119 @@ Telegram supports markdown-style formatting in message text. You can use the fol
 
 When posting with media (images or videos), the text content is sent as a **caption** attached to the media. Captions have a stricter limit of 1,024 characters when using the bot API. MTProto with Premium supports up to 2,048-character captions on media posts (not 4,096 -- the 4,096 limit applies only to text-only messages). Text-only messages (without media) support up to 4,096 characters for both bot API and MTProto connections.
 
+## Telegram Post Options
+
+Publora supports Telegram-specific post options that control message delivery and content protection. These options are available in the Publora dashboard under "Telegram Presets" when creating or editing a post with a Telegram channel selected.
+
+### Available Options
+
+| Option | Description | API Parameter |
+|--------|-------------|---------------|
+| **Disable link preview** | Prevents Telegram from generating link previews for URLs in the message | `disableWebPagePreview` |
+| **Silent notification** | Sends the message without triggering a notification sound on recipients' devices | `disableNotification` |
+| **Caption above media** | Places the caption above the photo/video instead of below (only applies when media is attached) | `showCaptionAboveMedia` |
+| **Protect content** | Prevents recipients from forwarding, saving, or copying the message content | `protectContent` |
+
+### Using Post Options via API
+
+To set Telegram-specific options via the API, include the `platformSettings.telegram` object in your request:
+
+**JavaScript (fetch)**
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/create-post', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    content: '*Exclusive Update*\n\nThis content is protected and cannot be forwarded.',
+    platforms: ['telegram-1001234567890'],
+    platformSettings: {
+      telegram: {
+        disableNotification: true,      // Send silently
+        disableWebPagePreview: true,    // No link previews
+        showCaptionAboveMedia: false,   // Caption below media (default)
+        protectContent: true            // Prevent forwarding/saving
+      }
+    }
+  })
+});
+
+const data = await response.json();
+console.log(data);
+// Response: { "success": true, "postGroupId": "abc123..." }
+```
+
+**Python (requests)**
+
+```python
+import requests
+
+response = requests.post(
+    'https://api.publora.com/api/v1/create-post',
+    headers={
+        'Content-Type': 'application/json',
+        'x-publora-key': 'YOUR_API_KEY'
+    },
+    json={
+        'content': '*Exclusive Update*\n\nThis content is protected and cannot be forwarded.',
+        'platforms': ['telegram-1001234567890'],
+        'platformSettings': {
+            'telegram': {
+                'disableNotification': True,
+                'disableWebPagePreview': True,
+                'showCaptionAboveMedia': False,
+                'protectContent': True
+            }
+        }
+    }
+)
+
+data = response.json()
+print(data)
+# Response: { "success": true, "postGroupId": "abc123..." }
+```
+
+### Option Details
+
+#### Disable Link Preview (`disableWebPagePreview`)
+
+When enabled, Telegram will not generate preview cards for URLs in your message. Useful for:
+- Keeping messages compact
+- Avoiding preview images that may not represent your content well
+- Reducing visual clutter in channels with frequent link sharing
+
+#### Silent Notification (`disableNotification`)
+
+When enabled, recipients will receive the message without a notification sound. The message still appears in their chat list and shows an unread badge. Useful for:
+- Posting during off-hours without disturbing subscribers
+- High-frequency update channels
+- Non-urgent announcements
+
+#### Caption Above Media (`showCaptionAboveMedia`)
+
+When enabled and media is attached, the caption text appears above the image/video instead of below. This option only applies when the post includes media. Useful for:
+- Emphasizing the text content over the visual
+- Creating a headline-style presentation
+- Matching specific visual preferences
+
+#### Protect Content (`protectContent`)
+
+When enabled, Telegram restricts what recipients can do with your message:
+- Cannot forward the message to other chats
+- Cannot save media to device
+- Cannot copy text (on mobile apps)
+- Screenshot restrictions on some platforms
+
+Useful for:
+- Exclusive or premium content
+- Time-sensitive announcements
+- Content you want to keep within your channel
+
+> **Note:** Content protection is enforced by Telegram clients but is not 100% foolproof. Users with modified clients or screen capture tools may still be able to save content.
+
 ## Examples
 
 ### Post a Text Message
@@ -348,7 +461,6 @@ console.log(response.data);
 - **Channel name format**: When setting up the connection, provide the channel name with the `@` prefix (e.g., `@mychannel`). The `channelName` field also accepts a numeric chat ID, which is required for private channels that do not have a public `@username`.
 - **Bot token security**: Your bot token is stored by Publora in the connection record and is never exposed in API responses. Treat your bot token like a password. Bot tokens are stored in plaintext in the connection record. Encryption at rest is planned but not yet implemented. MTProto sessions, however, ARE encrypted at rest (the service user's session is stored encrypted and decrypted at runtime).
 - **MTProto test-connection limitation**: The `test-connection` endpoint always fails for MTProto connections. The validator checks `connectionType === 'bot'` before validating the bot token. MTProto connections have `connectionType: 'mtproto'`, so they skip the bot validation block entirely and fall through to the default failure response with a misleading `'Invalid bot token'` error. This is a known limitation; MTProto connections work correctly for posting despite failing the test-connection check.
-- **Silent messages**: Telegram supports silent message delivery, but this feature is not currently available through the Publora API.
 - **Message editing**: Once posted, Telegram messages can be edited, but this capability is not currently exposed through the Publora API.
 
 ## API Limits
