@@ -472,6 +472,7 @@ const postedId = data.posts.find(p => p.platform === 'linkedin')?.postedId;
 
 ## Related Guides
 
+- [X Bookmarks](/docs/guides/x-bookmarks.md) - Sync, search, and export your X (Twitter) bookmarks
 - [LinkedIn Account Statistics](/docs/endpoints/linkedin-statistics.md) - Account-level analytics
 - [LinkedIn Followers](/docs/endpoints/linkedin-followers.md) - Follower count and growth
 - [LinkedIn Profile Summary](/docs/endpoints/linkedin-profile-summary.md) - Combined profile stats
