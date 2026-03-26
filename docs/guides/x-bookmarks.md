@@ -162,6 +162,15 @@ GET /api/v1/x-bookmarks/export?q=ai&has_media=true&limit=100
 
 Same filters as List. Returns up to 200 bookmarks with internal tracking fields stripped.
 
+**Response:**
+```json
+{
+  "success": true,
+  "count": 142,
+  "bookmarks": [ ... ]
+}
+```
+
 **Rate limit:** 5 exports per 15 minutes.
 
 ### Get Balance
@@ -182,7 +191,15 @@ Returns monthly usage and remaining quota.
     "remaining": 1850,
     "isUnlimited": false,
     "periodStart": "2026-03-01T00:00:00.000Z",
-    "periodEnd": "2026-04-01T00:00:00.000Z"
+    "periodEnd": "2026-04-01T00:00:00.000Z",
+    "monthKey": "2026-03"
+  },
+  "connection": {
+    "username": "johndoe",
+    "displayName": "John Doe",
+    "profileImageUrl": "https://pbs.twimg.com/...",
+    "lastSyncAt": "2026-03-26T12:00:00.000Z",
+    "lastSyncStatus": "success"
   }
 }
 ```
@@ -231,6 +248,8 @@ GET /api/v1/x-bookmarks/user/media-stats
 ```
 GET /api/v1/x-bookmarks/sync/history?page=1&limit=20
 ```
+
+Pagination: `limit` max 50 (default 20), `page` max 100.
 
 **Response:**
 ```json
@@ -758,10 +777,20 @@ Images and videos are automatically downloaded to cloud storage by a background 
 |--------|------|-------|----------|
 | 400 | `NOT_CONNECTED` | X account not connected | Connect via dashboard |
 | 400 | `CONFLICTING_FILTERS` | Incompatible filter combo | e.g., `has_media=false` + `q` |
+| 400 | `CONFLICTING_PARAMS` | Sort + text search conflict | Remove `sort` when using `q` |
 | 400 | `INVALID_PARAM_TYPE` | Wrong parameter type | Ensure params are strings |
 | 400 | `SEARCH_QUERY_TOO_LONG` | Query exceeds 200 chars | Shorten search query |
+| 400 | `EMPTY_QUERY` | Search query empty after sanitization | Provide a non-empty `q` value |
+| 400 | `INVALID_DATE` | Bad `from` or `to` format | Use ISO 8601 dates |
+| 400 | `INVALID_MEDIA_TYPE` | Bad `media_type` value | Use `photo`, `video`, or `animated_gif` |
+| 400 | `INVALID_SORT` | Bad `sort` value | Use `tweet_date`, `synced_at`, `likes`, or `retweets` |
+| 400 | `INVALID_BODY` | Settings body not JSON object | Send `Content-Type: application/json` |
+| 400 | `UNKNOWN_FIELDS` | Settings has unrecognized fields | Use only `downloadImages`, `downloadVideos`, `fetchReferencedTweets` |
+| 400 | `INVALID_FIELD_TYPE` | Settings field not boolean | All settings must be `true` or `false` |
 | 401 | `AUTH_EXPIRED` | X OAuth token expired | Reconnect X account |
 | 403 | `X_BOOKMARKS_LIMIT_REACHED` | Monthly quota exhausted | Wait for next billing period |
+| 404 | `BOOKMARK_NOT_FOUND` | Bookmark ID doesn't exist | Verify the ID |
+| 404 | `NOT_CONNECTED` | Settings: no connection | Connect X account first |
 | 409 | `SYNC_IN_PROGRESS` | Another sync is running | Wait and retry |
 | 429 | `SYNC_RATE_LIMITED` | Sync too frequent | Wait 60 seconds |
 | 429 | `EXPORT_RATE_LIMITED` | Too many exports | Wait 15 minutes |
