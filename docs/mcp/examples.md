@@ -353,7 +353,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ### Mention a Person in a Post
 
-> **You:** Schedule a LinkedIn post for tomorrow at 9am thanking John Smith (urn:li:person:123456) for his help
+> **You:** Schedule a LinkedIn post for tomorrow at 9am thanking John Smith (urn:li:person:ACoAABcD1234EfG) for his help
 
 > **Claude:** Done! I've scheduled the post with the mention:
 >
@@ -364,7 +364,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ### Mention a Company in a Post
 
-> **You:** Create a LinkedIn post announcing our partnership with Acme Corp (urn:li:organization:789012)
+> **You:** Create a LinkedIn post announcing our partnership with Acme Corp (urn:li:organization:98765432)
 
 > **Claude:** Done! Post created with the company mention:
 >
@@ -374,7 +374,7 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ### Multiple Mentions
 
-> **You:** Post to LinkedIn: "Shoutout to @{urn:li:person:123|Jane Doe} and the team at @{urn:li:organization:456|Tech Startup Inc} for the collaboration!"
+> **You:** Post to LinkedIn: "Shoutout to @{urn:li:person:ACoAADeFgHi5678|Jane Doe} and the team at @{urn:li:organization:98765432|Tech Startup Inc} for the collaboration!"
 
 > **Claude:** Posted! Both mentions will appear as clickable links:
 > - Jane Doe → links to her profile

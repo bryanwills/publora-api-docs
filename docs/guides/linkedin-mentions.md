@@ -10,7 +10,9 @@ Publora supports @mentioning both LinkedIn members (people) and organizations (c
 
 - Publora API key
 - LinkedIn account connected via Publora dashboard
-- LinkedIn URN of the person or company to mention
+- LinkedIn URN of the person or company to mention (see [Finding LinkedIn URNs](#finding-linkedin-urns))
+
+> **Important:** You must use a valid LinkedIn URN ID. Invalid or made-up IDs will cause a `400` error: `"Person URN ID in commentary field is invalid."` LinkedIn person IDs are typically long alphanumeric strings (e.g. `ACoAABcD1234EfG`) — short numeric IDs like `123` or `456` will not work.
 
 ## Mention Syntax
 
@@ -33,7 +35,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: 'Great insights from @{urn:li:person:4986615|Serge Bulaev} on building APIs!',
+    content: 'Great insights from @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} on building APIs!',
     platforms: ['linkedin-ABC123']
   })
 });
@@ -55,7 +57,7 @@ response = requests.post(
         'x-publora-key': 'YOUR_API_KEY'
     },
     json={
-        'content': 'Learned so much from @{urn:li:person:4986615|Serge Bulaev} today!',
+        'content': 'Learned so much from @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} today!',
         'platforms': ['linkedin-ABC123']
     }
 )
@@ -68,7 +70,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   -H "Content-Type: application/json" \
   -H "x-publora-key: YOUR_API_KEY" \
   -d '{
-    "content": "Thanks @{urn:li:person:4986615|Serge Bulaev} for the collaboration!",
+    "content": "Thanks @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} for the collaboration!",
     "platforms": ["linkedin-ABC123"]
   }'
 ```
@@ -119,7 +121,7 @@ You can mention multiple people and companies in the same post:
 const content = `
 Thrilled to announce our partnership!
 
-Thanks to @{urn:li:person:4986615|Serge Bulaev} and the team at
+Thanks to @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} and the team at
 @{urn:li:organization:107107343|Creative Content Crafts Inc} for making this happen.
 
 Looking forward to building great things together!
@@ -141,15 +143,17 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 ## Finding LinkedIn URNs
 
 ### Person URN
-The numeric ID from LinkedIn's API. Format: `urn:li:person:{numeric_id}`
+The member ID from LinkedIn's API. Format: `urn:li:person:{member_id}`
 
-You can find this via:
-- LinkedIn's API
-- Third-party LinkedIn tools
-- Browser developer tools when viewing a profile
+LinkedIn member IDs are typically long alphanumeric strings (e.g. `ACoAABcD1234EfG`). You can find them via:
+- LinkedIn's API (`/me` endpoint returns your own URN)
+- Browser developer tools: inspect network requests when viewing someone's profile
+- The LinkedIn profile URL sometimes contains a numeric ID, but this is **not** the same as the person URN ID
+
+> **Warning:** Using an invalid or made-up URN ID will cause LinkedIn to reject the entire post with a `400` error. Always verify the URN is correct before posting.
 
 ### Organization URN
-Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`
+Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`. Organization IDs are typically 8-digit numbers (e.g. `98765432`).
 
 ## Critical: Name Matching Requirements
 
@@ -157,10 +161,10 @@ Found in the company page URL or via LinkedIn's API. Format: `urn:li:organizatio
 
 | Status | Example |
 |--------|---------|
-| Correct | `@{urn:li:organization:123\|Acme Corp Inc}` |
-| Wrong | `@{urn:li:organization:123\|Acme Corp}` (missing "Inc") |
-| Correct | `@{urn:li:person:456\|John Smith}` |
-| Wrong | `@{urn:li:person:456\|john smith}` (wrong case) |
+| Correct | `@{urn:li:organization:98765432\|Acme Corp Inc}` |
+| Wrong | `@{urn:li:organization:98765432\|Acme Corp}` (missing "Inc") |
+| Correct | `@{urn:li:person:ACoAADeFgHi5678\|John Smith}` |
+| Wrong | `@{urn:li:person:ACoAADeFgHi5678\|john smith}` (wrong case) |
 
 **For companies:** Use the **exact registered company name** including suffixes like "Inc", "LLC", "Ltd", etc.
 

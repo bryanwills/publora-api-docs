@@ -103,7 +103,7 @@ Use the following format in your post content:
 
 **Mentioning a person:**
 ```
-Great insights from @{urn:li:person:4986615|Serge Bulaev} on building APIs!
+Great insights from @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} on building APIs!
 ```
 Result: `Great insights from @Serge Bulaev on building APIs!`
 
@@ -117,10 +117,10 @@ Both mentions will be rendered as clickable links on LinkedIn.
 
 ### How to Find LinkedIn URNs
 
-- **Person URN**: The numeric ID from LinkedIn's API. You can find this via LinkedIn's API or third-party tools. The format is `urn:li:person:{numeric_id}`.
-- **Organization URN**: Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`.
+- **Person URN**: The member ID from LinkedIn's API. The format is `urn:li:person:{member_id}`. Member IDs are typically long alphanumeric strings (e.g. `ACoAABcD1234EfG`). You can find them via LinkedIn's API (`/me` endpoint) or browser developer tools.
+- **Organization URN**: Found in the company page URL or via LinkedIn's API. Format: `urn:li:organization:{numeric_id}`. Organization IDs are typically 8-digit numbers.
 
-> **Note:** Publora automatically converts the person URN format for LinkedIn's API compatibility.
+> **Important:** You must use a valid LinkedIn URN ID. Invalid or made-up IDs will cause a `400` error: `"Person URN ID in commentary field is invalid."` Always verify the URN before posting. See the [LinkedIn Mentions Guide](/docs/guides/linkedin-mentions.md) for details.
 
 ### Important: Name Matching Requirements
 
@@ -131,8 +131,8 @@ Both mentions will be rendered as clickable links on LinkedIn.
 
 | Correct | Incorrect |
 |---------|-----------|
-| `@{urn:li:organization:123\|Acme Corp Inc}` | `@{urn:li:organization:123\|Acme Corp}` |
-| `@{urn:li:person:456\|John Smith}` | `@{urn:li:person:456\|john smith}` |
+| `@{urn:li:organization:98765432\|Acme Corp Inc}` | `@{urn:li:organization:98765432\|Acme Corp}` |
+| `@{urn:li:person:ACoAADeFgHi5678\|John Smith}` | `@{urn:li:person:ACoAADeFgHi5678\|john smith}` |
 
 If the name doesn't match exactly, the mention will appear as plain text instead of a clickable link.
 
@@ -147,7 +147,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
     'x-publora-key': 'YOUR_API_KEY'
   },
   body: JSON.stringify({
-    content: 'Excited to collaborate with @{urn:li:person:4986615|Serge Bulaev} on this project!',
+    content: 'Excited to collaborate with @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} on this project!',
     platforms: ['linkedin-987654321']
   })
 });
@@ -164,7 +164,7 @@ response = requests.post(
         'x-publora-key': 'YOUR_API_KEY'
     },
     json={
-        'content': 'Excited to collaborate with @{urn:li:person:4986615|Serge Bulaev} on this project!',
+        'content': 'Excited to collaborate with @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} on this project!',
         'platforms': ['linkedin-987654321']
     }
 )

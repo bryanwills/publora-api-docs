@@ -192,13 +192,13 @@ asyncio.run(schedule_post())
 You can @mention people and companies in LinkedIn posts using this syntax in your content:
 
 ```text
-@{urn:li:person:4986615|Serge Bulaev}           # Mention a person
+@{urn:li:person:ACoAABcD1234EfG|Serge Bulaev}           # Mention a person
 @{urn:li:organization:107107343|Acme Corp Inc}  # Mention a company
 ```
 
 **Example:**
 ```text
-"Great insights from @{urn:li:person:4986615|Serge Bulaev} at @{urn:li:organization:107107343|Creative Content Crafts Inc}!"
+"Great insights from @{urn:li:person:ACoAABcD1234EfG|Serge Bulaev} at @{urn:li:organization:107107343|Creative Content Crafts Inc}!"
 ```
 
 **Important:** The display name must exactly match the LinkedIn profile name (case-sensitive), including company suffixes like "Inc", "LLC", etc.
