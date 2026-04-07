@@ -21,7 +21,7 @@ Publora allows you to create and delete comments on any LinkedIn post visible to
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123` or `urn:li:ugcPost:123`) |
-| `message` | string | Yes | Comment text (max 1,250 characters) |
+| `message` | string | Yes | Comment text (max 1,250 characters). Supports `@{urn:li:person:ID\|Name}` mention syntax |
 | `platformId` | string | Yes | Your LinkedIn platform ID (e.g., `linkedin-ABC123`) |
 | `parentComment` | string | No | Comment URN for nested replies |
 
@@ -152,9 +152,39 @@ const data = await response.json();
 const postedId = data.posts[0].postedId; // e.g., "urn:li:share:7434685316856377344"
 ```
 
+## Mentions in Comments
+
+You can @mention people and organizations in comments using the same syntax as posts:
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:ugcPost:7429953213384187904',
+    message: 'Excellent analysis @{urn:li:person:ACoAABcD1234EfG|Jane Smith}!',
+    platformId: 'linkedin-ABC123'
+  })
+});
+```
+
+**Result on LinkedIn:** `Excellent analysis @Jane Smith!` — with "Jane Smith" as a clickable profile link.
+
+You can also mention organizations:
+
+```
+@{urn:li:organization:98765432|Acme Corp Inc}
+```
+
+For details on finding URN IDs and name matching requirements, see the [LinkedIn Mentions Guide](/docs/guides/linkedin-mentions.md).
+
 ## Important Notes
 
-- **Character limit:** Comments are limited to 1,250 characters
+- **Character limit:** Comments are limited to 1,250 characters (counted after mention syntax is converted to display names)
+- **Mentions:** Use `@{urn:li:person:ID|Name}` or `@{urn:li:organization:ID|Company}` syntax. The URN must be valid — invalid IDs cause a `400` error from LinkedIn
 - **Network visibility:** You can only comment on posts visible to your LinkedIn account
 - **URN format:** Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format (not `urn:li:activity:xxx` from URLs)
 - **MCP tool note:** When using the Publora MCP tool for deleting comments, the tool description only mentions URN format for `commentId`. The REST API accepts both URN and numeric ID formats.

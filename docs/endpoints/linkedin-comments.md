@@ -20,7 +20,7 @@ POST https://api.publora.com/api/v1/linkedin-comments
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123`, `urn:li:ugcPost:456`, `urn:li:activity:789`) |
-| `message` | string | Yes | The comment text |
+| `message` | string | Yes | The comment text. Supports mentions using `@{urn:li:person:ID\|Name}` or `@{urn:li:organization:ID\|Company}` syntax (see [Mentions in Comments](#mentions-in-comments)) |
 | `platformId` | string | Yes | LinkedIn connection ID (format: `linkedin-ABC123`) |
 | `parentComment` | string | No | Parent comment URN for threaded replies |
 
@@ -193,6 +193,40 @@ curl -X DELETE "https://api.publora.com/api/v1/linkedin-comments" \
     "platformId": "linkedin-Tz9W5i6ZYG"
   }'
 ```
+
+## Mentions in Comments
+
+You can @mention LinkedIn members and organizations in comments using the same syntax as posts:
+
+```
+@{urn:li:person:MEMBER_ID|Display Name}       # Mention a person
+@{urn:li:organization:ORG_ID|Company Name}    # Mention an organization
+```
+
+Publora automatically converts this to LinkedIn's comment mention format (`message.attributes`). The mention renders as a clickable link and notifies the mentioned user.
+
+### Example with Mention
+
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-comments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    postedId: 'urn:li:share:7123456789012345678',
+    message: 'Great point @{urn:li:person:ACoAABcD1234EfG|Jane Smith}! Totally agree.',
+    platformId: 'linkedin-Tz9W5i6ZYG'
+  })
+});
+```
+
+**Result on LinkedIn:** `Great point @Jane Smith! Totally agree.` — with "Jane Smith" as a clickable profile link.
+
+> **Important:** You must use a valid LinkedIn URN ID. Invalid IDs will cause LinkedIn to reject the comment with a `400` error. See the [LinkedIn Mentions Guide](/docs/guides/linkedin-mentions.md) for how to find URN IDs.
+
+---
 
 ## Errors
 

@@ -1829,6 +1829,7 @@ paths:
       description: |
         Post a comment on a LinkedIn post. Supports replies to existing comments
         via the parentComment parameter. Maximum comment length is 1250 characters.
+        Supports @mentions using @{urn:li:person:ID|Name} or @{urn:li:organization:ID|Company} syntax.
       operationId: createLinkedInComment
       tags:
         - LinkedIn Analytics
@@ -1846,8 +1847,8 @@ paths:
                   example: "urn:li:share:7123456789012345678"
                 message:
                   type: string
-                  description: "Comment text (max 1250 characters)"
-                  example: "Great insights! Thanks for sharing."
+                  description: "Comment text (max 1250 characters). Supports mentions: @{urn:li:person:ID|Name} or @{urn:li:organization:ID|Company}"
+                  example: "Great insights @{urn:li:person:ACoAABcD1234EfG|Jane Smith}! Thanks for sharing."
                 platformId:
                   type: string
                   description: "LinkedIn connection ID"

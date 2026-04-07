@@ -789,7 +789,7 @@ Post a comment on a LinkedIn post.
 |-----------|------|----------|-------------|
 | `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123456` or `urn:li:ugcPost:123456`) |
 | `platformId` | string | Yes | Platform connection ID |
-| `message` | string | Yes | Comment text (max 1,250 characters) |
+| `message` | string | Yes | Comment text (max 1,250 characters). Supports mentions: `@{urn:li:person:ID\|Name}` or `@{urn:li:organization:ID\|Company}` |
 | `parentComment` | string | No | Parent comment URN for nested replies |
 
 **Example prompts:**
@@ -798,6 +798,7 @@ Post a comment on a LinkedIn post.
 "Comment 'Great insights!' on this LinkedIn post"
 "Post a comment on my latest LinkedIn update"
 "Reply to this comment with 'Thanks for sharing!'"
+"Comment on this post mentioning @{urn:li:person:ACoAABcD1234EfG|Jane Smith}"
 ```
 
 **Python example:**
