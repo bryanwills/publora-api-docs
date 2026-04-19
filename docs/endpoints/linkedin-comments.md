@@ -19,7 +19,7 @@ POST https://api.publora.com/api/v1/linkedin-comments
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `postedId` | string | Yes | LinkedIn post URN (e.g., `urn:li:share:123`, `urn:li:ugcPost:456`, `urn:li:activity:789`) |
+| `postedId` | string | Yes | LinkedIn post URN — must be `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format. **Do not use `urn:li:activity:` URNs** (see note below) |
 | `message` | string | Yes | The comment text. Supports mentions using `@{urn:li:person:ID\|Name}` or `@{urn:li:organization:ID\|Company}` syntax (see [Mentions in Comments](#mentions-in-comments)) |
 | `platformId` | string | Yes | LinkedIn connection ID (format: `linkedin-ABC123`) |
 | `parentComment` | string | No | Parent comment URN for threaded replies |
@@ -225,6 +225,16 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-comments',
 **Result on LinkedIn:** `Great point @Jane Smith! Totally agree.` — with "Jane Smith" as a clickable profile link.
 
 > **Important:** You must use a valid LinkedIn URN ID. Invalid IDs will cause LinkedIn to reject the comment with a `400` error. See the [LinkedIn Mentions Guide](/docs/guides/linkedin-mentions.md) for how to find URN IDs.
+
+### postedId Format
+
+Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` — **not** `urn:li:activity:xxx`.
+
+The `urn:li:activity:` URN is what appears in LinkedIn post URLs (e.g. `linkedin.com/feed/update/urn:li:activity:123`), but it is **not** the correct format for the Comments API. Using it may work for plain text comments but will return **403 Forbidden** when mentions are included.
+
+To get the correct URN:
+- For posts created via Publora, use the `postedId` field from the [get-post](/docs/endpoints/get-post.md) response
+- The activity ID and share ID are typically the same number — try replacing `urn:li:activity:` with `urn:li:share:` (e.g. `urn:li:activity:7451373349668282369` → `urn:li:share:7451373349668282369`)
 
 ---
 

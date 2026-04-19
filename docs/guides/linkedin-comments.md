@@ -186,7 +186,7 @@ For details on finding URN IDs and name matching requirements, see the [LinkedIn
 - **Character limit:** Comments are limited to 1,250 characters (counted after mention syntax is converted to display names)
 - **Mentions:** Use `@{urn:li:person:ID|Name}` or `@{urn:li:organization:ID|Company}` syntax. The URN must be valid — invalid IDs cause a `400` error from LinkedIn
 - **Network visibility:** You can only comment on posts visible to your LinkedIn account
-- **URN format:** Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format (not `urn:li:activity:xxx` from URLs)
+- **URN format:** Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format — **not** `urn:li:activity:xxx` from URLs. Using `urn:li:activity:` may work for plain text comments but will return **403 Forbidden** when mentions are included. To convert: replace `urn:li:activity:` with `urn:li:share:` (the numeric ID is usually the same)
 - **MCP tool note:** When using the Publora MCP tool for deleting comments, the tool description only mentions URN format for `commentId`. The REST API accepts both URN and numeric ID formats.
 
 ## Related Guides
