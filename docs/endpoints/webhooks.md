@@ -181,7 +181,7 @@ Webhook management has two implementations: the **public API** (`/api/v1/webhook
 
 | Behavior | API (`/api/v1/webhooks`) | Dashboard (`/webhooks`) |
 |----------|--------------------------|-------------------------|
-| **Create error (invalid events)** | Error includes valid events list suffix: `"Invalid events: foo. Valid events: post.scheduled, ..."` | Error omits the valid events list |
+| **Create error (invalid events)** | Returns a flat `{ "error": "Invalid events" }` — submitted event names are **not** echoed back (to avoid leaking admin-only event names to non-admin probes). | Error echoes the invalid event names: `"Invalid events: foo"` |
 | **Update field checks** | Uses truthy checks on `name`/`url`/`events` — empty string `""` is silently ignored | Uses `!== undefined` checks — empty string is treated as a value |
 | **`isActive` type check** | Requires strict boolean (`typeof isActive === "boolean"`) — strings like `"false"` are silently ignored | Uses `isActive !== undefined` — accepts any truthy/falsy value |
 | **Re-enable webhook** | Sets `isActive: true` but does **not** reset `failureCount` | Sets `isActive: true` **and** resets `failureCount` to 0 |
@@ -422,8 +422,7 @@ curl -X DELETE https://api.publora.com/api/v1/webhooks/65f8a1b2c3d4e5f6a7b8c9d0 
 |--------|-------|-------|
 | 400 | `"Name, URL, and at least one event are required"` | Missing required fields |
 | 400 | `"Invalid URL format"` | Malformed URL |
-| 400 | `"Invalid events: ${invalidEvents}. Valid events: ${validEvents}"` | Unrecognized event names on **create** (includes valid events list) |
-| 400 | `"Invalid events: ${invalidEvents}"` | Unrecognized event names on **update** (shorter message, no valid events suffix) |
+| 400 | `"Invalid events"` | One or more submitted event names is not in the allowed-events list for this caller. Names are **not** echoed back (admin-only events would otherwise leak to non-admin probes). Applies to both create and update. |
 | 400 | `"URL must use HTTPS"` | URL uses unsupported protocol (note: both HTTP and HTTPS are actually accepted) |
 | 400 | `"Localhost URLs are not allowed"` | URL points to localhost or 127.0.0.1 |
 | 400 | `"Private IP addresses are not allowed"` | URL points to private network (10.x, 172.16-31.x, 192.168.x) |

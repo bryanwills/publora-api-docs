@@ -389,44 +389,14 @@ The `sessionId` is returned for future use, but the SSE progress endpoint (`/pro
 | 400 | `"No video file uploaded"` | No file is attached to the request |
 | 400 | `"Unsupported video format. Allowed: MP4, MOV, AVI, MKV, WebM"` | The uploaded file format is not one of the accepted video formats. **Note:** This error is thrown inside multer's `fileFilter` callback, so it may not be returned as a clean JSON 400 response depending on Express's error handler. |
 
-## Delete Media
+## Cleaning Up Abandoned Uploads
 
-Remove a media file attached to a post.
+If a `POST /get-upload-url` call succeeds but the subsequent `PUT` to the presigned S3 URL is cancelled or fails, the MediaFile record is persisted to the post group. An abandoned upload would otherwise leave a broken reference that blocks re-scheduling with `MEDIA_DIMENSIONS_UNVERIFIED`.
 
-> **Dashboard-only endpoint.** This endpoint uses session authentication (cookies) and is not available via API key auth. It is accessible only from the Publora dashboard.
+There is no public REST endpoint to delete a single media file by API key. To clean up an abandoned upload:
 
-### Endpoint
-
-```
-DELETE https://api.publora.com/media/post/media/:mediaId
-```
-
-### Authentication
-
-This endpoint requires an active dashboard session (cookie-based auth). It cannot be called with an API key.
-
-The endpoint verifies media ownership — it filters by the authenticated user's ID, so a user can only delete their own media files.
-
-### Response
-
-```json
-{
-  "success": true
-}
-```
-
-On success, the endpoint returns `{ success: true }`.
-
-### Errors
-
-| Status | Error | Cause |
-|--------|-------|-------|
-| 400 | `"Cannot delete media from a post that has already been published or failed"` | The post has already been published or is in a failed state |
-| 401 | Unauthorized | No active session |
-| 404 | `"Media file not found"` | No media record found for the given `mediaId` |
-| 500 | `"Failed to delete media file"` | Internal server error during media deletion |
-
-> **Note:** If S3 deletion fails, the database record is still deleted. This could leave orphaned files in S3.
+- **Delete the parent post group** via `DELETE /api/v1/delete-post/:postGroupId` — this removes the post group and all attached media. Works while the post is in `draft` or `scheduled` status.
+- **Or use the Publora dashboard** to remove the specific media file from the post group.
 
 ## File URLs
 

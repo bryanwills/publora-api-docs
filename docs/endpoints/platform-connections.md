@@ -81,6 +81,7 @@ GET https://api.publora.com/api/v1/platform-connections
 | `tokenExpiresIn` | string/null | Human-readable time until expiration. Possible formats: `"7d 3h"` (days and hours), `"5h"` (hours only, when less than one day remains), `"< 1h"` (less than one hour remaining), `"expired"` (token already expired), or `null` (no expiration). |
 | `lastSuccessfulPost` | string/null | Timestamp of last successful post to this platform |
 | `lastError` | object/null | Last error that occurred when posting to this platform. When present, contains: `message` (string — error description) and `occurredAt` (string — ISO 8601 timestamp of when the error occurred). |
+| `subscriptionType` | string/null | Platform subscription tier where applicable (e.g., `"premium"` for X, `"premium_plus"` for X premium-plus). `null` when the platform doesn't expose a subscription type or when not detected. |
 
 ## Token Status Values
 

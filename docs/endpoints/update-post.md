@@ -25,12 +25,13 @@ PUT https://api.publora.com/api/v1/update-post/:postGroupId
 
 ## Request Body
 
-At least one of `status` or `scheduledTime` must be provided.
+At least one of `status`, `scheduledTime`, or `platformSettings` must be provided. Missing all three returns `400 { "error": "At least one of status, scheduledTime, or platformSettings must be provided" }`.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `status` | string | No | `"draft"` or `"scheduled"` |
 | `scheduledTime` | string | No | New ISO 8601 UTC datetime |
+| `platformSettings` | object | No | Per-platform settings (same shape and allowlist as in [create-post](./create-post.md#platformsettings)). Merged with existing settings server-side — fields you omit are preserved. Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are accepted; other platform keys are silently dropped. |
 
 ### ISO 8601 DateTime Format
 

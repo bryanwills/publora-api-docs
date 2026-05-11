@@ -26,7 +26,7 @@ POST https://api.publora.com/api/v1/create-post
 | `content` | string | Yes | Post text content (cannot be empty or whitespace-only). Must be a string — non-string truthy values (numbers, objects) will pass validation but cause unexpected behavior. |
 | `platforms` | string[] | Yes | Array of platform connection IDs matching `/^[a-z]+-[a-zA-Z0-9_-]+$/` (e.g., `twitter-123456789`, `linkedin-ABC123`) |
 | `scheduledTime` | string | No | ISO 8601 UTC datetime. If omitted, the post is created as a `draft`. If the scheduled time is in the past, it is silently set to the current time |
-| `platformSettings` | object | No | Platform-specific settings object. Keys are platform names, values are setting objects (e.g., `{ "tiktok": { "viewerSetting": "PUBLIC_TO_EVERYONE" } }`). Merged with defaults per platform. Can be a JSON string or object. Per-platform values must be plain objects — arrays, `null`, or primitive values for individual platform keys are silently ignored. |
+| `platformSettings` | object | No | Per-platform settings that are merged with server-side defaults. User-provided values override defaults on a per-platform basis. Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are accepted — any other platform keys are silently dropped. Each platform key must map to a plain object; non-object values are skipped. See [Default Platform Settings](#default-platform-settings) below for the full list of defaults and merge behavior. Validation errors (`"Invalid platformSettings JSON"`, `"platformSettings must be an object"`) are returned if the field is present and malformed. |
 
 ## Response
 
@@ -78,11 +78,16 @@ When creating via the API, these defaults are applied automatically. If you prov
   },
   "threads": {
     "replyControl": ""
+  },
+  "telegram": {
+    "disableNotification": false,
+    "disableWebPagePreview": false,
+    "protectContent": false
   }
 }
 ```
 
-> **Note:** Only `tiktok`, `instagram`, `youtube`, and `threads` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`) are silently ignored and dropped.
+> **Note:** Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`, `facebook`, `bluesky`, `mastodon`) are silently ignored and dropped. For `telegram`, only the three boolean keys shown above (`disableNotification`, `disableWebPagePreview`, `protectContent`) are accepted; any other keys inside the telegram object are dropped, and string values like `"false"` / `"0"` / `"off"` are coerced to `false`.
 
 ## Examples
 
