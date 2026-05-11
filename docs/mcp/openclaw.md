@@ -29,7 +29,7 @@ Create `config/mcporter.json`:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "publora": {
       "url": "https://mcp.publora.com",
       "headers": {
