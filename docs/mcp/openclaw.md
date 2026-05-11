@@ -48,6 +48,10 @@ mcporter list --config config/mcporter.json
 
 > **Note:** Using CLI flags like `--header` may not work with all mcporter versions. Prefer the config file method.
 
+> **Troubleshooting:**
+> - If `mcporter list` reports *auth required* even with a Bearer header in this config, mcporter likely merged a different config source (`~/.claude.json`, `~/.mcporter/…`). Re-run with `--verbose` to see which file supplied the `publora` entry.
+> - Do **not** run `mcporter auth publora`. The Publora MCP server uses static API keys (`Authorization: Bearer …` or `x-publora-key`), not OAuth. mcporter's `auth` command performs OAuth Dynamic Client Registration against `/register`, which does not exist on the server and will fail with an HTML 404.
+
 ## Using with OpenClaw
 
 Once connected, talk to OpenClaw naturally:
@@ -102,14 +106,6 @@ async def get_scheduled_posts(session):
     """List all scheduled posts."""
     result = await session.call_tool("list_posts", {
         "status": "scheduled"
-    })
-    return result.content[0].text
-
-
-async def get_linkedin_analytics(session, platform_id: str):
-    """Get LinkedIn profile analytics."""
-    result = await session.call_tool("linkedin_profile_summary", {
-        "platformId": platform_id
     })
     return result.content[0].text
 
@@ -255,16 +251,17 @@ print('Image uploaded and attached to post:', post_group_id)
 
 | Platform | Characters | Images | Video | Special Features |
 |----------|------------|--------|-------|------------------|
-| LinkedIn | 3,000 | 10 | 500MB | Documents, carousels |
-| X/Twitter | 280 (25K premium) | 4 | 120s | Auto-threading |
-| Instagram | 2,200 | 10 | 3 min (180s) Reels, 60s carousel | Reels & Stories supported |
-| Threads | 500 | 10 | 5min | Auto-threading |
-| TikTok | 2,200 | N/A | 10min | Video-only platform |
-| YouTube | 5,000 desc | N/A | 12h | Shorts support |
-| Facebook | 63,206 | 10 | 45min | Page posts, Reels |
+| LinkedIn | 3,000 | 20 | 30 min / 500 MB | Documents (≤100 MB), multi-image, @mentions |
+| X/Twitter | 280 (25K premium) | 4 | 2 min / 512 MB | Auto-threading |
+| Instagram | 2,200 | 10 | Reels 15 min / 300 MB, 60s carousel | Reels & Stories, JPEG only via API |
+| Threads | 500 (10K with text attachment) | 20 | 5 min / 1 GB | Auto-threading |
+| TikTok | 2,200 | N/A | up to 10 min (creator-dependent) | Video-only platform |
+| YouTube | 100 title / 5,000 desc | N/A | 12 h | Shorts support |
+| Facebook | 63,206 | 10 | 45 min / 2 GB | Page posts, Reels 90s / 1 GB |
 | Bluesky | 300 | 4 | 3 min / 100 MB | Auto-facet detection |
 | Mastodon | 500* | 4 | ~99 MB | Instance-variable |
-| Telegram | 4,096 (1,024 captions) | Unlimited | 2GB | Markdown/HTML |
+| Telegram | 4,096 (1,024 captions) | 10 | 50 MB (Bot API) | Markdown/HTML |
+| Pinterest | 100 title / 800 desc | 5 (carousel) | 15 min / 1 GB | Boards & idea pins |
 
 *Varies by instance
 
@@ -344,6 +341,6 @@ async def safe_schedule_post(agent, content, platforms, scheduled_time):
 
 ## Next Steps
 
-- [Tools Reference](./tools-reference.md) — All 18 MCP tools
+- [Tools Reference](./tools-reference.md) — All 11 MCP tools
 - [Client Setup](./client-setup.md) — Other MCP clients
 - [Examples](./examples.md) — More conversation examples
