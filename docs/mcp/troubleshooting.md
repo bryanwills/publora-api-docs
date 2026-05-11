@@ -145,27 +145,49 @@ nslookup mcp.publora.com
 
 ## Authentication Issues
 
-### "Invalid API key"
+### "API key required" / "Malformed API key" (401)
+
+The MCP server returns one of these two 401 responses if the request is missing a usable API key:
+
+| Response `error` | Cause |
+|---|---|
+| `API key required. Use Authorization: Bearer sk_<your_key> or x-publora-key header.` | No `Authorization` or `x-publora-key` header at all. |
+| `Malformed API key. Publora keys start with sk_ and are 20-200 characters long.` | A key was sent, but it doesn't match the expected shape (e.g. you pasted the placeholder `sk_YOUR_API_KEY`, or the value is truncated). |
+
+Both responses include:
+
+- A `docs` field in the JSON body pointing back to this documentation site.
+- A `WWW-Authenticate: Bearer realm="publora", error="invalid_token", error_description="..."` header (RFC 6750). Inspect it with `curl -v` for the actionable message:
+
+```bash
+curl -v -X POST https://mcp.publora.com \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer sk_YOUR_API_KEY" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
+```
 
 **Solutions:**
 
-1. **Check for typos** — Keys start with `sk_`
+1. **Check for typos** — Keys start with `sk_` and are 20-200 characters long.
 
-2. **Ensure no quotes around key in header value:**
+2. **Ensure no quotes around the key in the header value:**
    ```json
    // Correct
-   "Authorization": "Bearer sk_abc123"
+   "Authorization": "Bearer sk_abc123..."
 
    // Wrong - extra quotes
-   "Authorization": "Bearer \"sk_abc123\""
+   "Authorization": "Bearer \"sk_abc123...\""
    ```
 
-3. **Generate a new key:**
+3. **Use the fallback header if your client / proxy strips `Authorization`** — the server also accepts `x-publora-key: sk_<your_key>`. Some Cloudflare / reverse-proxy configurations strip the `Authorization` header, so this is a useful alternative.
+
+4. **Generate a new key:**
    - [publora.com](https://publora.com) → **API** in the sidebar
    - Click **Generate API Key**
    - Update all configurations
 
-4. **Verify correct account** — Make sure you're logged into the right Publora account
+5. **Verify correct account** — Make sure you're logged into the right Publora account.
 
 ---
 
@@ -180,6 +202,22 @@ nslookup mcp.publora.com
 2. **Check subscription** — Ensure your plan includes API access
 
 3. **Verify resource ownership** — You can only access your own workspace's data
+
+---
+
+### "oauth_not_supported" (404) on `/register` or `.well-known/oauth-*`
+
+**Cause:** Your MCP client tried to perform OAuth Dynamic Client Registration. Publora MCP uses static API keys, not OAuth, so these paths return:
+
+```json
+{
+  "error": "oauth_not_supported",
+  "error_description": "Publora MCP uses static API keys, not OAuth. Send 'Authorization: Bearer sk_<your_key>' or 'x-publora-key: sk_<your_key>'.",
+  "docs": "https://docs.publora.com/mcp/openclaw"
+}
+```
+
+**Solution:** Disable OAuth in your client's MCP configuration and supply a static API key header instead. If the client offers no static-key option, see [Client Setup](./client-setup.md) for known-working clients.
 
 ---
 
@@ -369,16 +407,16 @@ If persistent:
 
 ## mcporter / OpenClaw Issues
 
-### "Unknown MCP server" Error
+### "Unknown MCP server" or "auth required" Error
 
-**Cause:** mcporter CLI argument parsing issue or missing Accept headers.
+**Cause:** mcporter expects the Claude Desktop / Cursor-compatible top-level config key `mcpServers` (not `servers`). With the wrong key, the file fails schema validation and mcporter falls back to treating the server as needing OAuth — which Publora MCP does not support.
 
-**Solution 1: Use the configuration file instead of CLI flags**
+**Solution 1: Use the correct config file shape**
 
 Create `config/mcporter.json`:
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "publora": {
       "url": "https://mcp.publora.com",
       "headers": {
@@ -394,11 +432,19 @@ Then run:
 mcporter list --config config/mcporter.json
 ```
 
+If `mcporter list` still reports `auth required` even with the Bearer header in this config, mcporter is merging another config source (e.g. `~/.claude.json`, `~/.mcporter/`). Run with `--verbose` to see which file is supplying the entry:
+
+```bash
+mcporter list --config config/mcporter.json --verbose
+```
+
+> **Do not run `mcporter auth publora`.** Publora MCP uses static API keys, not OAuth. The `auth` command performs OAuth Dynamic Client Registration against `/register`, which the server does not implement — it will fail with a 404.
+
 **Solution 2: Check mcporter version**
 
 Update to the latest version:
 ```bash
-pip install --upgrade mcporter
+npm install -g mcporter
 ```
 
 **Solution 3: Test connection manually**

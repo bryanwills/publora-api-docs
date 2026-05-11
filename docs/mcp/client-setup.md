@@ -109,7 +109,7 @@ Start a new conversation and ask:
 "What MCP tools do you have available?"
 ```
 
-Claude should list the 18 active Publora tools (3 additional tools — `linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions` — are temporarily disabled pending LinkedIn approval).
+Claude should list the 11 active Publora tools (3 additional LinkedIn feed-retrieval tools — `linkedin_posts`, `linkedin_post_comments`, `linkedin_post_reactions` — are pending LinkedIn approval).
 
 ---
 
@@ -161,27 +161,15 @@ For all projects, edit `~/.cursor/mcp.json`:
 
 ---
 
-## VS Code with Continue
+## VS Code / JetBrains / Other MCP Clients
 
-Continue is an open-source AI coding assistant for VS Code.
+Publora MCP is a standard MCP Streamable HTTP endpoint. Most MCP clients accept the same shape with minor key-name differences:
 
-### Configuration
+- **URL:** `https://mcp.publora.com`
+- **Header:** `Authorization: Bearer sk_YOUR_API_KEY` (or `x-publora-key: sk_YOUR_API_KEY`)
+- **Transport:** HTTP (Streamable HTTP)
 
-Add to your Continue configuration:
-
-```json
-{
-  "mcpServers": {
-    "publora": {
-      "type": "http",
-      "url": "https://mcp.publora.com",
-      "headers": {
-        "Authorization": "Bearer sk_YOUR_API_KEY"
-      }
-    }
-  }
-}
-```
+Refer to your client's MCP configuration docs for the exact config-file path and top-level JSON key (commonly `mcpServers`, `servers`, or a client-specific path). The Claude Desktop, Cursor, Claude Code, and mcporter examples above cover the most common config shapes.
 
 ---
 
@@ -244,7 +232,7 @@ Create `config/mcporter.json`:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "publora": {
       "url": "https://mcp.publora.com",
       "headers": {
@@ -553,6 +541,6 @@ Some clients support environment variable interpolation:
 
 ## Next Steps
 
-- [Tools Reference](./tools-reference.md) — All 18 active tools with parameters
+- [Tools Reference](./tools-reference.md) — All 11 active tools with parameters
 - [Examples](./examples.md) — Real-world conversation examples
 - [Troubleshooting](./troubleshooting.md) — Common issues and solutions

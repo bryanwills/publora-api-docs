@@ -130,79 +130,6 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 
 ---
 
-## Analytics and Insights
-
-### Check Single Post Performance
-
-> **You:** How did my last LinkedIn post perform?
-
-> **Claude:** Your post from February 15 received:
-> - **1,250** impressions
-> - **680** unique viewers
-> - **28** reactions (likes, celebrates, etc.)
-> - **5** comments
-> - **3** reshares
-> - **2.9%** engagement rate
-
-### Weekly Performance Summary
-
-> **You:** Give me a summary of my LinkedIn performance this week
-
-> **Claude:** This week's LinkedIn metrics:
->
-> **Posts:** 5 published
-> **Total impressions:** 4,230
-> **Total reactions:** 89
-> **Comments:** 12
-> **Reshares:** 7
->
-> **Best performer:** "Product launch announcement" (1,850 impressions)
-> **Follower growth:** +47 new followers
-
-### Compare Post Performance
-
-> **You:** Which of my posts got the most engagement this month?
-
-> **Claude:** Top 3 posts by engagement rate:
->
-> 1. "Announcing our Series A" - 3.4% engagement, 2,100 impressions
-> 2. "Meet our new CTO" - 2.8% engagement, 1,890 impressions
-> 3. "Product roadmap 2026" - 2.5% engagement, 1,650 impressions
-
-### Follower Growth
-
-> **You:** How many LinkedIn followers do I have and how's the growth?
-
-> **Claude:** Your LinkedIn page has **12,847** followers.
->
-> Growth breakdown:
-> - **This week:** +47 followers
-> - **This month:** +234 followers (+1.9%)
-> - **Last 90 days:** +687 followers (+5.6%)
-
-### Profile Overview
-
-> **You:** Give me an overall summary of my LinkedIn presence
-
-> **Claude:** LinkedIn Profile Summary:
->
-> **Profile:** Your Company Page
-> **Followers:** 12,847
->
-> **Last 30 days:**
-> - Posts published: 18
-> - Total impressions: 15,400
-> - Average engagement: 2.3%
-> - Best day: Tuesdays at 10am
-> - New followers: +234
->
-> **Top performing content types:**
-> 1. Announcements (3.1% avg engagement)
-> 2. Behind-the-scenes (2.8% avg engagement)
-> 3. Industry insights (2.4% avg engagement)
-
----
-
 ## Cross-Platform Workflows
 
 ### Morning Social Media Routine
@@ -216,18 +143,6 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 > **3:00 PM** - All platforms: "Product tip of the day"
 >
 > You also have 2 draft posts ready for review.
-
-### End of Day Review
-
-> **You:** How did today's posts perform?
-
-> **Claude:** Today's performance summary:
->
-> - **LinkedIn (9am):** 450 impressions, 23 reactions
-> - **Twitter (12pm):** 1,200 views, 45 votes on poll
-> - **All platforms (3pm):** 890 total impressions
->
-> Best engagement: Twitter poll with 3.8% engagement rate.
 
 ### Weekly Planning
 
@@ -259,42 +174,6 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 > 5. **Threads (1:00 PM):** "Want to know what we've been working on? Let me tell you..."
 >
 > All 5 posts scheduled for tomorrow. You can reschedule or cancel any of them.
-
----
-
-## Team and Workspace Management
-
-### View Team Members
-
-> **You:** Who's on my social media team?
-
-> **Claude:** Your workspace has 3 members:
->
-> 1. **you@company.com** - Admin
-> 2. **marketing@company.com** - Member
-> 3. **social@company.com** - Member
-
-### Add a Team Member
-
-> **You:** Add newperson@company.com to my workspace
-
-> **Claude:** Done! Invitation sent to newperson@company.com.
->
-> They'll receive an email to join your workspace. Once accepted, they can:
-> - View scheduled posts
-> - Create and schedule content
-> - Access analytics
-
-### Remove a Team Member
-
-> **You:** Remove the user social@company.com from my workspace
-
-> **Claude:** User removed from workspace. They no longer have access to:
-> - Scheduled posts
-> - Connected accounts
-> - Analytics data
->
-> Their past activity remains in the audit log.
 
 ---
 
@@ -465,42 +344,6 @@ Real-world examples of using Publora MCP with AI assistants like Claude, Cursor,
 > "Big milestone: Our team just hit 50 people! Years of hard work led us here. Thank you to everyone who believed in us from day one."
 >
 > Want me to schedule this to Twitter?
-
-### Analytics-Driven Scheduling
-
-> **You:** When's the best time to post on LinkedIn based on my analytics?
-
-> **Claude:** Based on your last 90 days of LinkedIn posts:
->
-> **Best times for engagement:**
-> 1. Tuesday 10am - 3.2% avg engagement
-> 2. Wednesday 9am - 2.9% avg engagement
-> 3. Thursday 2pm - 2.7% avg engagement
->
-> **Best days overall:**
-> - Tuesday: Highest impressions
-> - Thursday: Most comments
->
-> Want me to reschedule your upcoming posts to these optimal times?
-
-### Campaign Tracking
-
-> **You:** Show me all posts from my product launch campaign last week
-
-> **Claude:** Product launch campaign (Feb 12-16):
->
-> | Date | Platform | Content | Impressions | Engagement |
-> |------|----------|---------|-------------|------------|
-> | Feb 12 | LinkedIn | "Exciting news coming..." | 890 | 2.1% |
-> | Feb 13 | Twitter | "Tomorrow is the day!" | 1,200 | 1.8% |
-> | Feb 14 | All | "Introducing..." | 3,400 | 3.4% |
-> | Feb 15 | LinkedIn | "Deep dive into..." | 1,100 | 2.6% |
-> | Feb 16 | Twitter | "FAQ thread..." | 780 | 2.0% |
->
-> **Campaign totals:**
-> - Total impressions: 7,370
-> - Average engagement: 2.4%
-> - New followers: +156
 
 ### Quick Status Check
 
