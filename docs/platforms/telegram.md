@@ -13,7 +13,7 @@ Publora provides a unified REST API for publishing content to Telegram channels 
 | Authentication | Single API key | Bot token + channel setup |
 | Message formatting | Markdown support | Markdown/HTML support |
 | Media handling | Automatic | Manual upload |
-| Multi-platform | Post to 11 platforms | Telegram only |
+| Multi-platform | Post to 10 platforms | Telegram only |
 | Setup time | 5 minutes | 15-30 minutes |
 | Rate limiting | Handled | Manual implementation |
 

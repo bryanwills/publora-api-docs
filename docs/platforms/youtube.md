@@ -13,7 +13,7 @@ Publora provides a unified REST API for uploading and publishing videos to YouTu
 | Authentication | Single API key | Complex Google OAuth 2.0 |
 | Video upload | Simple REST endpoint | Resumable upload protocol |
 | Quota management | Handled automatically | Manual quota tracking |
-| Multi-platform | Post to 11 platforms | YouTube only |
+| Multi-platform | Post to 10 platforms | YouTube only |
 | Setup time | 5 minutes | Hours (Google Cloud setup) |
 | Privacy controls | Full support | Full support |
 

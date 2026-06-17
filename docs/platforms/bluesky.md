@@ -12,7 +12,7 @@ Publora provides a unified REST API for publishing text posts and media content 
 |---------|-------------|--------------------------|
 | Authentication | Single API key | App password + DID resolution |
 | Rich text | Automatic facets | Manual facet creation |
-| Multi-platform | Post to 11 platforms | Bluesky only |
+| Multi-platform | Post to 10 platforms | Bluesky only |
 | Setup time | 5 minutes | 30+ minutes |
 | Media handling | Automatic | Manual blob upload |
 | Rate limiting | Handled | Manual implementation |

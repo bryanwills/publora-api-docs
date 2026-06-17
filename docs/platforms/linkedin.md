@@ -13,7 +13,7 @@ Publora provides a unified REST API for professional content publishing to Linke
 | Authentication | Single API key | Complex OAuth 2.0 flow |
 | API access | Instant | LinkedIn partner approval |
 | Analytics | Built-in | Separate API calls |
-| Multi-platform | Post to 11 platforms | LinkedIn only |
+| Multi-platform | Post to 10 platforms | LinkedIn only |
 | Setup time | 5 minutes | Weeks (partner approval) |
 | Reactions | Full support | Full support |
 

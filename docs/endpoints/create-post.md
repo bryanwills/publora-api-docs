@@ -43,7 +43,7 @@ Use the `postGroupId` to track, update, or delete the post.
 
 ## Posts with Media
 
-> **Media-only platforms:** **Instagram, TikTok, YouTube, and Pinterest require media on every post** — a text-only post to these platforms cannot be published. `create-post` does **not** validate this (it only checks basic field presence), so a text-only post to these platforms is accepted here and then **fails when it is published** (Instagram, for example, errors with *"Instagram posts require at least one media item"*). When validation does run — the dashboard, or the validated update flow — it is rejected up front with the `MEDIA_REQUIRED` code instead. Always attach media via the draft → upload → schedule flow below so the post goes out cleanly. See [Validation](../guides/validation.md) for the per-platform media matrix.
+> **Media-only platforms:** **Instagram, TikTok, and YouTube require media on every post** — a text-only post to these platforms cannot be published. `create-post` does **not** validate this (it only checks basic field presence), so a text-only post to these platforms is accepted here and then **fails when it is published** (Instagram, for example, errors with *"Instagram posts require at least one media item"*). When validation does run — the dashboard, or the validated update flow — it is rejected up front with the `MEDIA_REQUIRED` code instead. Always attach media via the draft → upload → schedule flow below so the post goes out cleanly. See [Validation](../guides/validation.md) for the per-platform media matrix.
 
 > **Important:** When attaching images or videos, create the post as a **draft** (omit `scheduledTime`), upload media, then schedule via [Update Post](update-post.md).
 
@@ -164,9 +164,9 @@ const { data } = await axios.post(
 console.log(data.postGroupId);
 ```
 
-### Post to all 11 platforms at once
+### Post to all 10 platforms at once
 
-> **Note:** This example shows the platform-ID format and fan-out only. As written it is **text-only**, so the **Instagram, TikTok, YouTube, and Pinterest** targets would fail at publish time — those platforms require media. To publish to them, create this as a draft (omit `scheduledTime`), [upload media](upload-media.md), then schedule.
+> **Note:** This example shows the platform-ID format and fan-out only. As written it is **text-only**, so the **Instagram, TikTok, and YouTube** targets would fail at publish time — those platforms require media. To publish to them, create this as a draft (omit `scheduledTime`), [upload media](upload-media.md), then schedule.
 
 ```javascript
 const response = await fetch('https://api.publora.com/api/v1/create-post', {
@@ -181,7 +181,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
       'twitter-111', 'linkedin-222', 'instagram-333',
       'threads-444', 'tiktok-555', 'youtube-666',
       'facebook-777', 'bluesky-888', 'mastodon-999',
-      'telegram-000', 'pinterest-101'
+      'telegram-000'
     ],
     scheduledTime: '2026-03-01T09:00:00.000Z'
   })
@@ -228,7 +228,7 @@ response = requests.post(
 | 403 | LimitExceededError (structured) | Plan limit reached (see below) |
 | 500 | `"Failed to create post group"` | Unexpected server error |
 
-> **Media-requiring platforms (Instagram, TikTok, YouTube, Pinterest):** `create-post` does not validate media presence, so a text-only post to these platforms is **not** rejected here — it fails later when published (e.g. Instagram: *"Instagram posts require at least one media item"*). The validated flow returns the `MEDIA_REQUIRED` code instead. See [Posts with Media](#posts-with-media) and [Validation](../guides/validation.md).
+> **Media-requiring platforms (Instagram, TikTok, YouTube):** `create-post` does not validate media presence, so a text-only post to these platforms is **not** rejected here — it fails later when published (e.g. Instagram: *"Instagram posts require at least one media item"*). The validated flow returns the `MEDIA_REQUIRED` code instead. See [Posts with Media](#posts-with-media) and [Validation](../guides/validation.md).
 
 ### LimitExceededError (403)
 

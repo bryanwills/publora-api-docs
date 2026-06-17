@@ -13,7 +13,7 @@ Publora provides a unified REST API for publishing image posts, carousels, Reels
 | Authentication | Single API key | Instagram Business Login (OAuth 2.0) |
 | API access | Instant | Facebook app review |
 | Reels & Stories | Supported | Supported |
-| Multi-platform | Post to 11 platforms | Instagram only |
+| Multi-platform | Post to 10 platforms | Instagram only |
 | Setup time | 5 minutes | Days to weeks |
 | Carousel support | Yes | Yes |
 

@@ -13,7 +13,7 @@ Publora provides a unified REST API for uploading and publishing videos to TikTo
 | Authentication | Single API key | Complex OAuth 2.0 flow |
 | Video upload | Simple REST endpoint | Multi-step upload process |
 | App approval | Not required | TikTok app review required |
-| Multi-platform | Post to 11 platforms | TikTok only |
+| Multi-platform | Post to 10 platforms | TikTok only |
 | Setup time | 5 minutes | Weeks (app review) |
 | Privacy controls | Full support | Full support |
 

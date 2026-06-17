@@ -12,7 +12,7 @@ Publora provides a unified REST API for publishing text posts and media content 
 |---------|-------------|--------------|
 | Authentication | Single API key | OAuth 2.0 per instance |
 | Instance support | mastodon.social | Any instance |
-| Multi-platform | Post to 11 platforms | Mastodon/Fediverse only |
+| Multi-platform | Post to 10 platforms | Mastodon/Fediverse only |
 | Setup time | 5 minutes | Varies by instance |
 | Media handling | Automatic | Manual upload |
 | Federation | Automatic | Automatic |

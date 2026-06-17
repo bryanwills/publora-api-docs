@@ -261,7 +261,7 @@ print('Image uploaded and attached to post:', post_group_id)
 | Bluesky | 300 | 4 | 3 min / 100 MB | Auto-facet detection |
 | Mastodon | 500* | 4 | ~99 MB | Instance-variable |
 | Telegram | 4,096 (1,024 captions) | 10 | 50 MB (Bot API) | Markdown/HTML |
-| Pinterest | 100 title / 800 desc | 5 (carousel) | 15 min / 1 GB | Boards & idea pins |
+| Pinterest | 100 title / 800 desc | 5 (carousel) | 15 min / 1 GB | Boards & idea pins *(in development)* |
 
 *Varies by instance
 

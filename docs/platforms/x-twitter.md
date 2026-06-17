@@ -13,7 +13,7 @@ Publora provides a unified REST API for posting tweets to X (formerly Twitter), 
 | Authentication | Single API key | Complex OAuth 2.0 flow |
 | Rate limit handling | Automatic | Manual implementation |
 | Thread creation | Automatic splitting | Manual tweet chaining |
-| Multi-platform | Post to 11 platforms | Twitter only |
+| Multi-platform | Post to 10 platforms | Twitter only |
 | Setup time | 5 minutes | Hours to days |
 | Pricing | Free tier available; paid plan required for X | Free tier + paid tiers |
 

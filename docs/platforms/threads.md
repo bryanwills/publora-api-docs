@@ -15,7 +15,7 @@ Publora provides a unified REST API for publishing text posts, images, videos, c
 | Authentication | Single API key | Meta OAuth 2.0 flow |
 | API access | Instant | Requires Meta app review |
 | Thread creation | Automatic splitting | Manual implementation |
-| Multi-platform | Post to 11 platforms | Threads only |
+| Multi-platform | Post to 10 platforms | Threads only |
 | Setup time | 5 minutes | Days to weeks |
 | Carousel support | Yes | Yes |
 
