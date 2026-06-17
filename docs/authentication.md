@@ -36,7 +36,7 @@ In the Publora dashboard, connect the social platforms you want to post to:
 
 | Plan | Price | Posts/Month | Accounts | Platforms | Video Upload |
 |------|-------|-------------|----------|-----------|--------------|
-| **Starter** | Free | 15 | 1 | LinkedIn & Bluesky | 50MB |
+| **Starter** | Free | 15 | 3 | All 10 | 50MB |
 | **Pro** | $2.99/account | 100/account | Unlimited | All platforms | 100MB |
 | **Premium** | $5.99/account | 500/account | Unlimited | All platforms | 250MB |
 

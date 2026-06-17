@@ -221,7 +221,7 @@ response = requests.post(
 | 401 | `"API key is required"` | Missing `x-publora-key` header |
 | 401 | `"Invalid API key"` | `x-publora-key` value is incorrect or revoked |
 | 401 | `"Invalid API key owner"` | API key exists but the associated workspace/user could not be resolved |
-| 403 | `"API access is not enabled for this account"` | The account's plan does not include API access (e.g., Starter plan or custom plan with `apiAccess` disabled) |
+| 403 | `"API access is not enabled for this account"` | The account has `apiAccess` disabled (a custom plan; standard plans including the free Starter plan include API access) |
 | 403 | `"MCP access is not enabled for this account"` | Returned when `x-publora-client: mcp` is set but MCP access is not enabled |
 | 403 | `"Workspace access is not enabled for this key"` | The API key does not have workspace/managed-user permissions |
 | 403 | `"User is not managed by key"` | The `x-publora-user-id` references a user not managed by this API key |

@@ -10,11 +10,11 @@ Publora API lets you schedule and publish social media posts across 10 platforms
 
 | Plan | Price | Posts/Month | Platforms |
 |------|-------|-------------|-----------|
-| **Starter** | Free | 15 | LinkedIn & Bluesky |
+| **Starter** | Free | 15 | All 10 |
 | **Pro** | $2.99/account | 100/account | All platforms |
 | **Premium** | $5.99/account | 500/account | All platforms |
 
-> **Note:** The Starter plan does not include API access (dashboard-only). To use the API, upgrade to Pro or Premium.
+> **Note:** The free Starter plan **includes** full REST API and MCP access (3 connected accounts, 15 posts/month account-wide).
 
 See full details at [publora.com/pricing](https://publora.com/pricing)
 

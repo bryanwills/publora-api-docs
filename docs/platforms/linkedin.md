@@ -32,7 +32,7 @@ Where `{profileId}` is your LinkedIn profile identifier assigned during account 
 - A LinkedIn account connected via OAuth through the Publora dashboard
 - API key from Publora (Pro or Premium plan required)
 
-> **Note:** The Starter plan has `apiAccess: false`. API key authentication requires a Pro or Premium plan.
+> **Note:** The free Starter plan includes API access (`apiAccess: true`) — API key authentication works on all standard plans.
 
 ## Supported Content
 

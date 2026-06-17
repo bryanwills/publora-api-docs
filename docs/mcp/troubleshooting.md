@@ -397,7 +397,7 @@ If persistent:
 **Solutions:**
 
 1. **Check your plan limits:**
-   - **Starter (free):** 15 posts/month (account-wide) (dashboard only — `apiAccess: false`, `mcpAccess: false`). Starter users **cannot** use the API or MCP at all; attempting to do so returns an access error. The Starter plan also excludes Twitter/X — users must upgrade to Pro or Premium to post to Twitter. Upgrade to Pro or Premium for API/MCP access.
+   - **Starter (free):** 15 posts/month (account-wide), up to 3 connected accounts. **Includes** API and MCP access (`apiAccess: true`, `mcpAccess: true`) and can post to any of the 10 platforms.
    - **Pro:** 100 posts/month per connection
    - **Premium:** 500 posts/month per connection
 2. **Upgrade your plan** — Higher tiers have higher limits
