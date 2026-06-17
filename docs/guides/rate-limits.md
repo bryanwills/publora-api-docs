@@ -157,7 +157,7 @@ Each Publora plan enforces limits on monthly posts, scheduled (pending) posts, a
 
 | Plan | Monthly Posts | Connections | Post Limit Scope | Scheduled Posts | Schedule Horizon | API/MCP Access | Platforms |
 |------|-------------|-------------|------------------|-----------------|------------------|----------------|-----------|
-| **Starter (Free)** | 15 | 3 | Account-wide | 3 pending | 7 days | No | All except Twitter |
+| **Starter (Free)** | 15 | 3 | Account-wide | 3 pending | 7 days | Yes | All 10 |
 | **Pro Monthly ($5.99/mo)** | 100 | Per seat* | Per connection | 100 pending | Unlimited | Yes | All |
 | **Pro Yearly ($2.99/mo)** | 100 | Per seat* | Per connection | 100 pending | Unlimited | Yes | All |
 | **Premium Monthly ($9.99/mo)** | 500 | Per seat* | Per connection | 500 pending | Unlimited | Yes | All |
@@ -168,8 +168,8 @@ Each Publora plan enforces limits on monthly posts, scheduled (pending) posts, a
 **Key details:**
 
 - **Starter plan** limits are **account-wide** (15 posts total across all connections, max 3 connections, `scheduledPosts: 3`, `scheduleHorizonDays: 7`). Paid plans count limits **per connection** (e.g., 100 posts per LinkedIn connection + 100 posts per Twitter connection).
-- **Starter plan does not include API or MCP access** (`apiAccess: false`, `mcpAccess: false`). You must upgrade to Pro or Premium to use the REST API or MCP server. Starter is dashboard-only.
-- **Starter plan excludes Twitter/X.** To post to Twitter, upgrade to a paid plan.
+- **Starter plan includes API and MCP access** (`apiAccess: true`, `mcpAccess: true`) — the free tier can use the REST API and MCP server (3 connected accounts, 15 posts/month account-wide).
+- **Starter plan can post to any of the 10 platforms** (no platform restriction).
 
 > **Note:** Per-request API rate limiting (requests/minute) is **planned but not currently enforced**. The limits above (monthly posts, scheduled posts, schedule horizon) are the enforced plan-based limits. Future API rate limiting will be documented here when implemented.
 

@@ -10,7 +10,7 @@ Detailed setup instructions for connecting Publora MCP to different AI clients.
 
 > **Auth headers:** `x-publora-key: sk_...` is the required header for direct REST API calls to `api.publora.com`. The `Authorization: Bearer sk_...` format is only supported through the MCP proxy server, which translates it to `x-publora-key` internally. When making direct REST API calls, always use `x-publora-key`. The examples below use `Authorization: Bearer` for MCP client configurations, where it is the standard format.
 
-> **MCP client header:** The MCP server automatically sends an `x-publora-client: "mcp"` header on internal API calls. This identifies MCP traffic server-side. Your account must have `mcpAccess` enabled — Starter plan users do not have API or MCP access and will receive a `403` error. Upgrade to Pro or Premium for MCP access.
+> **MCP client header:** The MCP server automatically sends an `x-publora-client: "mcp"` header on internal API calls. This identifies MCP traffic server-side. Your account must have `mcpAccess` enabled. All standard plans — including the free Starter plan — have MCP access; only custom accounts with `mcpAccess` disabled will receive a `403` error.
 
 ---
 

@@ -68,7 +68,7 @@ All platforms have character limits for text content. Some platforms have differ
 
 ## Image Limits
 
-Image requirements vary significantly across platforms. Pay particular attention to the Instagram API restriction requiring JPEG format only.
+Image requirements vary significantly across platforms. Pay particular attention to each platform's format and size rules; Instagram accepts JPEG, PNG, and WebP images, with WebP auto-converted before publishing.
 
 | Platform | Max Size | Max Count | Supported Formats |
 |----------|----------|-----------|-------------------|

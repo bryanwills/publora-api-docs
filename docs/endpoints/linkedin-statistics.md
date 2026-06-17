@@ -496,7 +496,7 @@ print(f"Engagement rate: {stats['engagement_rate']}")
 | 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
 | 401 | `"Invalid API key owner"` | API key owner user not found in database |
-| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
 | 500 | `"Failed to fetch metric from LinkedIn"` | Server error while fetching a single metric (queryType) — LinkedIn returned null data |
 | 500 | `"Failed to fetch LinkedIn post statistics"` | Catch-all server error from outer try/catch |
@@ -521,7 +521,7 @@ print(f"Engagement rate: {stats['engagement_rate']}")
 | 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
 | 401 | `"Invalid API key owner"` | API key owner user not found in database |
-| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
 | 500 | `"Failed to fetch metric from LinkedIn"` | Single-metric request (queryType) returned null data from LinkedIn |
 | 500 | `"Failed to fetch LinkedIn account statistics"` | Catch-all server error from outer try/catch |

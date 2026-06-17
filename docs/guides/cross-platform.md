@@ -8,7 +8,7 @@ Publora lets you compose a single post and distribute it across multiple social 
 
 ### Plan Restrictions
 
-> **API access note:** API access is controlled by the `apiAccess` entitlement on your account. This entitlement is disabled by default on Starter plans (free, 15 posts/month), but it is possible for a Starter account to have `apiAccess` enabled if configured by support. If your account does not have the `apiAccess` entitlement, API calls will return a `403` error. The same applies to `mcpAccess` for MCP integrations.
+> **API access note:** API access is controlled by the `apiAccess` entitlement on your account. This entitlement is **enabled by default on all plans, including the free Starter plan** (15 posts/month, 3 accounts); only custom accounts with `apiAccess` explicitly disabled are blocked. If your account does not have the `apiAccess` entitlement, API calls will return a `403` error. The same applies to `mcpAccess` for MCP integrations.
 
 ### Platform IDs
 
@@ -527,7 +527,7 @@ if (status.posts) {
 | `400` error with invalid platform ID | Platform ID does not match the `{platform}-{id}` format, or account is not connected | Verify the format and check `GET /api/v1/platform-connections` for valid IDs |
 | Content rejected on some platforms | Platform character limit is lower than your text length and platform does not support threading | Shorten content to fit within the platform's limit, or post to those platforms separately with shorter text |
 | Video post fails on Instagram | Instagram requires specific video formats for Reels | Ensure your video is MP4, meets Instagram's aspect ratio requirements, and is within duration limits |
-| `403` `PLATFORM_NOT_AVAILABLE` when posting to Twitter | Starter plan does not include Twitter/X access | Upgrade to the Pro plan or higher to post to Twitter/X via the API |
+| `403` `PLATFORM_NOT_AVAILABLE` | The target platform connection is not available on the account (e.g. the account is not connected) | Connect the account in the dashboard, then retry |
 
 
 ---

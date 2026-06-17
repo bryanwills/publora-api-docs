@@ -31,7 +31,7 @@ Where `{userId}` is your X/Twitter numeric user ID assigned during account conne
 
 - An X/Twitter account connected via OAuth through the Publora dashboard
 - API key from Publora
-- **Paid Publora plan** (Pro or Premium) — Twitter/X is excluded from the Starter plan
+- Publora API access on any standard plan, including the free Starter plan
 
 ## Supported Content
 

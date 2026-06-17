@@ -36,7 +36,7 @@ In the Publora dashboard, connect the social platforms you want to post to:
 
 | Plan | Price | Posts/Month | Accounts | Platforms | Video Upload |
 |------|-------|-------------|----------|-----------|--------------|
-| **Starter** | Free | 15 | 1 | LinkedIn & Bluesky | 50MB |
+| **Starter** | Free | 15 | 3 | All 10 | 50MB |
 | **Pro** | $2.99/account | 100/account | Unlimited | All platforms | 100MB |
 | **Premium** | $5.99/account | 500/account | Unlimited | All platforms | 250MB |
 
@@ -435,8 +435,8 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 | 401 | `"API key is required"` | Missing `x-publora-key` header | Include the `x-publora-key` header with your API key |
 | 401 | `"Invalid API key"` | Key is wrong or has been revoked | Generate a new key at API in sidebar |
 | 401 | `"Invalid API key owner"` | User associated with the key could not be found | Contact support; the key owner account may be deleted |
-| 403 | `"API access is not enabled for this account"` | Account lacks the API access entitlement | Upgrade your plan at publora.com/pricing |
-| 403 | `"Your current plan does not include API access"` | Plan does not include API access (returned by key management endpoints) | Upgrade your plan at publora.com/pricing |
+| 403 | `"API access is not enabled for this account"` | Account lacks the API access entitlement | Contact support if you expect API access |
+| 403 | `"Your current plan does not include API access"` | API access is disabled for this account (returned by key management endpoints) | Contact support if you expect API access |
 | 403 | `"MCP access is not enabled for this account"` | Account lacks MCP access entitlement (sent via MCP client) | Upgrade your plan to include MCP access |
 | 403 | `"Workspace access is not enabled for this key"` | Used `x-publora-user-id` but key owner does not have `workspacesEnabled` | Enable workspace access on your account or remove the header. **Note:** Admin users (`isAdmin: true`) automatically bypass this check and have workspace access regardless of the `workspacesEnabled` permission |
 | 403 | `"User is not managed by key"` | Target user's `parentUser` is not set to the key owner | Ensure the managed user has `parentUser` set to your user ID |

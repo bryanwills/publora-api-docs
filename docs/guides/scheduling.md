@@ -29,7 +29,7 @@ processingStatus field:  pending --> processing --> finished
 - **Starter plan** users can have a maximum of **3 pending (scheduled) posts** at any time. This counts individual platform-level posts, not post groups. A single post group targeting 3 platforms counts as 3 scheduled posts toward this limit. Pro and Premium plan `scheduledPosts` limits are per-connection (100 and 500 respectively), not account-wide like Starter's limit of 3.
 - **Schedule horizon:** Starter plan users can schedule up to **7 days** in advance. Pro and Premium plans have no horizon limit.
 - **Monthly post limits:** Starter allows **15 posts/month** (account-wide), Pro allows **100 posts/month per connection**, Premium allows **500 posts/month per connection**. Note: scheduled posts are counted per-platform post, not per post group. A single post group targeting 3 platforms counts as 3 posts toward your limit.
-- **Starter plan excludes Twitter/X.** To post to Twitter, upgrade to Pro or Premium.
+- **Starter plan can post to any of the 10 platforms** (no platform restriction).
 - The scheduler runs every minute, so posts are published within roughly 60 seconds of their scheduled time.
 
 ## Examples
