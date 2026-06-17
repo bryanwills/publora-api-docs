@@ -497,7 +497,7 @@ When a single post has issues on multiple platforms:
 
 1. **Validate content length client-side.** Check character counts before sending the API request. Different platforms have different limits (Twitter: 280, LinkedIn: 3,000, Bluesky: 300).
 
-2. **Always use JPEG for Instagram.** The Instagram API does not support PNG or GIF. Convert images to JPEG before uploading.
+2. **Use supported Instagram image formats.** Instagram accepts JPEG, PNG, and WebP images; WebP is auto-converted before publishing. GIF is not supported for Instagram image posts.
 
 3. **Compress images for Bluesky.** Bluesky has a strict 1 MB limit. Use JPEG compression at 80-85% quality to stay under the limit.
 
@@ -509,7 +509,7 @@ When a single post has issues on multiple platforms:
 
 6. **Handle validation errors gracefully in your UI.** Display platform-specific error messages so users know exactly what to fix.
 
-7. **Consider platform requirements when designing content.** If targeting TikTok, always start with video. If targeting Instagram, prepare JPEG images.
+7. **Consider platform requirements when designing content.** If targeting TikTok, always start with video. If targeting Instagram, prepare JPEG, PNG, or WebP images.
 
 8. **Keep Bluesky image dimensions under 2000x2000 pixels.** Larger images will fail validation.
 
@@ -521,7 +521,7 @@ When a single post has issues on multiple platforms:
 
 | Problem | Cause | Solution |
 |---|---|---|
-| Instagram post fails with `MEDIA_TYPE_NOT_SUPPORTED` | Using PNG or GIF format | Convert to JPEG before uploading |
+| Instagram post fails with `MEDIA_TYPE_NOT_SUPPORTED` | Using an unsupported image format, such as GIF | Use JPEG, PNG, or WebP images |
 | TikTok post fails with `VIDEO_REQUIRED` | Posting images to a video-only platform | Use a video file instead |
 | Bluesky post fails with `MEDIA_SIZE_EXCEEDED` | Image over 1 MB | Compress to 80-85% JPEG quality |
 | Twitter post fails with `CONTENT_TOO_LONG` | Content over 280 characters | Shorten content or use threading |

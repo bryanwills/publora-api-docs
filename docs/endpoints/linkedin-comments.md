@@ -254,7 +254,7 @@ To get the correct URN:
 | 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
 | 401 | `"Invalid API key owner"` | API key owner user not found in database |
-| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
 | 500 | `"Failed to create LinkedIn comment"` | Server error while creating comment |
 
@@ -270,7 +270,7 @@ To get the correct URN:
 | 401 | `"API key is required"` | No `x-publora-key` header provided |
 | 401 | `"Invalid API key"` | Bad or missing `x-publora-key` |
 | 401 | `"Invalid API key owner"` | API key owner user not found in database |
-| 403 | `"API access is not enabled for this account"` | Account's plan does not include API access |
+| 403 | `"API access is not enabled for this account"` | Account does not have API access enabled |
 | 404 | `"LinkedIn connection not found"` | No LinkedIn account with that platformId |
 | 500 | `"Failed to delete LinkedIn comment"` | Server error while deleting comment |
 

@@ -306,7 +306,7 @@ console.log('Expires:', data.tokenExpiresAt); // Default TTL: 90 days
 
 If you want a managed user to have their own API key (scoped only to their data), you can generate one.
 
-> **Requirement:** The workspace **owner's** plan must include the `apiAccess` entitlement. The `apiAccess` check is performed against the workspace owner's subscription, not the managed user's plan. If the owner's plan does not include API access, this endpoint will return a `403` error. Contact Publora support to ensure the appropriate entitlements are configured.
+> **Requirement:** The workspace **owner** must have the `apiAccess` entitlement. The `apiAccess` check is performed against the workspace owner, not the managed user. If the owner has API access disabled, this endpoint will return a `403` error. Contact Publora support to ensure the appropriate entitlements are configured.
 
 **JavaScript (fetch)**
 
