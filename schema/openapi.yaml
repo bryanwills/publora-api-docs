@@ -1284,6 +1284,97 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /linkedin-reshare:
+    post:
+      summary: Reshare an existing LinkedIn post
+      description: Reshare (repost) an existing LinkedIn post to your own feed with optional commentary. Works for personal and company-page connections (authored as the member or the organization automatically).
+      operationId: createLinkedInReshare
+      tags:
+        - LinkedIn Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platformId, parent]
+              properties:
+                platformId:
+                  type: string
+                  description: "LinkedIn connection ID"
+                  example: "linkedin-Tz9W5i6ZYG"
+                parent:
+                  type: string
+                  description: "URN of the post to reshare (urn:li:share:* or urn:li:ugcPost:*)"
+                  example: "urn:li:share:7123456789012345678"
+                commentary:
+                  type: string
+                  description: "Optional text added above the reshare (max 3000 characters)"
+                  example: "Great read — sharing with my network!"
+                visibility:
+                  type: string
+                  enum: [PUBLIC, CONNECTIONS]
+                  default: PUBLIC
+                  description: "Optional visibility (case-insensitive). Defaults to PUBLIC."
+                  example: "PUBLIC"
+      responses:
+        "201":
+          description: Reshare created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  reshare:
+                    type: object
+                    description: "LinkedIn API response for the created reshare"
+                    properties:
+                      id:
+                        type: string
+                        description: "URN of the new reshare post"
+                        example: "urn:li:share:7123456789012345678"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingFields:
+                  value: { "error": "platformId and parent are required" }
+                invalidParent:
+                  value: { "error": "parent must be a valid LinkedIn post URN (urn:li:share:<id> or urn:li:ugcPost:<id>)" }
+                commentaryTooLong:
+                  value: { "error": "commentary cannot exceed 3000 characters" }
+                invalidVisibility:
+                  value: { "error": "visibility must be one of: PUBLIC, CONNECTIONS" }
+                missingOrganizationId:
+                  value: { "error": "LinkedIn company connection is missing organizationId. Please reconnect the LinkedIn page." }
+        "401":
+          description: Invalid API key or expired LinkedIn token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                tokenExpired:
+                  value: { "error": "LINKEDIN_TOKEN_EXPIRED" }
+        "404":
+          description: LinkedIn connection not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /list-posts:
     get:
       summary: List posts with pagination and filters

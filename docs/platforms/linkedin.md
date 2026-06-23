@@ -399,6 +399,58 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-comments',
 });
 ```
 
+## Reshare
+
+Reshare (repost) an existing LinkedIn post to your own feed, with optional commentary. Works for both personal profile and company-page connections — the reshare is authored as the member or the organization automatically.
+
+### Reshare a Post
+
+**Endpoint:** `POST /api/v1/linkedin-reshare`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `platformId` | string | Yes | Your LinkedIn platform ID (e.g., `linkedin-ABC123`) |
+| `parent` | string | Yes | URN of the post to reshare (`urn:li:share:<id>` or `urn:li:ugcPost:<id>`) |
+| `commentary` | string | No | Text added above the reshare (max 3,000 characters) |
+| `visibility` | string | No | `PUBLIC` or `CONNECTIONS` (case-insensitive). Defaults to `PUBLIC` |
+
+**JavaScript**
+```javascript
+const response = await fetch('https://api.publora.com/api/v1/linkedin-reshare', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-publora-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    platformId: 'linkedin-987654321',
+    parent: 'urn:li:share:7434685316856377344',
+    commentary: 'Great post! Sharing with my network.',
+    visibility: 'PUBLIC'
+  })
+});
+
+const data = await response.json();
+// HTTP 201 Created
+console.log(data.reshare.id); // urn:li:share:...
+```
+
+> **Note:** The reshare endpoint returns HTTP **201** (not 200). The new reshare URN is in `reshare.id`.
+
+**cURL**
+```bash
+curl -X POST https://api.publora.com/api/v1/linkedin-reshare \
+  -H "Content-Type: application/json" \
+  -H "x-publora-key: YOUR_API_KEY" \
+  -d '{
+    "platformId": "linkedin-987654321",
+    "parent": "urn:li:share:7434685316856377344",
+    "commentary": "Great post! Sharing with my network."
+  }'
+```
+
+See the [LinkedIn Reshare endpoint reference](../endpoints/linkedin-reshare.md) for the full parameter and error details.
+
 ## Examples
 
 ### Post a Text Update
