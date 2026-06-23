@@ -355,6 +355,22 @@ curl -X DELETE https://api.publora.com/api/v1/linkedin-reactions \
   }'
 ```
 
+## LinkedIn Reshare
+
+```bash
+curl -X POST https://api.publora.com/api/v1/linkedin-reshare \
+  -H "x-publora-key: $PUBLORA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platformId": "linkedin-ABC123DEF",
+    "parent": "urn:li:share:7123456789012345678",
+    "commentary": "Great read — sharing with my network!",
+    "visibility": "PUBLIC"
+  }'
+```
+
+`parent` accepts `urn:li:share:<id>` or `urn:li:ugcPost:<id>`. `commentary` (≤3000 chars) and `visibility` (`PUBLIC` / `CONNECTIONS`) are optional. Works for personal and company-page connections.
+
 ## Bash Script: Full Workflow
 
 ```bash

@@ -85,6 +85,7 @@ const response = await fetch('https://api.publora.com/api/v1/platform-connection
 | `/linkedin-reactions` | DELETE | Remove reaction from a post |
 | `/linkedin-comments` | POST | Post a comment |
 | `/linkedin-comments` | DELETE | Delete a comment |
+| `/linkedin-reshare` | POST | Reshare an existing post |
 
 ### Webhooks
 

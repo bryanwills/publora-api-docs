@@ -68,6 +68,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 | `POST` | `/linkedin-account-statistics` | Get LinkedIn account analytics | [View](docs/endpoints/linkedin-statistics.md) |
 | `POST` | `/linkedin-reactions` | Add reaction to a LinkedIn post | [View](docs/endpoints/linkedin-reactions.md) |
 | `DELETE` | `/linkedin-reactions` | Remove a LinkedIn reaction | [View](docs/endpoints/linkedin-reactions.md) |
+| `POST` | `/linkedin-reshare` | Reshare an existing LinkedIn post | [View](docs/endpoints/linkedin-reshare.md) |
 | `POST` | `/linkedin-followers` | Get LinkedIn follower statistics | [View](docs/endpoints/linkedin-followers.md) |
 | `POST` | `/linkedin-profile-summary` | Get LinkedIn profile summary | [View](docs/endpoints/linkedin-profile-summary.md) |
 
@@ -130,6 +131,7 @@ All plans include full API access. Pro/Premium use per-account pricing — add a
 - [Upload Media](docs/endpoints/upload-media.md) — images and video uploads
 - [LinkedIn Statistics](docs/endpoints/linkedin-statistics.md) — post and account analytics
 - [LinkedIn Reactions](docs/endpoints/linkedin-reactions.md) — add/remove reactions
+- [LinkedIn Reshare](docs/endpoints/linkedin-reshare.md) — repost an existing LinkedIn post
 
 ### Platform Guides
 - [X / Twitter](docs/platforms/x-twitter.md) · [LinkedIn](docs/platforms/linkedin.md) · [Instagram](docs/platforms/instagram.md) · [Threads](docs/platforms/threads.md) · [TikTok](docs/platforms/tiktok.md) · [YouTube](docs/platforms/youtube.md) · [Facebook](docs/platforms/facebook.md) · [Bluesky](docs/platforms/bluesky.md) · [Mastodon](docs/platforms/mastodon.md) · [Telegram](docs/platforms/telegram.md)
