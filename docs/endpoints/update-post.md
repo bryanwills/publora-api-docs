@@ -33,6 +33,8 @@ At least one of `status`, `scheduledTime`, or `platformSettings` must be provide
 | `scheduledTime` | string | No | New ISO 8601 UTC datetime |
 | `platformSettings` | object | No | Per-platform settings (same shape and allowlist as in [create-post](./create-post.md#platformsettings)). Merged with existing settings server-side — fields you omit are preserved. Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are accepted; other platform keys are silently dropped. |
 
+> **YouTube playlist & thumbnail (partial update):** `platformSettings` supports partial per-platform updates, so you can change `youtube.playlist` or set/clear `youtube.thumbnail` without resending the other YouTube fields. The **thumbnail can only be set here** (not on `create-post`, which has no `postGroupId` yet). Clear either by sending empty strings — `youtube.playlist` as `{ "id": "", "platformId": "" }`, or `youtube.thumbnail` as `{ "url": "" }`. Playlist or thumbnail changes return **`409`** while the post is publishing/processing (e.g. *"Post group is currently being published; cannot change YouTube playlist. Retry once publishing completes."*). See [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings).
+
 ### ISO 8601 DateTime Format
 
 The `scheduledTime` must be a valid ISO 8601 UTC datetime string:
