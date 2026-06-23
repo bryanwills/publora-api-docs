@@ -77,7 +77,11 @@ When creating via the API, these defaults are applied automatically. If you prov
   "youtube": {
     "privacy": "public",
     "title": "",
-    "madeForKids": false
+    "madeForKids": false,
+    "playlist": {
+      "id": "",
+      "platformId": ""
+    }
   },
   "threads": {
     "replyControl": ""
@@ -92,7 +96,7 @@ When creating via the API, these defaults are applied automatically. If you prov
 
 > **Note:** Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`, `facebook`, `bluesky`, `mastodon`) are silently ignored and dropped. For `telegram`, only the three boolean keys shown above (`disableNotification`, `disableWebPagePreview`, `protectContent`) are accepted; any other keys inside the telegram object are dropped, and string values like `"false"` / `"0"` / `"off"` are coerced to `false`.
 
-> **YouTube** also accepts `tags`, `categoryId`, `madeForKids`, and a custom `thumbnailUrl` in addition to `privacy`/`title` — see [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings) for the full field reference.
+> **YouTube** also accepts `tags`, `categoryId`, `madeForKids`, and a `playlist` object (`{ id, platformId }`) in addition to `privacy`/`title`. A `playlist` can be set directly on `create-post`. A custom `thumbnail` **cannot** be set on `create-post` — the thumbnail upload requires a `postGroupId`, so create the post first and set the thumbnail via `update-post`. See [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings) for the full field reference.
 
 ## Examples
 

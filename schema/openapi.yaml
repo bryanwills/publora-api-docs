@@ -47,6 +47,30 @@ components:
       description: "API key from Settings > API Keys. Format: sk_timestamp.hexstring"
 
   schemas:
+    YouTubePlaylistReference:
+      type: object
+      description: "Reference to a YouTube playlist for platformSettings.youtube.playlist. Send empty strings for both fields to clear the playlist."
+      properties:
+        id:
+          type: string
+          description: "YouTube playlist id"
+          example: "PLxxxxxxxx"
+        platformId:
+          type: string
+          description: "Compound YouTube platform id from platforms; must match the single selected YouTube channel"
+          example: "youtube-UCxxxxxxxx"
+    YouTubeThumbnailReference:
+      type: object
+      description: "Reference to a Publora-tracked custom thumbnail for platformSettings.youtube.thumbnail. Send an empty url to clear the thumbnail. Set via update-post only (the upload requires a postGroupId)."
+      properties:
+        mediaId:
+          type: string
+          description: "Publora media id returned by the YouTube thumbnail upload endpoint"
+          example: "665f..."
+        url:
+          type: string
+          description: "Publora-hosted thumbnail URL returned by the upload endpoint"
+          example: "https://media.publora.com/..."
     PlatformConnection:
       type: object
       properties:

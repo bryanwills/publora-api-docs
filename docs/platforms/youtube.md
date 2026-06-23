@@ -4,7 +4,7 @@ Upload videos to YouTube programmatically using the Publora REST API. A simpler 
 
 ## YouTube API Overview
 
-Publora provides a unified REST API for uploading and publishing videos to YouTube with configurable privacy (public, unlisted, private), metadata (title, description, tags, category, made-for-kids), and a custom thumbnail. No need to manage Google OAuth flows, handle resumable uploads, or navigate YouTube API quotas.
+Publora provides a unified REST API for uploading and publishing videos to YouTube with configurable privacy (public, unlisted, private), metadata (title, description, tags, category, made-for-kids), YouTube playlists, and a tracked custom thumbnail. No need to manage Google OAuth flows, handle resumable uploads, or navigate YouTube API quotas.
 
 ### Why Use Publora Instead of YouTube Data API?
 
@@ -47,18 +47,25 @@ Where `{channelId}` is your YouTube channel ID assigned during account connectio
 
 ## Platform-Specific Settings
 
-YouTube supports a `platformSettings` object for video metadata and a custom thumbnail:
+YouTube supports a `platformSettings` object for video metadata, a YouTube playlist, and a tracked custom thumbnail:
 
 ```json
 {
   "platformSettings": {
     "youtube": {
       "privacy": "public",
-      "title": "My Video Title",
-      "tags": ["api", "tutorial", "publora"],
-      "categoryId": "28",
+      "title": "My video title",
+      "tags": ["api", "tutorial"],
+      "categoryId": "22",
       "madeForKids": false,
-      "thumbnailUrl": "https://media.publora.com/your-thumbnail.jpg"
+      "playlist": {
+        "id": "PLxxxxxxxx",
+        "platformId": "youtube-UCxxxxxxxx"
+      },
+      "thumbnail": {
+        "mediaId": "665f...",
+        "url": "https://media.publora.com/..."
+      }
     }
   }
 }
@@ -71,7 +78,8 @@ YouTube supports a `platformSettings` object for video metadata and a custom thu
 | `tags` | string[] (or comma-separated string) | — | Video tags (`snippet.tags`). YouTube caps the **combined** length at 500 characters (tags containing whitespace are quote-wrapped, costing +2 chars each); the API trims the list to fit, so an oversized list can't fail the upload. Omitted entirely when empty. |
 | `categoryId` | string | — | YouTube video category ID (e.g. `"22"` People & Blogs, `"28"` Science & Technology). When omitted, YouTube applies the channel's default. An invalid id will fail the upload — see [Category IDs](#category-ids). |
 | `madeForKids` | boolean | `false` | Sets `status.selfDeclaredMadeForKids` — YouTube's required "made for kids" (COPPA) audience declaration. **Always sent** on every upload; defaults to `false` (not made for kids). |
-| `thumbnailUrl` | string | — | URL of a custom thumbnail image (JPEG/PNG, ≤2 MB, 1280×720 recommended). See [Custom Thumbnail](#custom-thumbnail) for the upload flow and constraints. |
+| `playlist` | object `{ id, platformId }` | — | Add the published video to a YouTube playlist. `playlist.id` is the YouTube playlist id; `playlist.platformId` is the compound channel id (e.g. `youtube-UCxxxxxxxx`) and must match the single selected YouTube channel. Settable on `create-post`; changeable or clearable via `update-post`. See [Playlist](#playlist). |
+| `thumbnail` | object `{ mediaId, url }` | — | Custom video thumbnail referencing a Publora-tracked media asset (uploaded via the dedicated thumbnail endpoint, which returns `mediaId` and `url`). Set via `update-post` (the upload requires a `postGroupId`). See [Custom Thumbnail](#custom-thumbnail). |
 
 > **Note:** The full `content` is used as the video description. Pass `platformSettings` directly in the `create-post` request body — the API merges your values with the per-platform defaults.
 
@@ -87,14 +95,110 @@ Pass `tags` as an array of strings (`["api", "tutorial"]`) or a comma-separated 
 
 `categoryId` accepts a YouTube category ID string. Common values: `"22"` (People & Blogs), `"28"` (Science & Technology), `"24"` (Entertainment), `"27"` (Education), `"10"` (Music). An invalid or region-disallowed id causes YouTube to reject the whole upload, so leave it unset to fall back to the channel default if unsure.
 
+### Playlist
+
+Add the published video to one of the channel's YouTube playlists.
+
+```json
+{
+  "platformSettings": {
+    "youtube": {
+      "playlist": {
+        "id": "PLxxxxxxxx",
+        "platformId": "youtube-UCxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+- `playlist.id` — the YouTube playlist id.
+- `playlist.platformId` — the compound YouTube platform id from `platforms` (e.g. `youtube-UCxxxxxxxx`). It must match the single selected YouTube channel.
+- A playlist can only be set when **exactly one** YouTube channel is selected.
+- Set the playlist on `create-post`, and change or clear it via `update-post`.
+- The video is added to the playlist **after** the YouTube upload finishes processing.
+- **Best-effort:** if adding the video to the playlist fails, the video stays published — only the playlist association is skipped.
+- You **cannot** change the playlist while the post is already `processing` (returns `409`).
+
+**Clear the playlist** by sending empty strings:
+
+```json
+{
+  "platformSettings": {
+    "youtube": {
+      "playlist": {
+        "id": "",
+        "platformId": ""
+      }
+    }
+  }
+}
+```
+
+**Playlist errors:**
+
+| Error | Cause |
+|-------|-------|
+| `platformSettings.youtube.playlistId is not supported; use platformSettings.youtube.playlist.` | Legacy `playlistId` field was sent — use the `playlist` object |
+| `platformSettings.youtube.playlist must be an object.` | `playlist` is not an object |
+| `platformSettings.youtube.playlist.id must be a string.` | `playlist.id` is not a string |
+| `platformSettings.youtube.playlist.platformId must be a string.` | `playlist.platformId` is not a string |
+| `YouTube playlist requires both playlist.id and playlist.platformId.` | One of the two fields is missing |
+| `YouTube playlist can only be set when exactly one YouTube channel is selected.` | More than one (or no) YouTube channel is selected |
+| `YouTube playlist platformId must match the selected YouTube channel.` | `playlist.platformId` does not match the chosen channel |
+| `Post group is currently being published; cannot change YouTube playlist. Retry once publishing completes.` | The post is publishing/processing |
+
 ### Custom Thumbnail
 
-`thumbnailUrl` sets a custom video thumbnail via the YouTube `thumbnails.set` API **after** the video is published.
+A custom thumbnail is a **Publora-tracked media asset**, referenced by the `thumbnail` object:
 
-- **Source must be Publora-hosted.** Only URLs on `media.publora.com` (or the `brandcraft-media` S3 bucket) are accepted — upload your thumbnail image through the [media upload flow](../guides/media-uploads.md) and use the returned URL. Arbitrary external URLs are rejected (not fetched).
-- **Format & size:** JPEG or PNG, ≤ 2 MB, 1280×720 (16:9) recommended.
-- **Requires a verified channel.** YouTube only allows custom thumbnails on channels that have completed verification.
-- **Best-effort:** the thumbnail is applied after the video publishes. If it fails (unverified channel, oversized/invalid image), **the video still publishes** — only the thumbnail is skipped.
+```json
+{
+  "platformSettings": {
+    "youtube": {
+      "thumbnail": {
+        "mediaId": "665f...",
+        "url": "https://media.publora.com/..."
+      }
+    }
+  }
+}
+```
+
+**Flow:**
+
+1. Create a draft post (`create-post`).
+2. Upload the thumbnail image through the dedicated YouTube thumbnail upload endpoint — it requires the `postGroupId`.
+3. Use the returned `mediaId` and `url`.
+4. Update the post with `platformSettings.youtube.thumbnail` (`update-post`).
+5. Schedule the post.
+
+> **Note:** A thumbnail **cannot** be passed on `create-post` — the thumbnail upload requires a `postGroupId`, so the post must exist first.
+
+**Constraints:**
+
+- **Format:** JPEG or PNG.
+- **Max size:** 2 MB.
+- **Min dimensions:** 640×360. **Recommended:** 1280×720 (16:9).
+- **Must be Publora-uploaded / tracked media** — pass the `mediaId` and `url` returned by the thumbnail upload endpoint. Arbitrary URLs (including raw `media.publora.com` links) are not accepted; uploading via the generic media-upload flow is not sufficient.
+- The custom thumbnail is applied **after** the video finishes processing, via the YouTube `thumbnails.set` API.
+- **Best-effort:** if YouTube rejects the thumbnail (unverified channel, oversized/invalid image), **the video still publishes** — only the thumbnail is skipped.
+- **Requires a verified YouTube channel.**
+- You **cannot** change the thumbnail while the post is already `processing` (returns `409`).
+
+**Clear the thumbnail** by sending an empty `url`:
+
+```json
+{
+  "platformSettings": {
+    "youtube": {
+      "thumbnail": {
+        "url": ""
+      }
+    }
+  }
+}
+```
 
 ### Privacy Settings
 
