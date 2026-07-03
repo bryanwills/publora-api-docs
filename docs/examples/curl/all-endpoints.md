@@ -116,7 +116,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 ### Post with Platform Settings
 
 ```bash
-# Instagram Reel
+# Instagram Reel (coverUrl = optional custom cover; public JPEG URL)
 curl -X POST https://api.publora.com/api/v1/create-post \
   -H "x-publora-key: $PUBLORA_API_KEY" \
   -H "Content-Type: application/json" \
@@ -125,7 +125,8 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "platforms": ["instagram-789012345"],
     "platformSettings": {
       "instagram": {
-        "videoType": "REELS"
+        "videoType": "REELS",
+        "coverUrl": "https://cdn.example.com/covers/reel-cover.jpg"
       }
     }
   }'

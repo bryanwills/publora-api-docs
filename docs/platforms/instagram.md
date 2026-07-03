@@ -96,7 +96,8 @@ Instagram supports a `platformSettings` object to control video behavior:
 {
   "platformSettings": {
     "instagram": {
-      "videoType": "REELS"
+      "videoType": "REELS",
+      "coverUrl": "https://cdn.example.com/covers/reel-cover.jpg"
     }
   }
 }
@@ -105,7 +106,8 @@ Instagram supports a `platformSettings` object to control video behavior:
 | Setting | Values | Default | Description |
 |---------|--------|---------|-------------|
 | `videoType` | `"REELS"`, `"STORIES"` | `"REELS"` | Determines how videos are published |
-| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. **Note:** This setting is only available via the dashboard `updatePostGroup` endpoint, not via the `create-post` API. |
+| `coverUrl` | http(s) URL string | — | Custom cover image for Reels (alias: `cover_url`). Must be a **publicly accessible URL to a JPEG image** — Instagram fetches it server-side when the Reel is created. When set, it takes precedence over frame-based cover selection (`videoTimestamp`). Send an empty string to clear. Invalid URLs are rejected with `400`. Settable on both `create-post` and `update-post`. Ignored for Stories and images. |
+| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. **Note:** This setting is only available via the dashboard `updatePostGroup` endpoint, not via the `create-post` API. For API-based cover control, use `coverUrl` instead. |
 
 ## Examples
 
@@ -469,6 +471,7 @@ console.log(response.data);
 - **Direct Instagram connection**: Publora connects directly to Instagram via Instagram Business Login. No Facebook Page is required.
 - **Carousel limits**: Carousels require between 2 and 10 media items. A single image is posted as a regular photo post, not a carousel.
 - **Reel is the default**: When posting a video, Publora defaults to publishing it as a Reel. Set `videoType: "STORIES"` to post as a Story instead.
+- **Custom Reels cover**: Set `platformSettings.instagram.coverUrl` to a publicly accessible JPEG URL to control the Reel's cover/thumbnail. Instagram downloads the image itself, so private or expiring URLs will fail at publish time. See [Platform-Specific Settings](#platform-specific-settings).
 - **Stories disappear**: Stories are ephemeral and will disappear after 24 hours. This is standard Instagram behavior.
 - **Image aspect ratios**: Instagram supports aspect ratios between 4:5 (portrait) and 1.91:1 (landscape). Images outside this range may be cropped.
 - **Caption hashtags**: Hashtags are included in the caption text. There is no separate hashtags field.

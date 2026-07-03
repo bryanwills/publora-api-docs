@@ -35,6 +35,8 @@ At least one of `status`, `scheduledTime`, or `platformSettings` must be provide
 
 > **YouTube playlist & thumbnail (partial update):** `platformSettings` supports partial per-platform updates, so you can change `youtube.playlist` or set/clear `youtube.thumbnail` without resending the other YouTube fields. The **thumbnail can only be set here** (not on `create-post`, which has no `postGroupId` yet). Clear either by sending empty strings — `youtube.playlist` as `{ "id": "", "platformId": "" }`, or `youtube.thumbnail` as `{ "url": "" }`. Playlist or thumbnail changes return **`409`** while the post is publishing/processing (e.g. *"Post group is currently being published; cannot change YouTube playlist. Retry once publishing completes."*). See [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings).
 
+> **Instagram Reels cover:** set or change `instagram.coverUrl` (alias: `cover_url`) here — a publicly accessible http(s) URL to a JPEG image used as the Reel's cover. Send `{ "instagram": { "coverUrl": "" } }` to clear it (the cover falls back to automatic/frame-based selection). Invalid URLs are rejected with `400`. See [Instagram → Platform-Specific Settings](../platforms/instagram.md#platform-specific-settings).
+
 ### ISO 8601 DateTime Format
 
 The `scheduledTime` must be a valid ISO 8601 UTC datetime string:
