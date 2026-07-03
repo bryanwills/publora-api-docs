@@ -52,6 +52,8 @@ export interface CreatePostRequest {
 export interface PlatformSettings {
   instagram?: {
     videoType?: 'REELS' | 'STORIES';
+    /** Custom Reels cover: public http(s) URL to a JPEG. Empty string clears it. */
+    coverUrl?: string;
   };
   tiktok?: {
     disableDuet?: boolean;

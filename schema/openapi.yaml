@@ -71,6 +71,34 @@ components:
           type: string
           description: "Publora-hosted thumbnail URL returned by the upload endpoint"
           example: "https://media.publora.com/..."
+    PlatformSettingsInput:
+      type: object
+      description: "Per-platform settings. Only tiktok, instagram, youtube, threads, and telegram keys are recognized; other platform keys are silently dropped. Merged with defaults on create-post and with existing settings on update-post (omitted fields are preserved)."
+      properties:
+        instagram:
+          type: object
+          properties:
+            videoType:
+              type: string
+              enum: [REELS, STORIES]
+              default: REELS
+              description: "How videos are published"
+            coverUrl:
+              type: string
+              description: "Custom Reels cover image (alias: cover_url). Publicly accessible http(s) URL to a JPEG — Instagram fetches it server-side at publish time. Empty string clears the custom cover. Invalid URLs are rejected with 400. Ignored for Stories and image posts."
+              example: "https://cdn.example.com/covers/reel-cover.jpg"
+        tiktok:
+          type: object
+          description: "TikTok settings (viewerSetting, allowComments, allowDuet, allowStitch, commercialContent, brandOrganic, brandedContent)"
+        youtube:
+          type: object
+          description: "YouTube settings (privacy, title, tags, categoryId, madeForKids, playlist; thumbnail is settable via update-post only)"
+        threads:
+          type: object
+          description: "Threads settings (replyControl)"
+        telegram:
+          type: object
+          description: "Telegram settings (disableNotification, disableWebPagePreview, protectContent — booleans)"
     PlatformConnection:
       type: object
       properties:
@@ -322,6 +350,8 @@ paths:
                   format: date-time
                   description: "ISO 8601 UTC datetime for scheduling. Omit for draft."
                   example: "2026-03-01T14:00:00.000Z"
+                platformSettings:
+                  $ref: "#/components/schemas/PlatformSettingsInput"
       responses:
         "200":
           description: Post created
@@ -416,11 +446,14 @@ paths:
 
   /update-post/{postGroupId}:
     put:
-      summary: Update post timing or status
+      summary: Update post timing, status, or platform settings
       description: |
-        Modify the scheduled time or status of an existing draft or scheduled post.
+        Modify the scheduled time, status, or platformSettings of an existing
+        draft or scheduled post.
         Cannot update posts that are published, failed, pending, or processing.
-        At least one of status or scheduledTime must be provided.
+        At least one of status, scheduledTime, or platformSettings must be provided.
+        platformSettings are merged per-platform with existing settings —
+        omitted fields are preserved.
         Updating a post group also updates all associated platform-specific posts.
       operationId: updatePost
       tags:
@@ -442,7 +475,7 @@ paths:
           application/json:
             schema:
               type: object
-              description: "At least one of status or scheduledTime must be provided"
+              description: "At least one of status, scheduledTime, or platformSettings must be provided"
               properties:
                 status:
                   type: string
@@ -452,6 +485,8 @@ paths:
                   type: string
                   format: date-time
                   description: "New ISO 8601 UTC scheduled time (must be in the future)"
+                platformSettings:
+                  $ref: "#/components/schemas/PlatformSettingsInput"
       responses:
         "200":
           description: Post updated
@@ -484,7 +519,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               examples:
                 missingFields:
-                  value: { "error": "Either status or scheduledTime must be provided" }
+                  value: { "error": "At least one of status, scheduledTime, or platformSettings must be provided" }
                 invalidStatus:
                   value: { "error": "Status must be either 'draft' or 'scheduled'" }
                 invalidTimeFormat:

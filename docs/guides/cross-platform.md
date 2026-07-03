@@ -63,14 +63,14 @@ When your content exceeds a platform's character limit, Publora adapts it automa
 
 `platformSettings` can be passed directly in the `create-post` request body. The API merges user-provided settings with defaults per platform.
 >
-> **⚠️ Supported platforms for `platformSettings`:** The API only merges `platformSettings` for **TikTok**, **Instagram**, **YouTube**, and **Threads**. Settings passed for other platforms (Twitter, LinkedIn, Facebook, Bluesky, Mastodon, Telegram) are silently ignored.
+> **⚠️ Supported platforms for `platformSettings`:** The API only merges `platformSettings` for **TikTok**, **Instagram**, **YouTube**, **Threads**, and **Telegram**. Settings passed for other platforms (Twitter, LinkedIn, Facebook, Bluesky, Mastodon) are silently ignored.
 >
-> **⚠️ Important limitation:** The external API `update-post` endpoint only accepts `status` and `scheduledTime`. It does **not** accept `platformSettings`, `content`, or `platforms`. To modify platform-specific settings after creation, use the Publora dashboard or create a new post.
+> **⚠️ Important limitation:** The external API `update-post` endpoint only accepts `status`, `scheduledTime`, and `platformSettings` (merged per-platform — see [update-post](../endpoints/update-post.md)). It does **not** accept `content` or `platforms`. To change the text or target platforms after creation, use the Publora dashboard or create a new post.
 
 Publora applies sensible defaults for platform-specific settings:
 
 - **TikTok:** Default privacy and interaction settings are applied automatically.
-- **Instagram:** Video posts are published as **Reels** by default. Set `videoType: "STORIES"` to post as a Story instead.
+- **Instagram:** Video posts are published as **Reels** by default. Set `videoType: "STORIES"` to post as a Story instead. An optional `coverUrl` (public JPEG URL) sets a custom Reels cover.
 - **YouTube:** Videos are set to **public** visibility by default.
 
 ### Response Status Code

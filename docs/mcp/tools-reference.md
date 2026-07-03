@@ -124,7 +124,8 @@ Create and schedule a post to one or more platforms.
 >       "allowStitch": "boolean"
 >     },
 >     "instagram": {
->       "videoType": "REELS | STORIES"  // default: "REELS"
+>       "videoType": "REELS | STORIES",  // default: "REELS"
+>       "coverUrl": "string"  // optional: public http(s) URL to a JPEG used as the Reels cover
 >     },
 >     "youtube": {
 >       "privacy": "public | unlisted | private",  // default: "public"

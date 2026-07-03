@@ -269,7 +269,7 @@ declare namespace Publora {
     scheduledTime?: string;
     status?: 'draft' | 'scheduled';
     platformSettings?: {
-      instagram?: { videoType?: 'REELS' | 'STORIES' };
+      instagram?: { videoType?: 'REELS' | 'STORIES'; coverUrl?: string };
       tiktok?: { disableDuet?: boolean; disableStitch?: boolean };
       telegram?: { parseMode?: 'HTML' | 'MarkdownV2' };
     };
