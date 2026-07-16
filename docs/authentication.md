@@ -51,7 +51,7 @@ In the Publora dashboard, connect the social platforms you want to post to:
 | Expiration | Never expires | Typically 1 hour |
 | Refresh needed | No | Yes (refresh token flow) |
 | How to get | Dashboard → API | OAuth authorization flow |
-| Format | `sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...` (~70 chars) | `eyJhbG...` (JWT) |
+| Format | Dashboard multi-key: `sk_mrmbzomn_1a2b3c4d.964793af0123456789abcdef0123456789abcdef0123456789ab`; single-current `User.apiKey`: `sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab` | `eyJhbG...` (JWT) |
 
 **Key point:** You can generate up to 10 active API keys from the dashboard. Each key works independently and never expires.
 
@@ -64,15 +64,17 @@ Once you have an account with connected social platforms:
 3. Click **Generate API Key**
 4. **Copy immediately** — the full key is shown only once
 
-### Why No Programmatic Key Generation?
+### Why Dashboard Multi-Key Generation Is Session-Only
 
-Technically, a REST endpoint exists (`POST /auth/api-keys`) for creating API keys, but it requires **dashboard session authentication** — not API key auth. This means you cannot use an existing API key to create new API keys; you must be logged in through the browser. The endpoint powers the dashboard's "Generate API Key" button.
+The dashboard multi-key endpoint (`POST /auth/api-keys`) requires **dashboard session authentication**, not API-key authentication. An existing key therefore cannot mint another named dashboard key for its owner.
+
+There is one scoped workspace exception: an authorized workspace-owner key can call `POST /api/v1/workspace/users/:userId/api-key` for an already managed user. That endpoint generates or replaces the managed user's single current `User.apiKey`; it does not create another owner/dashboard multi-key record.
 
 This is intentional for security reasons:
 
 | Concern | Why Session-Auth-Only |
 |---------|-------------------|
-| **Key theft prevention** | API key auth cannot generate new keys — compromised code can't escalate access |
+| **Key theft prevention** | API-key auth cannot mint additional dashboard multi-key records for its owner; the workspace exception is restricted to an already managed user and replaces that user's current key |
 | **Human verification** | Dashboard login ensures a human authorized the key |
 | **Audit trail** | All key generation is logged with user/IP information |
 | **Accidental exposure** | Prevents automated systems from creating excess keys |
@@ -110,10 +112,10 @@ These endpoints manage API keys and require **dashboard session authentication**
     "apiKey": {
       "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
       "name": "My Key",
-      "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+      "keyPrefix": "sk_mrmbzomn_1a2b3c4d",
       "createdAt": "2026-02-22T10:00:00.000Z",
       "lastUsedAt": null,
-      "rawKey": "sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
+      "rawKey": "sk_mrmbzomn_1a2b3c4d.964793af0123456789abcdef0123456789abcdef0123456789ab"
     }
   }
   ```
@@ -126,7 +128,7 @@ These endpoints manage API keys and require **dashboard session authentication**
       {
         "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
         "name": "My Key",
-        "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+        "keyPrefix": "sk_mrmbzomn_1a2b3c4d",
         "createdAt": "2026-02-22T10:00:00.000Z",
         "lastUsedAt": "2026-02-23T14:30:00.000Z"
       }
@@ -146,7 +148,7 @@ These endpoints manage API keys and require **dashboard session authentication**
     "apiKey": {
       "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
       "name": "Renamed Key",
-      "keyPrefix": "sk_kzq5mjw_a1b2c3d4",
+      "keyPrefix": "sk_mrmbzomn_1a2b3c4d",
       "createdAt": "2026-02-22T10:00:00.000Z",
       "lastUsedAt": "2026-02-23T14:30:00.000Z"
     }
@@ -160,20 +162,24 @@ These endpoints manage API keys and require **dashboard session authentication**
 
 ### Key Format
 
-```
-sk_kzq5mjw_a1b2c3d4e5f6g7h8i9j0.k1l2m3n4o5p6...
+Publora currently mints two API-key shapes:
+
+```text
+# Dashboard key (POST /auth/api-keys)
+sk_mrmbzomn_1a2b3c4d.964793af0123456789abcdef0123456789abcdef0123456789ab
+
+# Single-current User.apiKey (session `/auth/generate-api-key` or managed-user workspace endpoint)
+sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab
 ```
 
-- Starts with `sk_` prefix
-- Contains a base36-encoded timestamp segment
-- Followed by an underscore and a random hex string
-- Then a dot separator and another random hex string
-- Format: `sk_<timestamp_base36>_<random_hex>.<random_hex>`
-- Total length: ~70 characters
-- Maximum of **10 active API keys** per user
-- **Name length:** Maximum 100 characters (enforced by the API)
+- Both start with `sk_`, contain a base36 timestamp, use one dot separator, and end with 52 random hex characters.
+- Dashboard keys add an 8-hex collision-resistant segment before the dot: `sk_<timestamp_base36>_<8_hex>.<52_hex>` (about 73 characters today).
+- Single-current `User.apiKey` keys use `sk_<timestamp_base36>.<52_hex>` (64 characters today). They are produced both by session-authenticated `/auth/generate-api-key` for the current user and by the API-key-authenticated managed-user workspace endpoint.
+- Exact total length varies as the base36 timestamp grows. The authentication shape gate accepts 20–200 URL-safe characters, requires `sk_`, and requires a dot; the stored hash remains authoritative.
+- **Dashboard keys:** Maximum **10 active keys** per user; each dashboard key has a name with a 100-character maximum.
+- **Single-current `User.apiKey`:** Each user has one stored current key in this form. Session generation replaces the caller's key; workspace generation replaces the managed user's key via `$set`. Neither adds a named dashboard multi-key record.
 
-> **Note:** The authentication middleware does **not** enforce the `sk_` prefix — it performs a two-step verification: first a prefix lookup against stored key prefixes, then a bcrypt comparison of the full key. Legacy keys created before the `sk_` format was introduced will still work. Client-side validation of the `sk_` prefix (shown below) is a best practice but not strictly required.
+> **Note:** The middleware enforces the broad shape above before its legacy-user fallback. A key without `sk_` or a dot is rejected even if an old user record exists; do not rely on pre-format keys.
 
 ### Key Validation (Before Making Requests)
 
@@ -181,44 +187,48 @@ Validate your key format before making API calls:
 
 ```javascript
 function isValidPubloraKey(key) {
-  if (!key || typeof key !== 'string') return false;
-  if (!key.startsWith('sk_')) return false;
-  if (key.length < 20) return false;
-  return true;
+  return typeof key === 'string' &&
+    key.length >= 20 &&
+    key.length <= 200 &&
+    key.startsWith('sk_') &&
+    key.includes('.') &&
+    /^[A-Za-z0-9._-]+$/.test(key);
 }
 
 // Usage
 const apiKey = process.env.PUBLORA_API_KEY;
 if (!isValidPubloraKey(apiKey)) {
-  throw new Error('Invalid PUBLORA_API_KEY format. Key must start with sk_');
+  throw new Error('Invalid PUBLORA_API_KEY format');
 }
 ```
 
 ```python
+import re
+
 def is_valid_publora_key(key):
     """Validate Publora API key format."""
-    if not key or not isinstance(key, str):
-        return False
-    if not key.startswith('sk_'):
-        return False
-    if len(key) < 20:
-        return False
-    return True
+    return (
+        isinstance(key, str)
+        and 20 <= len(key) <= 200
+        and key.startswith('sk_')
+        and '.' in key
+        and re.fullmatch(r'[A-Za-z0-9._-]+', key) is not None
+    )
 
 # Usage
 api_key = os.environ.get('PUBLORA_API_KEY')
 if not is_valid_publora_key(api_key):
-    raise ValueError('Invalid PUBLORA_API_KEY format. Key must start with sk_')
+    raise ValueError('Invalid PUBLORA_API_KEY format')
 ```
 
-## Two Ways to Authenticate
+## Authentication by Interface
 
-Publora provides two interfaces that use the **same API key** with **different header formats**:
+Publora provides two interfaces that use the **same API key**. REST requires its custom header; MCP recommends Bearer authentication and also accepts the REST-style header:
 
 | Interface | Header Format | Use Case |
 |-----------|---------------|----------|
 | REST API | `x-publora-key: sk_...` | Direct HTTP requests |
-| MCP Server | `Authorization: Bearer sk_...` | AI assistants (Claude, Cursor) |
+| MCP Server | `Authorization: Bearer sk_...` (recommended) or `x-publora-key: sk_...` | AI assistants (Claude, Cursor) |
 
 ### REST API Authentication
 
@@ -226,7 +236,7 @@ For direct HTTP calls to `api.publora.com`:
 
 ```bash
 curl https://api.publora.com/api/v1/platform-connections \
-  -H "x-publora-key: sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
+  -H "x-publora-key: sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab"
 ```
 
 ```javascript
@@ -255,22 +265,22 @@ For MCP clients connecting to `mcp.publora.com`:
       "type": "http",
       "url": "https://mcp.publora.com",
       "headers": {
-        "Authorization": "Bearer sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
+        "Authorization": "Bearer sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab"
       }
     }
   }
 }
 ```
 
-**Why different headers?** The REST API uses a custom header (`x-publora-key`) for simplicity. The MCP server uses the standard `Authorization: Bearer` header because MCP clients expect OAuth-style headers.
+**Why recommend Bearer for MCP?** MCP clients commonly expect the standard `Authorization: Bearer` format. The MCP server also accepts `x-publora-key` as a fallback. Direct REST requests accept only `x-publora-key`.
 
 ### MCP Client Identification
 
-MCP clients send an additional header `x-publora-client: mcp` to identify themselves. This triggers an `mcpAccess` entitlement check on the server side. If the account does not have MCP access enabled, the server responds with `403 "MCP access is not enabled for this account"`.
+Publora's MCP server sets `x-publora-client: mcp` on its internal REST requests to the backend. This triggers an `mcpAccess` entitlement check. If the account does not have MCP access enabled, the backend responds with `403 "MCP access is not enabled for this account"`.
 
-You do not need to set this header manually — MCP-compatible clients (Claude Desktop, Cursor, etc.) send it automatically.
+Claude Desktop, Cursor, and other MCP clients do not send this REST header; they authenticate to `mcp.publora.com`, and Publora's MCP server adds it downstream. A direct REST caller may also set `x-publora-client`; the value `mcp` opts that request into the same entitlement check.
 
-The `x-publora-client` header value is stored as `req.apiUser.client` in the request context (defaults to `"api"` when not set). This value is available to all downstream route handlers for client-specific logic or logging.
+The backend stores any non-empty `x-publora-client` value verbatim as `req.apiUser.client`; when the header is absent it uses `"api"`.
 
 ### Internal Request Context (`req.apiUser`)
 
@@ -282,9 +292,9 @@ After successful authentication, the middleware attaches a `req.apiUser` object 
 | `ownerId` | `ObjectId` | The billing owner's user ID (may differ from the direct key owner for managed workspace users, resolved via `resolveWorkspaceEntitlementsByActor`) |
 | `ownerUser` | `Object` | Subset of the `actorUser` document (the user whose API key was used, resolved via workspace entitlements) containing `{ _id, permissions, isAdmin }` |
 | `billingOwnerUser` | `Object` | The user responsible for billing. Contains `{ _id, permissions, isAdmin, entitlements }`. May differ from `ownerUser` in workspace setups |
-| `keyPrefix` | `string` | The prefix portion of the API key used for lookup (falls back to `"legacy"` for keys without a dot separator) |
+| `keyPrefix` | `string` | The portion before the required dot separator, retained for lookup/log context without exposing the secret suffix |
 | `isWorkspace` | `boolean` | `true` if acting on behalf of a managed user via `x-publora-user-id` |
-| `client` | `string` | Client identifier — `"mcp"` or `"api"` (default) |
+| `client` | `string` | Arbitrary client identifier copied from `x-publora-client`; `"api"` when absent. Publora's MCP server sends `"mcp"` |
 | `entitlements` | `Object` | Feature flags and plan capabilities for the billing owner |
 
 > **Note:** These fields are internal to the server — they are not returned in API responses. They are documented here for contributors and advanced integrators who may encounter them in error messages or logs.
@@ -295,14 +305,14 @@ After successful authentication, the middleware attaches a `req.apiUser` object 
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export PUBLORA_API_KEY="sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k..."
+export PUBLORA_API_KEY="sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab"
 ```
 
 Or use a `.env` file (add to `.gitignore`):
 
 ```bash
 # .env
-PUBLORA_API_KEY=sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...
+PUBLORA_API_KEY=sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab
 ```
 
 ### Step 2: Verify Your Key Works
@@ -599,7 +609,7 @@ async function publoraRequestWithRetry(endpoint, options = {}, maxRetries = 3) {
 - Commit keys to version control
 - Share keys in chat, email, or public forums
 - Use keys in client-side JavaScript (browsers)
-- Log full API keys (mask them: `sk_kzq5mjw_a1b2...****`)
+- Log full API keys (mask them: `sk_mrmbzomn.9647...****`)
 
 ### Key Storage
 
@@ -608,7 +618,7 @@ async function publoraRequestWithRetry(endpoint, options = {}, maxRetries = 3) {
 const apiKey = process.env.PUBLORA_API_KEY;
 
 // Bad: Hardcoded
-const apiKey = 'sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...'; // Never do this!
+const apiKey = 'sk_mrmbzomn.964793af0123456789abcdef0123456789abcdef0123456789ab'; // Never do this!
 ```
 
 ### Managing API Keys
@@ -631,10 +641,10 @@ You can generate multiple API keys — useful for different environments or appl
 | REST API Base URL | `https://api.publora.com/api/v1` |
 | MCP Server URL | `https://mcp.publora.com` |
 | REST API Header | `x-publora-key: sk_...` |
-| MCP Header | `Authorization: Bearer sk_...` |
-| Key Format | `sk_<timestamp_base36>_<random_hex>.<random_hex>` (~70 chars) |
+| MCP Header | `Authorization: Bearer sk_...` (recommended) or `x-publora-key: sk_...` |
+| Key Format | Dashboard multi-key: `sk_<timestamp_base36>_<8_hex>.<52_hex>`; single-current `User.apiKey`: `sk_<timestamp_base36>.<52_hex>` |
 | Key Expiration | Never (until revoked) |
-| Max Keys | 10 active keys per user |
+| Max Keys | Dashboard: 10 active multi-key records per user; `User.apiKey`: one current key per user, replaced on regeneration |
 | Get Key | publora.com → API |
 
 ---

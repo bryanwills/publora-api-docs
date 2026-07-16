@@ -32,7 +32,7 @@ At least one of `status`, `scheduledTime`, `platformSettings`, or `mediaUrls` mu
 |-----------|------|----------|-------------|
 | `status` | string | No | `"draft"` or `"scheduled"` |
 | `scheduledTime` | string | No | New ISO 8601 UTC datetime |
-| `platformSettings` | object | No | Per-platform settings (same shape and allowlist as in [create-post](./create-post.md#platformsettings)). Merged with existing settings server-side — fields you omit are preserved. Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are accepted. Any unknown top-level platform **or** unknown nested key is **rejected with `400 PLATFORM_SETTING_UNKNOWN`** and nothing is persisted — see [Unknown platformSettings paths](#unknown-platformsettings-paths). |
+| `platformSettings` | object | No | Per-platform settings using the canonical [create-post allowlist](./create-post.md#unknown-platformsettings-paths), including LinkedIn repost settings. Merged with existing settings server-side — fields you omit are preserved. Any unknown top-level platform **or** unknown nested key is **rejected with `400 PLATFORM_SETTING_UNKNOWN`** and nothing is persisted — see [Unknown platformSettings paths](#unknown-platformsettings-paths). |
 | `mediaUrls` | string[] | No | Public **`https://`** URLs (1–10 per request) that the server downloads and attaches to the post. **Semantics are APPEND** — the media is added to the post's existing media, never replacing it. Ingestion is all-or-nothing: if any URL fails, none are attached. Plain `http://`, embedded credentials, non-443 ports, and internal/loopback hosts are rejected. Because a retry re-appends, **send an [`Idempotency-Key`](#idempotency) whenever this field is present.** |
 
 > **YouTube playlist & thumbnail (partial update):** `platformSettings` supports partial per-platform updates, so you can change `youtube.playlist` or set/clear `youtube.thumbnail` without resending the other YouTube fields. The **thumbnail can only be set here** (not on `create-post`, which has no `postGroupId` yet). Clear either by sending empty strings — `youtube.playlist` as `{ "id": "", "platformId": "" }`, or `youtube.thumbnail` as `{ "url": "" }`. Playlist or thumbnail changes return **`409`** while the post is publishing/processing (e.g. *"Post group is currently being published; cannot change YouTube playlist. Retry once publishing completes."*). See [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings).
@@ -93,12 +93,12 @@ March 15, 2026              ✗ Not ISO 8601
 
 ### Past scheduled times
 
-| How far in the past | Today | From **2026-08-25** (strict mode) |
+| How far in the past | Today | When strict mode is active (scheduled **2026-08-25** by default) |
 |---|---|---|
 | Less than 5 minutes | Clamped to server time + `SCHEDULED_TIME_COERCED` warning | **Unchanged — still clamped + warned** |
 | 5 minutes or more | Clamped to server time + `SCHEDULED_TIME_COERCED` warning | **Rejected — `400 SCHEDULED_TIME_IN_PAST`** |
 
-> **The 5-minute tolerance is permanent.** It does **not** go away at the sunset. Only the *5-minutes-or-more* case changes behaviour on 2026-08-25 — flipping from clamp-and-warn to a hard `400`. A time a few seconds or a couple of minutes in the past (ordinary clock skew and request latency) will keep being clamped and warned about, before and after that date, forever.
+> **The 5-minute tolerance is permanent.** The *5-minutes-or-more* case is scheduled to flip from clamp-and-warn to a hard `400` on 2026-08-25, unless production configuration overrides that date either way.
 
 Clamped requests still return `200`, and the response carries the warning:
 
@@ -146,7 +146,7 @@ When rescheduling a post (changing `scheduledTime`), the update flow performs tw
 
 If either check fails, the request returns a **403** error with a `LimitExceededError` message describing which limit was hit.
 
-> **Note:** The limits service may automatically adjust the `scheduledTime` to comply with minimum interval constraints between posts. If this happens, the limits service `scheduledTime` takes priority over the user-provided time. The response will contain the adjusted time in the `postGroup.scheduledTime` field — always use the returned value rather than assuming the requested time was used as-is.
+> **Note:** There is no minimum-interval adjustment. A schedule-horizon violation returns `403`; only the documented past-time compatibility ramp can clamp a time, with a `SCHEDULED_TIME_COERCED` warning.
 
 ### Helper Functions
 
@@ -239,7 +239,7 @@ Generate the key **once per logical update** and reuse it across retries. Genera
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `scheduledTime` | string/null | **Always present.** The *effective* time actually stored, after any past-time clamping or limits-service adjustment. `null` if the post has no scheduled time. Trust this over the time you sent. |
+| `scheduledTime` | string/null | **Always present.** The effective stored time after any permitted past-time clamp. `null` if the post has no scheduled time. |
 | `postGroup.scheduledTime` | string | The same value; included only when the post has a scheduled time set. |
 | `warnings` | array | Present only when something was adjusted — e.g. a `SCHEDULED_TIME_COERCED` entry. See [Past scheduled times](#past-scheduled-times). |
 | `mediaValidationStatus` | string | Present as `"pending"` only when media validation had not completed by the time the response was sent. |
@@ -427,7 +427,7 @@ def update_post_safely(post_group_id, updates):
 |--------|-------|-------|
 | 400 | `"At least one of status, scheduledTime, platformSettings, or mediaUrls must be provided"` | None of the four fields was provided (see note below) |
 | 400 | `"Unknown platformSettings path: {path}"` — code `PLATFORM_SETTING_UNKNOWN` | An unrecognized top-level platform or nested settings key. The response includes `field` with the exact dotted path. Nothing is persisted. |
-| 400 | `"Scheduled time is in the past. Server time is {t} UTC."` — code `SCHEDULED_TIME_IN_PAST` | The requested time — or, on a status-only transition, the post's stored time — is 5+ minutes in the past, once strict mode is on (**2026-08-25**). The response includes `serverTime`. |
+| 400 | `"Scheduled time is in the past. Server time is {t} UTC."` — code `SCHEDULED_TIME_IN_PAST` | The requested or stored time is 5+ minutes in the past while strict mode is active (scheduled for **2026-08-25** unless configuration overrides it). Includes `serverTime`. |
 | 400 | `"Idempotency-Key request body is too deeply nested"` — code `IDEMPOTENCY_BODY_TOO_COMPLEX` | The request body sent with an `Idempotency-Key` exceeds the nesting limit and cannot be hashed |
 | 409 | `"A request with this idempotency key is still in flight"` — code `IDEMPOTENCY_IN_FLIGHT` | Another request with the same `Idempotency-Key` is still being processed. Retry shortly. |
 | 422 | `"Idempotency key was already used with a different request body"` — code `IDEMPOTENCY_KEY_CONFLICT` | The same `Idempotency-Key` was reused with a different body. Use a new key. |
@@ -499,7 +499,7 @@ When a **403** limit error is returned, the response body is a structured JSON o
 
 > **Note:** For `SCHEDULE_HORIZON_REACHED`, the `used`, `requested`, and `remaining` fields are `null` since this limit is date-based rather than count-based.
 
-> **Note:** The response may include additional context fields depending on the error code. These can include `scheduledTime`, `scope`, `blockedPlatforms`, `channelBreakdown`, `disallowedPlatforms`, and `allowedPlatforms`. These fields are spread from the error context and provide extra details about why the limit was exceeded.
+> **Note:** Additional top-level context depends on the code: `scheduledTime`/`maxScheduledDate` for the schedule horizon; `limitScope` and (for connection scope) `blockedPlatforms` for monthly posts; workspace fields for the scheduled queue; and platform allowlist fields for availability checks.
 
 > **Note (low priority):** When a `LimitExceededError` is triggered, the API also sends a limit-reached notification email to the account owner as a side effect. This is an internal behavior and does not affect the API response.
 

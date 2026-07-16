@@ -440,7 +440,7 @@ LinkedIn analytics may take **up to 24 hours** to fully populate. Querying immed
 
 ### Caching
 
-Publora caches analytics for 30 minutes to improve performance and reduce LinkedIn API calls. The `cached` field in the response indicates if data was served from cache.
+Publora caches post analytics for 2 hours to reduce LinkedIn API calls. The `cached` field indicates if data was served from cache.
 
 ### Finding the postedId
 
@@ -472,7 +472,7 @@ const postedId = data.posts.find(p => p.platform === 'linkedin')?.postedId;
 
 ## Related Guides
 
-- [LinkedIn Account Statistics](/docs/endpoints/linkedin-statistics.md) - Account-level analytics
-- [LinkedIn Followers](/docs/endpoints/linkedin-followers.md) - Follower count and growth
-- [LinkedIn Profile Summary](/docs/endpoints/linkedin-profile-summary.md) - Combined profile stats
-- [Get Post](/docs/endpoints/get-post.md) - Get postedId for analytics
+- [LinkedIn Account Statistics](../endpoints/linkedin-statistics.md) - Account-level analytics
+- [LinkedIn Followers](../endpoints/linkedin-followers.md) - Follower count and growth
+- [LinkedIn Profile Summary](../endpoints/linkedin-profile-summary.md) - Combined profile stats
+- [Get Post](../endpoints/get-post.md) - Get postedId for analytics

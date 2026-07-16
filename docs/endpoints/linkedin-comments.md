@@ -19,8 +19,8 @@ POST https://api.publora.com/api/v1/linkedin-comments
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `postedId` | string | Yes | LinkedIn post URN — must be `urn:li:share:xxx` or `urn:li:ugcPost:xxx` format. **Do not use `urn:li:activity:` URNs** (see note below) |
-| `message` | string | Yes | The comment text. Supports mentions using `@{urn:li:person:ID\|Name}` or `@{urn:li:organization:ID\|Company}` syntax (see [Mentions in Comments](#mentions-in-comments)) |
+| `postedId` | string | Yes | LinkedIn post URN: `urn:li:share:xxx`, `urn:li:ugcPost:xxx`, or `urn:li:activity:xxx` |
+| `message` | string | Yes | Raw input up to 10,000 characters. After mention syntax is converted, the text sent to LinkedIn must be at most 1,250 characters. |
 | `platformId` | string | Yes | LinkedIn connection ID (format: `linkedin-ABC123`) |
 | `parentComment` | string | No | Parent comment URN for threaded replies |
 
@@ -224,17 +224,13 @@ const response = await fetch('https://api.publora.com/api/v1/linkedin-comments',
 
 **Result on LinkedIn:** `Great point @Jane Smith! Totally agree.` — with "Jane Smith" as a clickable profile link.
 
-> **Important:** You must use a valid LinkedIn URN ID. Invalid IDs will cause LinkedIn to reject the comment with a `400` error. See the [LinkedIn Mentions Guide](/docs/guides/linkedin-mentions.md) for how to find URN IDs.
+> **Important:** You must use a valid LinkedIn URN ID. Invalid IDs will cause LinkedIn to reject the comment with a `400` error. See the [LinkedIn Mentions Guide](../guides/linkedin-mentions.md) for how to find URN IDs.
 
 ### postedId Format
 
-Use `urn:li:share:xxx` or `urn:li:ugcPost:xxx` — **not** `urn:li:activity:xxx`.
+Publora accepts `urn:li:share:xxx`, `urn:li:ugcPost:xxx`, and `urn:li:activity:xxx`. It first sends the supplied URN to LinkedIn. If LinkedIn rejects an activity URN with a retryable target error, Publora also attempts the corresponding `ugcPost` and `share` URNs with the same ID. LinkedIn can still reject a URN based on the target post or account permissions.
 
-The `urn:li:activity:` URN is what appears in LinkedIn post URLs (e.g. `linkedin.com/feed/update/urn:li:activity:123`), but it is **not** the correct format for the Comments API. Using it may work for plain text comments but will return **403 Forbidden** when mentions are included.
-
-To get the correct URN:
-- For posts created via Publora, use the `postedId` field from the [get-post](/docs/endpoints/get-post.md) response
-- The activity ID and share ID are typically the same number — try replacing `urn:li:activity:` with `urn:li:share:` (e.g. `urn:li:activity:7451373349668282369` → `urn:li:share:7451373349668282369`)
+For posts created via Publora, prefer the exact `postedId` returned by [get-post](get-post.md).
 
 ---
 
@@ -248,7 +244,8 @@ To get the correct URN:
 | 400 | `"platformId must be a string"` | platformId is not a string type |
 | 400 | `"postedId must be a valid LinkedIn URN"` | Not a valid LinkedIn URN format |
 | 400 | `"message cannot be empty"` | Message is an empty string |
-| 400 | `"message cannot exceed 1250 characters"` | Message exceeds LinkedIn's character limit |
+| 400 | `"comment text cannot exceed 10000 characters"` | Raw input exceeds the defensive pre-processing cap |
+| 400 | `"comment text cannot exceed 1250 characters after mention processing"` | Converted LinkedIn comment text exceeds the platform limit |
 | 400 | `"parentComment must be a valid LinkedIn URN"` | parentComment is not a valid URN format |
 | 400 | `"Invalid platformId"` | platformId format is invalid |
 | 401 | `"API key is required"` | No `x-publora-key` header provided |

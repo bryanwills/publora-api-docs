@@ -15,7 +15,7 @@ Publora provides a unified REST API for posting tweets to X (formerly Twitter), 
 | Thread creation | Automatic splitting | Manual tweet chaining |
 | Multi-platform | Post to 10 platforms | Twitter only |
 | Setup time | 5 minutes | Hours to days |
-| Pricing | Free tier available; paid plan required for X | Free tier + paid tiers |
+| Pricing | API access is included on the free Starter plan | Free tier + paid tiers |
 
 ### Keywords: Twitter API, X API, post tweet API, Twitter posting API, tweet programmatically, Twitter bot API, Twitter automation API, send tweet API, Twitter REST API, Twitter developer API
 
@@ -37,7 +37,7 @@ Where `{userId}` is your X/Twitter numeric user ID assigned during account conne
 
 | Type | Supported | Limits |
 |------|-----------|--------|
-| Text | Yes | 280 characters |
+| Text | Yes | 280 characters (standard) / 25,000 characters (Premium and PremiumPlus) |
 | Images | Yes | Up to 4 per post, auto-converted to PNG (max 1000px width) |
 | Videos | Yes | MP4, MOV format |
 | Threads | Yes | Auto-split with `(1/N)` markers |
@@ -66,7 +66,7 @@ Publora uses the official X API v2 `reply.in_reply_to_tweet_id` parameter to cha
 
 ### Automatic Splitting
 
-When content exceeds the 280-character limit, Publora automatically:
+When content exceeds the applicable account limit, Publora automatically:
 
 - Splits at paragraph breaks (`\n\n`) when possible
 - Falls back to sentence boundaries (`. `, `! `, `? `)
@@ -132,7 +132,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Python (requests)**
@@ -154,7 +154,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **cURL**
@@ -167,7 +167,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Hello from Publora! Posting to X has never been easier.",
     "platforms": ["twitter-12345678"]
   }'
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Node.js (axios)**
@@ -186,7 +186,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 ### Post with an Image
@@ -208,7 +208,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Python (requests)**
@@ -230,7 +230,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **cURL**
@@ -243,7 +243,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Check out this screenshot of our new dashboard!",
     "platforms": ["twitter-12345678"]
   }'
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Node.js (axios)**
@@ -262,7 +262,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 > **Note:** To attach media to a post, first create the post, then use the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`.
@@ -290,7 +290,7 @@ The new SDK is available for JavaScript, Python, and Go. Each SDK includes full 
 
 const data = await response.json();
 console.log(data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Python (requests)**
@@ -318,7 +318,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **cURL**
@@ -331,7 +331,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Here is a deep dive into our new feature release and what it means for developers building on our platform.\n\nWe have completely redesigned the API layer to support batch operations, real-time webhooks, and granular rate limiting. This means you can now process up to 1000 requests per minute with predictable throughput.\n\nThe new SDK is available for JavaScript, Python, and Go. Each SDK includes full TypeScript definitions, async support, and built-in retry logic. Check our docs for migration guides.",
     "platforms": ["twitter-12345678"]
   }'
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Node.js (axios)**
@@ -356,14 +356,14 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2/3)`, `(3/3)`) at sentence boundaries.
 
 ## Platform Quirks
 
-- **Emoji character counting**: Each emoji counts as 2 characters toward the 280-character limit. Publora accounts for this automatically.
+- **Emoji character counting**: Each emoji counts as 2 characters toward the applicable account limit. Publora accounts for this automatically.
 - **PNG preferred for images**: While JPEG works, PNG images tend to render with higher quality on X due to their compression algorithm.
 - **Thread numbering**: Publora adds `(1/N)` markers at the end of each tweet in a thread. This is appended after the content, so it reduces available character space by 10 characters per tweet.
 - **Image auto-conversion**: Publora automatically converts all images to PNG format and resizes them to a maximum width of 1000px before uploading.
@@ -373,10 +373,14 @@ Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2
 
 ## API Limits
 
+<!-- limits tables below synced from @publora/platform-limits 1.0.0 (2026-03-11) — regenerate on bump -->
+
 ### Character Limit
 
-- **All accounts:** 280 characters (Publora always uses the 280-character limit)
-- **Threading:** Supported - content over 280 characters will be split into a thread
+- **Standard accounts:** 280 characters
+- **Premium and PremiumPlus accounts:** 25,000 characters
+- **Detection:** Publora selects the limit automatically from the connected X account's subscription type
+- **Threading:** Supported when content exceeds the applicable account limit
 
 ### Image Limits
 
@@ -392,11 +396,11 @@ Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2
 
 | Property | Limit |
 |----------|-------|
-| **Max duration** | **2 minutes (120 seconds)** |
+| **Max duration** | **2 minutes 20 seconds (140 seconds)** |
 | Max size | 512 MB |
 | Formats | MP4, MOV |
 
-> **Important:** The X API has a **2-minute video limit** even though the native X app allows videos up to 2:20 (140 seconds). If you attempt to upload a longer video via the API, you will receive the error: *"This user is not allowed to post a video longer than 2 minutes"*
+> **Important:** Publora validates X videos at **140 seconds (2:20)** through the API.
 
 **Premium users via native app:** Up to 4 hours (not available via API)
 
@@ -404,20 +408,17 @@ Publora will automatically split this into a numbered thread (e.g., `(1/3)`, `(2
 
 | Account Type | Limit |
 |-------------|-------|
-| All accounts | 280 characters |
-| Thread tweet (each part) | 280 characters, minus `(X/N)` marker space (10 chars) |
+| Standard | 280 characters |
+| Premium and PremiumPlus | 25,000 characters |
+| Thread tweet (each part) | Applicable account limit, minus `(X/N)` marker space (10 chars) |
 
 ## Rate Limits
 
-The underlying X API v2 has the following publishing limits based on your account tier:
+X-side pricing and posting quotas change independently of Publora and are not a Publora contract. Consult X's current developer documentation; Publora surfaces platform rate-limit errors when X rejects a request.
 
-| Tier | Monthly Posts | Per 15 Minutes | Per 24 Hours |
-|------|--------------|----------------|--------------|
-| Free | 500 | ~17 | ~500 |
-| Basic ($100/mo) | 10,000 | 100 per user | 10,000 per app |
-| Pro ($5,000/mo) | 1,000,000 | Higher | Higher |
+## What you can't do
 
-Publora returns the appropriate error from the X API if rate limits are exceeded. Each tweet in a thread counts as a separate post toward these limits.
+- **Preserve animated GIFs:** The X publish path sends every non-video media item through `sharp(...).png()` before upload. A GIF is accepted as input, but animation is lost and X receives a static PNG.
 
 
 ---

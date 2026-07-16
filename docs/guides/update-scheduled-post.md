@@ -50,6 +50,7 @@ x-publora-key: YOUR_API_KEY
 {
   "success": true,
   "message": "Post updated successfully",
+  "scheduledTime": "2026-03-15T14:00:00.000Z",
   "postGroup": {
     "_id": "507f1f77bcf86cd799439011",
     "status": "scheduled",
@@ -405,7 +406,7 @@ curl -X PUT "https://api.publora.com/api/v1/update-post/507f1f77bcf86cd799439011
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `"Scheduled time is in the past. Server time is <ISO> UTC."` (`code: "SCHEDULED_TIME_IN_PAST"`) | DateTime is 5+ minutes before server time, and the stricter behaviour is active (from **2026-08-25**) | Use a future datetime; compare the response's `serverTime` to your clock. Under 5 min late is clamped to now with a `SCHEDULED_TIME_COERCED` warning instead. See [Scheduling](./scheduling.md#past-scheduled-times) |
+| `"Scheduled time is in the past. Server time is <ISO> UTC."` (`code: "SCHEDULED_TIME_IN_PAST"`) | DateTime is 5+ minutes before server time and strict mode is active (scheduled for **2026-08-25** unless configuration overrides it) | Use a future datetime; compare `serverTime` to your clock. Under 5 min late is always clamped with `SCHEDULED_TIME_COERCED`. |
 | `"Cannot update post: post is currently in published status"` | Post already published | Cannot modify published posts |
 | `"Post group not found"` | Invalid ID or wrong user | Verify postGroupId and API key |
 | `"Invalid API key"` | Bad x-publora-key header | Check API key in dashboard |
@@ -478,7 +479,7 @@ console.log('Post scheduled for:', result.postGroup.scheduledTime);
 
 ## Related Guides
 
-- [Create Post](/docs/endpoints/create-post.md) - Create new posts
-- [Get Post](/docs/endpoints/get-post.md) - Check post status
-- [Delete Post](/docs/endpoints/delete-post.md) - Remove posts
-- [Scheduling Guide](/docs/guides/scheduling.md) - Scheduling best practices
+- [Create Post](../endpoints/create-post.md) - Create new posts
+- [Get Post](../endpoints/get-post.md) - Check post status
+- [Delete Post](../endpoints/delete-post.md) - Remove posts
+- [Scheduling Guide](scheduling.md) - Scheduling best practices

@@ -1,6 +1,6 @@
 # Webhooks
 
-Receive real-time notifications when posts are published, fail, or when tokens are expiring.
+Receive real-time post lifecycle notifications, including scheduled, published, failed, and media-demotion events. `token.expiring` is defined and subscribable but is not currently dispatched, so do not depend on it for token monitoring.
 
 ## Endpoints
 
@@ -65,7 +65,7 @@ POST https://api.publora.com/api/v1/webhooks
 {
   "name": "Production Notifications",
   "url": "https://your-app.com/webhooks/publora",
-  "events": ["post.published", "post.failed", "token.expiring"]
+  "events": ["post.published", "post.failed", "post.demoted"]
 }
 ```
 
@@ -78,7 +78,7 @@ POST https://api.publora.com/api/v1/webhooks
     "_id": "65f8a1b2c3d4e5f6a7b8c9d0",
     "name": "Production Notifications",
     "url": "https://your-app.com/webhooks/publora",
-    "events": ["post.published", "post.failed", "token.expiring"],
+    "events": ["post.published", "post.failed", "post.demoted"],
     "secret": "a1b2c3d4e5f6...your-signing-secret...x9y0z1",
     "isActive": true,
     "createdAt": "2026-02-22T10:00:00.000Z"
@@ -97,7 +97,8 @@ POST https://api.publora.com/api/v1/webhooks
 | `post.scheduled` | Post was scheduled |
 | `post.published` | Post was successfully published |
 | `post.failed` | Post failed to publish |
-| `token.expiring` | Platform token is expiring soon |
+| `post.demoted` | A scheduled post was returned to draft after media changed |
+| `token.expiring` | Defined and subscribable, but not currently dispatched; do not build flows that depend on it |
 
 ---
 
@@ -212,6 +213,7 @@ When an event occurs, Publora sends a POST request to your webhook URL:
 
 ```json
 {
+  "version": "1",
   "event": "post.published",
   "timestamp": "2026-02-22T14:30:00.000Z",
   "data": {
@@ -226,18 +228,32 @@ When an event occurs, Publora sends a POST request to your webhook URL:
 }
 ```
 
+`version` is currently the string `"1"`. The HMAC covers the raw bytes of this complete envelope: `{ version, event, timestamp, data }`.
+
 ### Event-Specific Data
 
 #### post.scheduled
 
 ```json
 {
-  "postId": "507f1f77bcf86cd799439012",
   "postGroupId": "507f1f77bcf86cd799439011",
-  "platform": "linkedin",
-  "scheduledAt": "2026-02-23T09:00:00.000Z"
+  "scheduledTime": "2026-02-23T09:00:00.000Z",
+  "platforms": ["linkedin-ABC123", "twitter-123456789"]
 }
 ```
+
+#### post.demoted
+
+```json
+{
+  "postGroupId": "507f1f77bcf86cd799439011",
+  "reason": "media_changed",
+  "changeType": "attach",
+  "mediaFileId": "507f1f77bcf86cd799439013"
+}
+```
+
+`changeType` is `attach` or `detach`. The event is emitted when that media change demotes a scheduled group back to draft.
 
 #### post.published
 
@@ -286,6 +302,8 @@ When an event occurs, Publora sends a POST request to your webhook URL:
 
 #### token.expiring
 
+> **Planned shape:** this event is defined and can be selected when creating a webhook, but no production code currently dispatches it. Do not depend on receiving it.
+
 ```json
 {
   "platform": "instagram",
@@ -306,10 +324,10 @@ Verify webhook authenticity using HMAC-SHA256:
 ```javascript
 const crypto = require('crypto');
 
-function verifyWebhookSignature(payload, signature, secret) {
+function verifyWebhookSignature(rawBody, signature, secret) {
   const expectedSignature = crypto
     .createHmac('sha256', secret)
-    .update(JSON.stringify(payload))
+    .update(rawBody)
     .digest('hex');
 
   return crypto.timingSafeEqual(
@@ -319,7 +337,7 @@ function verifyWebhookSignature(payload, signature, secret) {
 }
 
 // Express middleware
-app.post('/webhooks/publora', express.json(), (req, res) => {
+app.post('/webhooks/publora', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-publora-signature'];
   const event = req.headers['x-publora-event'];
 
@@ -327,7 +345,9 @@ app.post('/webhooks/publora', express.json(), (req, res) => {
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
-  console.log(`Received ${event}:`, req.body.data);
+  const payload = JSON.parse(req.body.toString('utf8'));
+
+  console.log(`Received ${event}:`, payload.data);
 
   // Handle the event
   switch (event) {
@@ -336,9 +356,6 @@ app.post('/webhooks/publora', express.json(), (req, res) => {
       break;
     case 'post.failed':
       // Alert your team, retry logic, etc.
-      break;
-    case 'token.expiring':
-      // Notify user to reconnect
       break;
   }
 
@@ -352,16 +369,15 @@ app.post('/webhooks/publora', express.json(), (req, res) => {
 import os
 import hmac
 import hashlib
-import json
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 WEBHOOK_SECRET = os.environ['PUBLORA_WEBHOOK_SECRET']
 
-def verify_signature(payload, signature, secret):
+def verify_signature(raw_body, signature, secret):
     expected = hmac.new(
         secret.encode(),
-        json.dumps(payload, separators=(',', ':')).encode(),
+        raw_body,
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(signature, expected)
@@ -370,10 +386,12 @@ def verify_signature(payload, signature, secret):
 def handle_webhook():
     signature = request.headers.get('X-Publora-Signature')
     event = request.headers.get('X-Publora-Event')
-    payload = request.json
+    raw_body = request.get_data()
 
-    if not verify_signature(payload, signature, WEBHOOK_SECRET):
+    if not verify_signature(raw_body, signature, WEBHOOK_SECRET):
         return jsonify({'error': 'Invalid signature'}), 401
+
+    payload = request.get_json()
 
     print(f"Received {event}: {payload['data']}")
 
@@ -389,10 +407,13 @@ def handle_webhook():
 ## Webhook Reliability
 
 - Webhooks timeout after 10 seconds
-- Failed webhooks are retried (up to 5 consecutive failures)
+- Each event gets one delivery attempt; failed deliveries are not retried automatically
 - After 5 consecutive failures, the webhook is automatically disabled
+- A successful delivery resets `failureCount`; in a concurrent in-flight race it may also restore `isActive`. An already-disabled webhook receives no further deliveries and must be re-enabled explicitly with an update request.
 - Re-enable a disabled webhook by updating `isActive: true`
 - **Note:** Re-enabling a webhook via the API does **not** reset `failureCount`. The counter persists, meaning the webhook may be disabled again after fewer new failures. However, re-enabling a webhook via the **dashboard** does reset `failureCount` to 0. If you need to reset the counter through the API, delete and recreate the webhook.
+
+> **Signature verification:** Compute the HMAC-SHA256 over the exact raw request body bytes. Capture and verify the raw body before parsing JSON; parsing and re-serializing can change the signed bytes.
 
 ## Limits
 

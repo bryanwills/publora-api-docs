@@ -184,6 +184,7 @@ const response = await fetch('https://api.publora.com/api/v1/webhooks', {
     'x-publora-key': 'sk_YOUR_API_KEY'
   },
   body: JSON.stringify({
+    name: 'Production Notifications',
     url: 'https://your-server.com/webhook',
     events: ['post.published', 'post.failed']
   })
@@ -212,7 +213,7 @@ Use ISO 8601 UTC format:
 Time must be in the future. A past time is never silently accepted:
 
 - **Less than 5 min in the past** (clock skew): clamped to server time, and the `200` response carries `warnings: [{ code: "SCHEDULED_TIME_COERCED", requested, effective }]`. This tolerance is permanent.
-- **5 min or more in the past**: clamped + warned today, but rejected with `400` / `SCHEDULED_TIME_IN_PAST` (body includes `serverTime`) from **2026-08-25**. Fix these before that date.
+- **5 min or more in the past**: clamped + warned today; scheduled to become `400 SCHEDULED_TIME_IN_PAST` on **2026-08-25**, unless production configuration overrides the date either way.
 
 A `200` can still mean the API adjusted your request — read `warnings`, don't discard it. `GET /get-post` returns the effective stored `scheduledTime` to confirm what was actually kept.
 
@@ -258,7 +259,8 @@ Available events:
 - `post.scheduled` - Post was scheduled
 - `post.published` - Post was successfully published
 - `post.failed` - Post failed to publish
-- `token.expiring` - Platform token is about to expire
+- `post.demoted` - Scheduled post returned to draft after media attach/detach
+- `token.expiring` - Defined and subscribable, but not currently dispatched; do not depend on it
 
 ## Error Handling
 

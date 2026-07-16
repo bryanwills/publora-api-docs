@@ -559,10 +559,11 @@ echo "Summary: $SUCCEEDED succeeded, $FAILED failed"
 |-------------|-------------|-------|
 | `draft` | Yes | Not yet scheduled |
 | `scheduled` | Yes | Before publication time |
-| `pending` | No | Being processed by scheduler |
-| `processing` | No | Currently publishing |
-| `published` | No | Already live on platforms |
+| `published` | Yes | Deletes Publora's records only; it does not remove the live platform post |
 | `failed` | Yes | Clean up failed attempts |
+| `partially_published` | Yes | Deletes Publora's records only; already-published platform posts remain live |
+
+`pending` and `processing` are values of the separate `processingStatus` field, not post-group statuses. Deleting a group while `processingStatus` is `pending` or `processing` removes Publora's records without cancelling in-flight platform work, which may still complete.
 
 ## Error Reference
 
@@ -612,7 +613,7 @@ try {
 
 ## Related Guides
 
-- [Create Post](/docs/endpoints/create-post.md) - Create new posts
-- [Get Post](/docs/endpoints/get-post.md) - Check post status before deletion
-- [Update Scheduled Post](/docs/guides/update-scheduled-post.md) - Reschedule instead of delete
-- [List Posts](/docs/endpoints/list-posts.md) - Find posts to delete
+- [Create Post](../endpoints/create-post.md) - Create new posts
+- [Get Post](../endpoints/get-post.md) - Check post status before deletion
+- [Update Scheduled Post](update-scheduled-post.md) - Reschedule instead of delete
+- [List Posts](../endpoints/list-posts.md) - Find posts to delete

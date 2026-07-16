@@ -2,6 +2,8 @@
 
 This guide covers how to handle errors from the Publora API, including HTTP status codes, error response formats, retry strategies, and dealing with partial failures.
 
+For a code-by-code lookup covering top-level, validation, media-ingestion, and workspace errors, see the [API Error Code Catalog](./error-codes.md).
+
 ## How It Works
 
 The Publora API uses standard HTTP status codes to indicate success or failure. When an error occurs, the response body contains a JSON object with details about what went wrong.
@@ -12,8 +14,6 @@ The Publora API uses standard HTTP status codes to indicate success or failure. 
 |---|---|---|
 | `200` | OK | Request succeeded (GET, PUT, DELETE, and most POST endpoints including `create-post`) |
 | `201` | Created | Resource created successfully (used by specific POST endpoints such as workspace user creation) |
-
-> **Note:** Most POST endpoints (including `create-post`) return `200` on success, but workspace user creation (`POST /workspace/users`) returns `201`. Check for both `200` and `201` as success codes in your error handling logic.
 | `400` | Bad Request | Invalid input, missing required fields, or malformed data |
 | `401` | Unauthorized | Missing or invalid API key |
 | `403` | Forbidden | Valid API key but insufficient permissions or plan limits reached |
@@ -21,6 +21,8 @@ The Publora API uses standard HTTP status codes to indicate success or failure. 
 | `409` | Conflict | Duplicate or conflicting operation, or an `Idempotency-Key` request that is still in flight |
 | `422` | Unprocessable Entity | An `Idempotency-Key` was reused with a different request body |
 | `500` | Internal Server Error | Something went wrong on Publora's side |
+
+> **Note:** Most POST endpoints (including `create-post`) return `200` on success, but workspace user creation (`POST /workspace/users`) returns `201`. Check for both `200` and `201` as success codes in your error handling logic.
 
 ### Error Response Format
 
@@ -72,9 +74,11 @@ A `200` from `create-post` or `update-post` may include a `warnings` array. It i
 |---|---|
 | Less than 5 minutes in the past | **Always** clamped to server time + `SCHEDULED_TIME_COERCED` warning (tolerates clock skew). This tolerance is permanent — it does not change after the sunset. |
 | 5 minutes or more in the past, **before** the strict sunset (`2026-08-25`) | Clamped to server time + `SCHEDULED_TIME_COERCED` warning |
-| 5 minutes or more in the past, **on or after** the sunset (`2026-08-25`) | Rejected: `400` `SCHEDULED_TIME_IN_PAST` |
+| 5 minutes or more in the past, **on or after** the configured sunset (default `2026-08-25`) | Rejected: `400` `SCHEDULED_TIME_IN_PAST` |
 
-**Migrate now:** if you see `SCHEDULED_TIME_COERCED` in a response, that same request will start failing with `400` after the sunset. Compare `requested` against the `serverTime`/`effective` value to detect clock skew in your own system. For the full narrative, see [Scheduling → Past scheduled times](/guides/scheduling#past-scheduled-times).
+Production configuration can force strict mode on or off, or move the sunset, so the calendar date is not unconditional.
+
+**Migrate now:** `SCHEDULED_TIME_COERCED` means the request will fail whenever strict mode becomes active. Compare `requested` against `serverTime`/`effective` to detect clock skew.
 
 ### Common Errors
 
@@ -140,7 +144,7 @@ The `code` field is the contract — branch on it, not on the message text.
 
 | Status | Error Message | Cause | Resolution |
 |---|---|---|---|
-| `400` | `"Either status or scheduledTime must be provided"` | An update-post request was sent without specifying `status` or `scheduledTime` | Include at least one of `status` or `scheduledTime` in the request body |
+| `400` | `"At least one of status, scheduledTime, platformSettings, or mediaUrls must be provided"` | An update-post request omitted all four accepted fields | Include at least one of `status`, `scheduledTime`, `platformSettings`, or `mediaUrls` in the request body |
 | `400` | `"Status must be either 'draft' or 'scheduled'"` | The `status` field in an update-post request contains an invalid value | Set `status` to either `"draft"` or `"scheduled"` |
 | `422` / `409` / `400` | Idempotency errors | An `Idempotency-Key` was reused with a different body, is still in flight, or the body is too deeply nested | See [Idempotency Errors](#idempotency-errors) |
 
@@ -175,8 +179,8 @@ In addition to the standard fields (`code`, `error`, `message`, `metric`, `limit
 | `disallowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platforms in the request that are not available on the current plan |
 | `allowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platforms that are available on the current plan |
 | `projectedUsed` | `CHANNEL_LIMIT_REACHED` | The projected usage count if the operation were to proceed |
-| `blockedPlatforms` | `POST_LIMIT_REACHED`, `SCHEDULED_POST_LIMIT_REACHED` | Array of objects with `platformSelection`, `used`, and `remaining` fields. Present when scope is connection-level |
-| `scope` | Various | The scope of the limit (e.g., `"account"`, `"connection"`) |
+| `blockedPlatforms` | `POST_LIMIT_REACHED` | Per-connection `{ platformSelection, used, remaining }` entries; present only for connection-scoped monthly-post limits |
+| `limitScope` | `POST_LIMIT_REACHED` | Monthly-post scope: `"account"` or `"connection"` |
 | `scheduledTime` | `SCHEDULE_HORIZON_REACHED` | The requested scheduled time that exceeded the horizon |
 | `maxScheduledDate` | `SCHEDULE_HORIZON_REACHED` | The latest allowed scheduled date for the current plan |
 
@@ -186,7 +190,7 @@ In addition to the standard fields (`code`, `error`, `message`, `metric`, `limit
 |---|---|---|
 | `"Multi-part threads (nested replies) are temporarily blocked while we wait for Meta to approve additional permissions for our app."` | Multi-part threads (content >500 chars or with `---` separators) are temporarily disabled due to Threads API access requirements | Keep content under 500 characters without `---` separators. Use carousel posts for multiple images. Contact support@publora.com for updates. |
 
-**Note:** Single posts (under 500 characters) and carousel posts on Threads continue to work normally. Only multi-part threads (where content is automatically split into multiple connected replies) are temporarily restricted.
+**Note:** Single posts (under 500 characters) and carousel posts on Threads continue to work normally. Multi-part requests are blocked, and no automatic split occurs while `supportsThreading` is false.
 
 ### Post-Level Errors (Partial Failures)
 
@@ -198,39 +202,52 @@ When checking a post group's status, each individual platform post has its own `
 {
   "success": true,
   "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d",
+  "status": "partially_published",
+  "scheduledTime": "2026-03-15T14:00:00.000Z",
+  "platformSettings": {},
+  "platforms": ["twitter-123456", "tiktok-789012", "linkedin-ABCDEF"],
   "posts": [
     {
+      "_id": "664f1a2b3c4d5e6f7a8b9c01",
       "platform": "twitter",
       "platformId": "123456",
       "status": "published",
       "content": "Check out our latest product launch!",
-      "postedId": "1234567890123456789"
+      "postedId": "1234567890123456789",
+      "permalink": null
     },
     {
+      "_id": "664f1a2b3c4d5e6f7a8b9c02",
       "platform": "tiktok",
       "platformId": "789012",
       "status": "failed",
+      "content": "Check out our latest product launch!",
+      "postedId": null,
+      "permalink": null,
       "error": {
-        "code": "PLATFORM_VALIDATION_ERROR",
-        "message": "Video FPS is below minimum requirement",
-        "platformStatusCode": null,
+        "code": "RATE_LIMITED",
+        "message": "Rate limit exceeded",
+        "platformStatusCode": 429,
         "platformError": null,
         "failedAt": "2026-03-15T14:01:12.000Z",
-        "retryable": false
+        "retryable": true
       }
     },
     {
+      "_id": "664f1a2b3c4d5e6f7a8b9c03",
       "platform": "linkedin",
       "platformId": "ABCDEF",
       "status": "published",
       "content": "Check out our latest product launch!",
-      "postedId": "urn:li:share:7000000000000000000"
+      "postedId": "urn:li:share:7000000000000000000",
+      "permalink": null
     }
-  ]
+  ],
+  "media": []
 }
 ```
 
-**Note:** The `content` and `status` fields exist on each individual post within the `posts` array, not at the post group level. The top-level response only contains `success`, `postGroupId`, and `posts`.
+**Note:** Top-level `status` is the aggregate post-group status. Each `posts[].status` is the outcome for one platform target. The top-level response also includes `success`, `postGroupId`, `scheduledTime`, `platformSettings`, `platforms`, and `media`; `content` remains per-platform inside `posts[]`.
 
 > **`error` field format:** The `error` field on individual platform posts is a structured object, not a plain string. The `get-post` endpoint returns the full error object with fields: `code`, `message`, `platformStatusCode`, `platformError`, `failedAt`, and `retryable`.
 
@@ -866,7 +883,7 @@ if result['failed']:
 
 1. **Always check the HTTP status code.** Do not assume every response is successful. Parse the error body for details.
 
-2. **Only retry on 5xx errors and network failures.** Client errors (4xx) indicate a problem with your request that retrying will not fix.
+2. **Do not retry most 4xx responses unchanged.** They usually indicate a problem with the request. The exception is `429 MEDIA_URL_RATE_LIMITED` from `mediaUrls` ingestion: wait the number of seconds in `Retry-After` (also returned as `retryAfterSec`), then retry with the same `Idempotency-Key` described in item 4.
 
 3. **Use exponential backoff for retries.** Start at 1 second and double with each attempt. Cap at 3-5 retries to avoid infinite loops.
 
@@ -889,12 +906,12 @@ if result['failed']:
 | `401` on every request | API key not set or incorrect | Ensure `x-publora-key` header is present with a valid key |
 | `403` but key is valid | Account has no active subscription, hit a usage limit, or account is on hold/inactive | Check subscription status, review the structured error response for limit details, or contact support |
 | `400` when scheduling | `scheduledTime` is malformed, or (code `SCHEDULED_TIME_IN_PAST`) 5+ minutes in the past with strict mode active | Always send a future UTC time as `YYYY-MM-DDTHH:mm:ss.sssZ`. Compare your clock against the `serverTime` in the error body. |
-| Post scheduled "now" instead of my requested time | The time was in the past and was clamped — the response carried a `SCHEDULED_TIME_COERCED` warning | Send a future time. This becomes a hard `400` after the `2026-08-25` strict sunset. |
+| Post scheduled "now" instead of my requested time | The time was in the past and was clamped — the response carried a `SCHEDULED_TIME_COERCED` warning | Send a future time; strict mode may turn this into a hard `400` (scheduled for 2026-08-25 unless configuration overrides it). |
 | `422` on retry | Same `Idempotency-Key` reused with a different body | Generate a fresh key per distinct request; reuse a key only to retry the *identical* request |
 | `409` on retry | The original request with that key is still processing | Wait and retry the identical request — do not issue a new key |
 | `404` when fetching a post | Post group ID is wrong or belongs to another account | Verify the ID and that you are using the correct API key |
 | Post group shows `partially_published` | Some platforms failed while others succeeded | Inspect individual platform post statuses for error details |
-| TikTok post fails with FPS error | Video frame rate below TikTok's minimum requirement | Re-encode the video with at least 24 FPS before uploading |
+| TikTok post fails with FPS error | Video frame rate below TikTok's minimum requirement | Re-encode the video with at least 23 FPS before uploading |
 | `500` intermittent errors | Temporary server issues | Implement retry logic with exponential backoff |
 | Threads post fails with nested thread error | Multi-part nested threads are temporarily disabled pending Meta permissions approval | Keep content under 500 characters or use carousel posts. Contact support@publora.com for updates. |
 

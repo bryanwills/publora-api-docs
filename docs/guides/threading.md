@@ -1,6 +1,6 @@
 # Threading Guide - Post Multi-Part Threads via API
 
-Learn how to post threads (multiple connected posts) to Twitter/X and Threads using the Publora API. This guide covers automatic thread splitting, manual thread creation, and best practices.
+Learn how to post connected threads to Twitter/X. Multi-part publishing on Meta Threads is currently disabled; any Threads mechanics shown are non-operational reference material.
 
 > **⚠️ Threads Platform Notice:** Multi-part nested threads on Threads are temporarily unavailable due to API access requirements. Twitter/X threading works normally. Single posts and carousels on Threads continue to work. Contact support@publora.com for updates.
 
@@ -24,10 +24,10 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
   body: JSON.stringify({
     content: `This is a long post that will be automatically split into multiple parts.
 
-When your content exceeds the character limit (280 for X/Twitter, 500 for Threads), Publora automatically creates a thread.
+When X/Twitter content exceeds the applicable account limit, Publora can automatically create a thread.
 
 Each part is posted as a reply to the previous one, creating a connected conversation that your followers can read through.`,
-    platforms: ['twitter-123', 'threads-456']
+    platforms: ['twitter-123']
   })
 });
 ```
@@ -53,9 +53,9 @@ When your content exceeds platform limits, Publora automatically:
 2. **Posts sequentially:**
    - First post published normally
    - Each subsequent post replies to the previous
-   - Uses `reply_to_id` (Threads) or `in_reply_to_tweet_id` (X)
+   - Uses `in_reply_to_tweet_id` on X; the analogous Threads flow is disabled
 
-3. **Adds numbering (X/Twitter and Threads):**
+3. **Adds numbering (X/Twitter only):**
    - Appends `(1/N)`, `(2/N)`, etc. to each post
    - Reserves 10 characters for the marker
 
@@ -65,7 +65,7 @@ When your content exceeds platform limits, Publora automatically:
 |----------|----------------|------------------|
 | X/Twitter (Standard) | 280 | Yes `(1/N)` |
 | X/Twitter (Premium) | 25,000 | Yes `(1/N)` |
-| Threads | 500 | Yes (default) |
+| Threads | 500 | Disabled; numbering is not a public contract |
 
 ## Manual Thread Control
 
@@ -116,7 +116,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
   },
   body: JSON.stringify({
     content,
-    platforms: ['twitter-123', 'threads-456']
+    platforms: ['twitter-123']
   })
 });
 ```
@@ -204,7 +204,7 @@ await fetch(`${BASE_URL}/update-post/${postGroupId}`, {
 | Platform | Images | Video | Notes |
 |----------|--------|-------|-------|
 | X/Twitter | Up to 4 | 1 | Cannot mix images and video |
-| Threads | Up to 10 (carousel) | 1 | WebP auto-converted |
+| Threads | Up to 20 images | 1 | WebP auto-converted; threading disabled |
 
 ## Cross-Platform Threading
 
@@ -219,14 +219,14 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
   },
   body: JSON.stringify({
     content: `A long piece of content that will become a thread...`,
-    platforms: ['twitter-123', 'threads-456']
+    platforms: ['twitter-123']
   })
 });
 ```
 
 Publora handles platform differences:
 - X/Twitter: 280 char limit, adds `(1/N)` markers
-- Threads: 500 char limit, adds `(1/N)` markers by default
+- Threads: multi-part threading is disabled; numbering semantics are not a public contract until re-enabled
 
 ## Scheduling Threads
 
@@ -251,32 +251,28 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 ### Partial Thread Failures
 
-If a thread partially publishes (some posts succeed, others fail):
+Publora stores one `ScheduledPost` per platform target, not one row per thread part. Thread parts and their platform IDs are internal and are not returned by get-post. If X publishes some parts and then fails, the target is marked failed with `THREAD_PARTIALLY_PUBLISHED`, while `postedId` preserves the head tweet ID. A group containing only that X target is therefore `failed`; a multi-target group can be `partially_published` when another target succeeds.
 
 ```json
 {
-  "status": "partially_published",
+  "success": true,
+  "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d",
+  "status": "failed",
+  "scheduledTime": "2026-03-15T14:30:00.000Z",
+  "platformSettings": {},
+  "platforms": ["twitter-123"],
   "posts": [
-    { "platform": "twitter", "platformId": "123", "content": "Part 1 (1/5)", "status": "published", "postedId": "123" },
-    { "platform": "twitter", "platformId": "123", "content": "Part 2 (2/5)", "status": "published", "postedId": "456" },
-    { "platform": "twitter", "platformId": "123", "content": "Part 3 (3/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } },
-    { "platform": "twitter", "platformId": "123", "content": "Part 4 (4/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } },
-    { "platform": "twitter", "platformId": "123", "content": "Part 5 (5/5)", "status": "failed", "error": { "code": "RATE_LIMIT", "message": "Rate limit exceeded", "platformStatusCode": 429, "platformError": null, "failedAt": "2026-03-15T14:01:12.000Z", "retryable": true } }
-  ]
+    { "platform": "twitter", "platformId": "123", "content": "Original long thread content", "status": "failed", "postedId": "1234567890", "permalink": null, "error": { "code": "THREAD_PARTIALLY_PUBLISHED", "message": "Twitter thread partially published (2/5): Rate limit exceeded", "failedAt": "2026-03-15T14:01:12.000Z", "retryable": false } }
+  ],
+  "media": []
 }
 ```
 
-The successfully posted parts remain live. You may need to:
-1. Wait for rate limits to reset
-2. Manually post remaining content as replies
+Already-published parts may remain live. The public response exposes only the head tweet ID in `postedId`, not every per-part ID. Use the target error and post logs for diagnosis; do not infer per-part recovery state from `posts[]`.
 
 ### Rate Limits
 
-| Platform | Limit | Notes |
-|----------|-------|-------|
-| X/Twitter (Free) | 500/month | Each tweet in thread counts |
-| X/Twitter (Basic) | 10,000/month | 100 per 15 min per user |
-| Threads | 250/day | ~25/hour |
+Platform-side quotas and pricing change independently and are not a Publora numeric contract. Threads multi-part publishing remains disabled.
 
 ## Best Practices
 
@@ -288,48 +284,41 @@ The successfully posted parts remain live. You may need to:
 
 ## API Response
 
-The `create-post` endpoint returns only the post group reference, not the individual thread parts:
-
-```json
-{
-  "success": true,
-  "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d"
-}
-```
-
-To see the individual thread parts and their statuses, fetch the post group after it has been processed using `GET /api/v1/get-post/:postGroupId`. Each thread part appears as a separate entry in the `posts` array:
+The `create-post` endpoint returns the post group reference and effective schedule time, not individual thread parts:
 
 ```json
 {
   "success": true,
   "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d",
+  "scheduledTime": null
+}
+```
+
+`GET /api/v1/get-post/:postGroupId` returns one entry for the X connection target. The stored original content and overall target status are public; internal `threadParts[]` and per-part IDs are not:
+
+```json
+{
+  "success": true,
+  "postGroupId": "664f1a2b3c4d5e6f7a8b9c0d",
+  "status": "published",
+  "scheduledTime": "2026-03-15T14:30:00.000Z",
+  "platformSettings": {},
+  "platforms": ["twitter-123"],
   "posts": [
     {
       "platform": "twitter",
       "platformId": "123",
-      "content": "First part (1/3)",
+      "content": "Original long thread content",
       "status": "published",
-      "postedId": "1234567890"
-    },
-    {
-      "platform": "twitter",
-      "platformId": "123",
-      "content": "Second part (2/3)",
-      "status": "published",
-      "postedId": "1234567891"
-    },
-    {
-      "platform": "twitter",
-      "platformId": "123",
-      "content": "Third part (3/3)",
-      "status": "published",
-      "postedId": "1234567892"
+      "postedId": "1234567890",
+      "permalink": null
     }
-  ]
+  ],
+  "media": []
 }
 ```
 
-The `postedId` field contains the platform-native post ID (not a full URL). If a thread partially publishes, some entries will have `status: "failed"` with an `error` field.
+The single `postedId` is the platform-native ID stored for the target. It is not a list of every tweet ID.
 
 ## Related Guides
 
@@ -340,4 +329,4 @@ The `postedId` field contains the platform-native post ID (not a full URL). If a
 
 ---
 
-*[Publora](https://publora.com) - Post threads to X/Twitter and Threads via a simple REST API.*
+*[Publora](https://publora.com) - Post threads to X/Twitter via a simple REST API; Meta Threads multi-part publishing is currently disabled.*

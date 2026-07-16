@@ -4,6 +4,8 @@
 
 Publora API lets you schedule and publish social media posts across 10 platforms from a single REST endpoint. Base URL: `https://api.publora.com`
 
+Machine-readable API descriptions are available as [OpenAPI YAML](https://docs.publora.com/openapi.yaml) and [OpenAPI JSON](https://docs.publora.com/openapi.json).
+
 > **For AI Agents:** You cannot programmatically create accounts or generate API keys. Your user must complete Steps 1-2 manually at [publora.com](https://publora.com), then provide you with their API key.
 
 ## Pricing
@@ -25,7 +27,7 @@ See full details at [publora.com/pricing](https://publora.com/pricing)
 3. Click **Generate API Key**
 4. Copy the key immediately — it's shown only once
 
-Your key looks like: `sk_kzq5mjw_a1b2c3d4e5f6.7h8i9j0k...`
+Dashboard keys look like: `sk_mrmbzomn_1a2b3c4d.964793af0123456789abcdef0123456789abcdef0123456789ab`
 
 ## Step 2: Connect Social Accounts
 
@@ -93,6 +95,7 @@ console.log(data.connections);
 ### JavaScript (fetch)
 
 ```javascript
+const scheduledTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 const response = await fetch('https://api.publora.com/api/v1/create-post', {
   method: 'POST',
   headers: {
@@ -102,7 +105,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
   body: JSON.stringify({
     content: 'Hello from Publora API! 🚀',
     platforms: ['twitter-123456789', 'linkedin-ABC123'],
-    scheduledTime: '2026-03-01T14:00:00.000Z'
+    scheduledTime
   })
 });
 const data = await response.json();
@@ -113,6 +116,7 @@ console.log(data.postGroupId); // "507f1f77bcf86cd799439011"
 
 ```python
 import requests
+from datetime import datetime, timedelta, timezone
 
 response = requests.post(
     'https://api.publora.com/api/v1/create-post',
@@ -123,13 +127,15 @@ response = requests.post(
     json={
         'content': 'Hello from Publora API! 🚀',
         'platforms': ['twitter-123456789', 'linkedin-ABC123'],
-        'scheduledTime': '2026-03-01T14:00:00.000Z'
+        'scheduledTime': (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
     }
 )
 print(response.json()['postGroupId'])
 ```
 
 ### cURL
+
+Replace `<FUTURE_ISO_8601_UTC>` with a UTC time at least five minutes ahead.
 
 ```bash
 curl -X POST https://api.publora.com/api/v1/create-post \
@@ -138,7 +144,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
   -d '{
     "content": "Hello from Publora API! 🚀",
     "platforms": ["twitter-123456789", "linkedin-ABC123"],
-    "scheduledTime": "2026-03-01T14:00:00.000Z"
+    "scheduledTime": "<FUTURE_ISO_8601_UTC>"
   }'
 ```
 
@@ -146,13 +152,14 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 
 ```javascript
 const axios = require('axios');
+const scheduledTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
 const { data } = await axios.post(
   'https://api.publora.com/api/v1/create-post',
   {
     content: 'Hello from Publora API! 🚀',
     platforms: ['twitter-123456789', 'linkedin-ABC123'],
-    scheduledTime: '2026-03-01T14:00:00.000Z'
+    scheduledTime
   },
   { headers: { 'x-publora-key': 'YOUR_API_KEY' } }
 );

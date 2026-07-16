@@ -36,20 +36,8 @@ const axios = require('axios');
 const API_KEY = process.env.PUBLORA_API_KEY;
 const BASE_URL = 'https://api.publora.com/api/v1';
 
-// Advisory/recommended limits — NOT enforced by Publora.
-// These are conservative guidelines to avoid platform-side rate limiting.
-const PLATFORM_LIMITS = {
-  twitter:   { perHour: 10, perDay: 50 },   // advisory
-  linkedin:  { perHour: 5,  perDay: 20 },   // advisory
-  instagram: { perHour: 3,  perDay: 10 },   // advisory
-  threads:   { perHour: 10, perDay: 50 },   // advisory
-  tiktok:    { perHour: 2,  perDay: 10 },   // advisory
-  facebook:  { perHour: 5,  perDay: 25 },   // advisory
-  youtube:   { perHour: 2,  perDay: 10 },   // advisory
-  bluesky:   { perHour: 10, perDay: 100 },  // advisory
-  mastodon:  { perHour: 5,  perDay: 50 },   // advisory
-  telegram:  { perHour: 20, perDay: 300 },  // advisory
-};
+// Optional user-supplied throttles. Publora defines no per-platform quotas.
+const PLATFORM_LIMITS = {};
 
 async function schedulePost(content, platforms, scheduledTime) {
   const response = await axios.post(`${BASE_URL}/create-post`, {
@@ -99,20 +87,8 @@ from datetime import datetime, timedelta, timezone
 API_KEY = os.environ['PUBLORA_API_KEY']
 BASE_URL = 'https://api.publora.com/api/v1'
 
-# Advisory/recommended limits — NOT enforced by Publora.
-# These are conservative guidelines to avoid platform-side rate limiting.
-PLATFORM_LIMITS = {
-    'twitter':   {'per_hour': 10, 'per_day': 50},    # advisory
-    'linkedin':  {'per_hour': 5,  'per_day': 20},    # advisory
-    'instagram': {'per_hour': 3,  'per_day': 10},    # advisory
-    'threads':   {'per_hour': 10, 'per_day': 50},    # advisory
-    'tiktok':    {'per_hour': 2,  'per_day': 10},    # advisory
-    'facebook':  {'per_hour': 5,  'per_day': 25},    # advisory
-    'youtube':   {'per_hour': 2,  'per_day': 10},    # advisory
-    'bluesky':   {'per_hour': 10, 'per_day': 100},   # advisory
-    'mastodon':  {'per_hour': 5,  'per_day': 50},    # advisory
-    'telegram':  {'per_hour': 20, 'per_day': 300},   # advisory
-}
+# Optional user-supplied throttles. Publora defines no per-platform quotas.
+PLATFORM_LIMITS = {}
 
 def schedule_post(content: str, platforms: list, scheduled_time: str) -> dict:
     response = requests.post(
@@ -167,7 +143,7 @@ Each Publora plan enforces limits on monthly posts, scheduled (pending) posts, a
 
 **Key details:**
 
-- **Starter plan** limits are **account-wide** (15 posts total across all connections, max 3 connections, `scheduledPosts: 3`, `scheduleHorizonDays: 7`). Paid plans count limits **per connection** (e.g., 100 posts per LinkedIn connection + 100 posts per Twitter connection).
+- **Monthly-post scope:** Starter's 15 monthly posts are account-wide; paid-plan `monthlyPosts` are counted per connection (for example, 100 for one LinkedIn connection and 100 for one Twitter connection). The active `scheduledPosts` queue limit is workspace-wide on every plan, not per connection. Connection count and schedule horizon are separate plan limits.
 - **Starter plan includes API and MCP access** (`apiAccess: true`, `mcpAccess: true`) — the free tier can use the REST API and MCP server (3 connected accounts, 15 posts/month account-wide).
 - **Starter plan can post to any of the 10 platforms** (no platform restriction).
 
@@ -175,30 +151,15 @@ Each Publora plan enforces limits on monthly posts, scheduled (pending) posts, a
 
 ## Platform-Specific Rate Limits (Advisory)
 
-Each social media platform has its own posting limits. The table below shows **advisory/recommended limits** based on platform documentation and best practices. These limits are **not enforced by Publora** -- they are guidelines to help you avoid being rate-limited or penalized by the platforms themselves. Publora handles automatic queuing and retry when platform limits are hit.
+Platform-side posting limits are advisory, account-dependent, and may change without notice. Publora does not treat unsourced posts-per-hour/day figures as an API contract; consult the destination platform for current quotas.
 
-### All 10 Supported Platforms
+### What Publora enforces
 
-| Platform | Posts/Day (platform limit) | Posts/Hour (platform limit) | Publora Recommended | Notes |
-|----------|-----------|------------|---------------------|-------|
-| **X/Twitter** | 2,400 tweets | 300 tweets | 50/day, 10/hour | Threading counts as multiple posts |
-| **LinkedIn** | 100 posts | 25 posts | 20/day, 5/hour | Personal + organization pages |
-| **Instagram** | 25 posts | 10 posts | 10/day, 3/hour | Feed posts only; Stories separate |
-| **Threads** | 250 posts | 50 posts | 50/day, 10/hour | Threading supported |
-| **TikTok** | 50 videos | 10 videos | 10/day, 2/hour | Video uploads only |
-| **YouTube** | 50 videos | 10 videos | 10/day, 2/hour | Per channel |
-| **Facebook** | 50 posts | 25 posts | 25/day, 5/hour | Per page |
-| **Bluesky** | 1,666 posts | 100 posts | 100/day, 10/hour | Per account |
-| **Mastodon** | 300 posts | 30 posts | 50/day, 5/hour | Instance-dependent |
-| **Telegram** | Unlimited | 20 msg/sec | 300/day, 20/hour | Channel/group dependent |
+- Plan entitlements shown above (monthly posts, pending posts, connections, and scheduling horizon).
+- Media-URL ingestion: 60 URLs per fixed one-hour window; `429 MEDIA_URL_RATE_LIMITED` includes `Retry-After`.
+- MCP session limits documented by the MCP endpoint.
 
-**"Publora Recommended"** limits are conservative defaults built into the scheduler examples below to ensure reliable publishing without hitting platform limits.
-
-### How Publora Handles Platform Limits
-
-1. **Automatic Queuing** - If a platform rate limit is hit, Publora queues the post and retries automatically
-2. **Smart Distribution** - When scheduling many posts, Publora distributes them to avoid hitting limits
-3. **Error Reporting** - If a post fails due to platform limits, status shows `failed` with the reason
+Platform-side rate-limit failures are reported on the post. Do not assume Publora automatically retries or redistributes a failed platform publication.
 
 ## API Reference for Scheduling
 
@@ -214,7 +175,7 @@ x-publora-key: sk_YOUR_API_KEY
 {
   "content": "Your post content",
   "platforms": ["twitter-123456", "linkedin-ABC123"],
-  "scheduledTime": "2026-03-15T14:00:00.000Z"
+  "scheduledTime": "<FUTURE_ISO_8601_UTC>"
 }
 ```
 
@@ -223,7 +184,8 @@ x-publora-key: sk_YOUR_API_KEY
 ```json
 {
   "success": true,
-  "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1"
+  "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
+  "scheduledTime": "<FUTURE_ISO_8601_UTC>"
 }
 ```
 
@@ -238,25 +200,29 @@ x-publora-key: sk_YOUR_API_KEY
 
 ```json
 {
+  "success": true,
   "postGroupId": "67a1b2c3d4e5f6a7b8c9d0e1",
   "status": "published",
-  "content": "Your post content",
+  "scheduledTime": "2026-03-15T14:00:00.000Z",
+  "platformSettings": {},
+  "platforms": ["twitter-123456", "linkedin-ABC123"],
   "posts": [
     {
-      "postId": "p_1",
       "platform": "twitter",
       "platformId": "123456",
       "status": "published",
-      "publishedUrl": "https://twitter.com/user/status/123456"
+      "postedId": "1234567890123456789",
+      "permalink": "https://twitter.com/user/status/123456"
     },
     {
-      "postId": "p_2",
       "platform": "linkedin",
       "platformId": "ABC123",
       "status": "published",
-      "publishedUrl": "https://linkedin.com/posts/..."
+      "postedId": "urn:li:share:7000000000000000000",
+      "permalink": "https://linkedin.com/posts/..."
     }
-  ]
+  ],
+  "media": []
 }
 ```
 
@@ -275,7 +241,7 @@ x-publora-key: sk_YOUR_API_KEY
 {
   "success": true,
   "connections": [
-    { "platformId": "twitter-123456789", "username": "myaccount", "displayName": "My Account", "tokenStatus": "unknown" },
+    { "platformId": "twitter-123456789", "username": "myaccount", "displayName": "My Account", "tokenStatus": "valid" },
     { "platformId": "linkedin-ABC123", "username": "My Company", "displayName": "My Company", "tokenStatus": "valid" },
     { "platformId": "threads-789012", "username": "mythreads", "displayName": "My Threads", "tokenStatus": "valid" }
   ]
@@ -731,20 +697,15 @@ for post in scheduled:
 const axios = require('axios');
 
 class PubloraQueueScheduler {
-  constructor(apiKey) {
+  constructor(apiKey, platformLimits = {}) {
     this.apiKey = apiKey;
     this.api = axios.create({
       baseURL: 'https://api.publora.com/api/v1',
       headers: { 'x-publora-key': apiKey }
     });
 
-    this.platformLimits = {
-      twitter: { perHour: 10, perDay: 50 },
-      linkedin: { perHour: 5, perDay: 20 },
-      instagram: { perHour: 3, perDay: 10 },
-      tiktok: { perHour: 2, perDay: 10 },
-      facebook: { perHour: 5, perDay: 25 },
-    };
+    // User-supplied throttles. Publora does not define per-platform posting quotas.
+    this.platformLimits = platformLimits;
 
     this.peakHours = {
       twitter: [13, 14, 15, 16],
@@ -923,19 +884,8 @@ class PubloraQueueScheduler {
     this.rateLimitRemaining = Infinity;
     this.rateLimitReset = 0;
 
-    // Platform-specific limits (posts per hour / per day) - all 10 platforms
-    this.platformLimits = {
-      twitter:   { perHour: 10, perDay: 50 },
-      linkedin:  { perHour: 5,  perDay: 20 },
-      instagram: { perHour: 3,  perDay: 10 },
-      threads:   { perHour: 10, perDay: 50 },
-      tiktok:    { perHour: 2,  perDay: 10 },
-      facebook:  { perHour: 5,  perDay: 25 },
-      youtube:   { perHour: 2,  perDay: 10 },
-      bluesky:   { perHour: 10, perDay: 100 },
-      mastodon:  { perHour: 5,  perDay: 50 },
-      telegram:  { perHour: 20, perDay: 300 },
-    };
+    // Optional user-supplied throttles; Publora defines no per-platform quotas.
+    this.platformLimits = options.platformLimits || {};
 
     // Peak engagement hours (UTC) - all 10 platforms
     this.peakHours = {

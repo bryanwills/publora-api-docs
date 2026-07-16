@@ -18,16 +18,16 @@ POST https://api.publora.com/api/v1/create-post
 | `Idempotency-Key` | No | Opt-in duplicate protection. A client-generated unique string. Retrying with the **same key and same body** replays the original response instead of creating a second post. See [Idempotency](#idempotency). |
 | `Content-Type` | Yes | `application/json` |
 
-> **Note:** The API does not include `x-publora-key` or `x-publora-user-id` in CORS allowed headers, so requests from browser-based clients will fail preflight checks. This API is designed for server-to-server use only.
+> **Browser usage:** CORS permits `x-publora-key`, `x-publora-user-id`, `x-publora-client`, and `Idempotency-Key`, but only requests from origins in Publora's deployment allowlist are accepted. An arbitrary integrator origin can still fail preflight. Even from an allowed origin, embedding a secret API key in client-side code exposes it; prefer a server-side proxy.
 
 ## Request Body
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `content` | string | Yes | Post text content (cannot be empty or whitespace-only). Must be a string — non-string truthy values (numbers, objects) will pass validation but cause unexpected behavior. |
-| `platforms` | string[] | Yes | Array of platform connection IDs matching `/^[a-z]+-[a-zA-Z0-9_-]+$/` (e.g., `twitter-123456789`, `linkedin-ABC123`) |
+| `content` | string | Conditional | Normally required and non-empty. It may be omitted or empty when a targeted LinkedIn connection has repost intent through `platformSettings.linkedin.repostEnabled: true` or a non-empty `repostParentUrn`; the repost settings must still form a valid parent/enable combination. Non-string truthy values (numbers, objects) can pass the initial content gate but cause unexpected behavior. |
+| `platforms` | string[] | Yes | Array of `<lowercase-prefix>-<id>` connection IDs. The ID cannot contain whitespace, `/`, `?`, or `#`; colons are allowed (e.g., `twitter-123456789`, `bluesky-did:plc:abc123`). |
 | `scheduledTime` | string | No | ISO 8601 UTC datetime. If omitted, the post is created as a `draft`. A time in the past is **never silently accepted** — it is either clamped to server time with a `SCHEDULED_TIME_COERCED` warning in the response, or rejected with `400 SCHEDULED_TIME_IN_PAST`. See [Past scheduled times](#past-scheduled-times). |
-| `platformSettings` | object | No | Per-platform settings that are merged with server-side defaults. User-provided values override defaults on a per-platform basis. Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are accepted. **Any unknown top-level platform or unknown nested key is rejected with `400 PLATFORM_SETTING_UNKNOWN` and nothing is persisted** — see [Unknown platformSettings paths](#unknown-platformsettings-paths) for the exact accepted tree. Each platform key must map to a plain object. Validation errors (`"Invalid platformSettings JSON"`, `"platformSettings must be an object"`) are returned if the field is present and malformed. |
+| `platformSettings` | object | No | Per-platform settings that are merged with server-side defaults. User-provided values override defaults on a per-platform basis. The accepted keys are `tiktok`, `instagram`, `youtube`, `threads`, `telegram`, and `linkedin`. **Any unknown top-level platform or unknown nested key is rejected with `400 PLATFORM_SETTING_UNKNOWN` and nothing is persisted** — see [Unknown platformSettings paths](#unknown-platformsettings-paths) for the exact accepted tree. Each platform key must map to a plain object. Validation errors (`"Invalid platformSettings JSON"`, `"platformSettings must be an object"`) are returned if the field is present and malformed. |
 | `mediaUrls` | string[] | No | Up to **10** public **https** image/video URLs. Publora downloads them server-side and attaches them to the post **before** validation, so you can attach media *and* schedule in one call (pass together with `scheduledTime`). This is the one-shot alternative to the draft → `get-upload-url` → schedule flow. Ingestion is rate-limited to 60 URLs/hour. See [Posts with Media](#posts-with-media). |
 
 ## Response
@@ -48,7 +48,7 @@ Use the `postGroupId` to track, update, or delete the post.
 |-------|----------------|-------------|
 | `success` | Yes | `true` on a 200 |
 | `postGroupId` | Yes | Post group ID — use it to track, update, or delete the post |
-| `scheduledTime` | Yes | The **effective** scheduled time actually stored (ISO 8601 UTC), or `null` for a draft. Trust this over the value you sent — it may differ (past-time clamping, plan-horizon adjustment). |
+| `scheduledTime` | Yes | The **effective** scheduled time actually stored (ISO 8601 UTC), or `null` for a draft. Trust this over the value you sent — a permitted past-time clamp may change it; a plan-horizon violation is rejected rather than adjusted. |
 | `warnings` | No | Present only when the request was accepted with a caveat. Array of `{ code, message, requested, effective }`. |
 | `media` | No | Per-URL ingestion results, present only when `mediaUrls` was supplied |
 
@@ -76,13 +76,14 @@ A `scheduledTime` in the past is handled by how far in the past it is. The 5-min
 tolerance absorbs ordinary client clock skew; anything beyond it is a real bug in the
 caller's logic.
 
-| How far in the past | Behaviour today | Behaviour after 2026-08-25 |
+| How far in the past | Behaviour today | Behaviour when strict mode is active (scheduled 2026-08-25 by default) |
 |---------------------|-----------------|----------------------------|
 | Less than 5 minutes | Clamped to server time + `SCHEDULED_TIME_COERCED` warning | **Unchanged** — clamped + warned |
 | 5 minutes or more | Clamped to server time + `SCHEDULED_TIME_COERCED` warning | **Rejected** with `400` / `SCHEDULED_TIME_IN_PAST` |
 
-> **⚠️ Migration deadline — 2026-08-25.** Sending a `scheduledTime` 5+ minutes in the
-> past currently succeeds with a warning. On **2026-08-25** this becomes a hard `400`.
+> **⚠️ Scheduled strict date — 2026-08-25.** Sending a `scheduledTime` 5+ minutes in the
+> past currently succeeds with a warning. It is scheduled to become a hard `400` on
+> **2026-08-25**, unless production configuration overrides that date either way.
 > If you see `SCHEDULED_TIME_COERCED` in your responses today, fix it before that date:
 > the usual causes are an unsynced client clock, a local-time value sent without a UTC
 > offset, or replaying a stored `scheduledTime` from an earlier run. Compare your
@@ -107,7 +108,7 @@ Use `serverTime` to measure your clock offset against Publora's.
 ## Unknown platformSettings paths
 
 `platformSettings` is validated against a strict allowlist **before anything is
-persisted**. An unrecognized top-level platform (e.g. `twitter`, `linkedin`) or an
+persisted**. An unrecognized top-level platform (e.g. `twitter`, `facebook`) or an
 unrecognized nested key returns `400` and creates no post:
 
 ```json
@@ -132,6 +133,9 @@ Nested reference objects are checked to their leaves — `youtube.playlist` and
 | `youtube` | `privacy`, `title`, `tags`, `madeForKids`, `categoryId`, `playlist.{id,platformId}`, `thumbnail.{mediaId,id,url,path}` |
 | `threads` | `replyControl` |
 | `telegram` | `disableNotification`, `disableWebPagePreview`, `protectContent` |
+| `linkedin` | `repostEnabled`, `repostParentUrn`, `repostVisibility` |
+
+LinkedIn repost settings default to `false`, an empty parent URN, and an empty visibility. When enabled, use a canonical `urn:li:share:...` or `urn:li:ugcPost:...` parent. `CONNECTIONS` visibility is supported only for personal connections; scheduling a company-page repost with it returns `400` with `"LinkedIn company-page reposts cannot use CONNECTIONS visibility; choose PUBLIC"`.
 
 Still accepted, unchanged:
 
@@ -190,7 +194,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
 
 ## Posts with Media
 
-> **Media-required platforms (Instagram, TikTok, YouTube, Pinterest):** these platforms require media on every post. `create-post` **validates this at the scheduling gate**: if `scheduledTime` is set (so the post is created as `scheduled`) and one of these platforms has no media, the call is **rejected up front with HTTP 400 `MEDIA_REQUIRED`** — the validator runs with an empty media list. It is *not* accepted-then-failed-at-publish. Two ways to satisfy it: (1) pass `mediaUrls` (public https URLs) in the **same** `create-post` call to attach and schedule in one shot, or (2) create a **draft** (omit `scheduledTime`), attach media, then schedule via [Update Post](update-post.md). Creating a draft with no media is always allowed (drafts skip validation). See [Validation](../guides/validation.md) for the per-platform media matrix.
+> **Publishable media-required platforms (Instagram, TikTok, YouTube):** these platforms require media on every post. `create-post` **validates this at the scheduling gate**: if `scheduledTime` is set (so the post is created as `scheduled`) and one of these platforms has no media, the call is **rejected up front with HTTP 400 `MEDIA_REQUIRED`** — the validator runs with an empty media list. It is *not* accepted-then-failed-at-publish. Two ways to satisfy it: (1) pass `mediaUrls` (public https URLs) in the **same** `create-post` call to attach and schedule in one shot, or (2) create a **draft** (omit `scheduledTime`), attach media, then schedule via [Update Post](update-post.md). Creating a draft with no media is always allowed (drafts skip validation). Pinterest is connect-only: its registry limits and media validation do not imply publishing support. See [Validation](../guides/validation.md) for the per-platform media matrix.
 
 > **Two supported media flows:**
 >
@@ -252,7 +256,7 @@ When creating via the API, these defaults are applied automatically. If you prov
 }
 ```
 
-> **Note:** Only `tiktok`, `instagram`, `youtube`, `threads`, and `telegram` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `linkedin`, `facebook`, `bluesky`, `mastodon`) are **rejected with `400` / `PLATFORM_SETTING_UNKNOWN`** — they are no longer silently dropped. For `telegram`, only the three boolean keys shown above (`disableNotification`, `disableWebPagePreview`, `protectContent`) are accepted; any other key inside the telegram object is likewise a `400`, and string values like `"false"` / `"0"` / `"off"` are still coerced to `false`. See [Unknown platformSettings paths](#unknown-platformsettings-paths).
+> **Note:** Only `tiktok`, `instagram`, `youtube`, `threads`, `telegram`, and `linkedin` keys are recognized in `platformSettings`. Other platform keys (e.g., `twitter`, `facebook`, `bluesky`, `mastodon`) are **rejected with `400` / `PLATFORM_SETTING_UNKNOWN`** — they are no longer silently dropped. LinkedIn accepts `repostEnabled`, `repostParentUrn`, and `repostVisibility`. For `telegram`, only the three boolean keys shown above (`disableNotification`, `disableWebPagePreview`, `protectContent`) are accepted; any other key inside the telegram object is likewise a `400`, and string values like `"false"` / `"0"` / `"off"` are still coerced to `false`. See [Unknown platformSettings paths](#unknown-platformsettings-paths).
 
 > **YouTube** also accepts `tags`, `categoryId`, `madeForKids`, and a `playlist` object (`{ id, platformId }`) in addition to `privacy`/`title`. A `playlist` can be set directly on `create-post`. Nested objects are validated to their leaves: `playlist` accepts only `id`/`platformId` and `thumbnail` only `mediaId`/`id`/`url`/`path` — any other nested key (e.g. `youtube.thumbnail.mediaID`) returns `400` / `PLATFORM_SETTING_UNKNOWN` rather than silently clearing the value. A custom `thumbnail` **cannot** be set on `create-post` — the thumbnail upload requires a `postGroupId`, so create the post first and set the thumbnail via `update-post`. See [YouTube → Platform-Specific Settings](../platforms/youtube.md#platform-specific-settings) for the full field reference.
 
@@ -333,7 +337,7 @@ console.log(data.postGroupId);
 
 ### Post to all 10 platforms at once
 
-> **Note:** This example shows the platform-ID format and fan-out only. As written it is **text-only** with `scheduledTime` set, so it is **rejected with HTTP 400 `MEDIA_REQUIRED`** — the **Instagram, TikTok, YouTube, and Pinterest** targets require media. To include them, either pass `mediaUrls` in this same call, or create as a draft (omit `scheduledTime`), [upload media](upload-media.md), then schedule.
+> **Note:** This example shows the platform-ID format and fan-out only. As written it is **text-only** with `scheduledTime` set, so it is **rejected with HTTP 400 `MEDIA_REQUIRED`** — the **Instagram, TikTok, and YouTube** targets require media. To include them, either pass `mediaUrls` in this same call, or create as a draft (omit `scheduledTime`), [upload media](upload-media.md), then schedule. Pinterest is connect-only and is intentionally absent: satisfying its registry media validation does not make it publishable.
 
 ```javascript
 const response = await fetch('https://api.publora.com/api/v1/create-post', {
@@ -373,6 +377,8 @@ response = requests.post(
 
 ## Errors
 
+Platform IDs use `<lowercase-prefix>-<id>`. The prefix must contain only lowercase ASCII letters. The ID must be non-empty and cannot contain whitespace, `/`, `?`, or `#`; other characters, including colons, are allowed. For example, `bluesky-did:plc:abc123` is a valid target.
+
 | Status | Error | Cause |
 |--------|-------|-------|
 | 400 | `"Content is required"` | Missing `content` field or content is empty/whitespace-only |
@@ -380,9 +386,9 @@ response = requests.post(
 | 400 | `"At least one platform is required"` | `platforms` is an empty array |
 | 400 | `"Platforms must be an array"` | `platforms` is not an array |
 | 400 | `"Invalid platforms JSON format"` | `platforms` contains malformed JSON |
-| 400 | `"Invalid platform ID format: <id>"` | Platform ID does not match `/^[a-z]+-[a-zA-Z0-9_-]+$/` |
+| 400 | `"Invalid platform ID format: <id>"` | Prefix is not lowercase letters, or the ID is empty or contains whitespace, `/`, `?`, or `#` |
 | 400 | `"Invalid scheduled time format"` | `scheduledTime` is not a valid ISO 8601 datetime |
-| 400 | `"Scheduled time is in the past. Server time is <ISO> UTC."` | `code: "SCHEDULED_TIME_IN_PAST"`, `serverTime: "<ISO>"`. `scheduledTime` is 5+ minutes in the past. Warn-only until **2026-08-25** — see [Past scheduled times](#past-scheduled-times) |
+| 400 | `"Scheduled time is in the past. Server time is <ISO> UTC."` | `code: "SCHEDULED_TIME_IN_PAST"`, `serverTime: "<ISO>"`. `scheduledTime` is 5+ minutes in the past while strict mode is active; the default transition is scheduled for **2026-08-25** but configuration can override it. |
 | 400 | `"Unknown platformSettings path: <path>"` | `code: "PLATFORM_SETTING_UNKNOWN"`, `field: "<exact.path>"`. Unknown platform or nested key; nothing is persisted. See [Unknown platformSettings paths](#unknown-platformsettings-paths) |
 | 400 | `"Invalid platformSettings JSON"` | `platformSettings` was provided as a string that could not be parsed as valid JSON |
 | 400 | `"Idempotency-Key request body is too deeply nested"` | `code: "IDEMPOTENCY_BODY_TOO_COMPLEX"`. Body nested more than 200 levels deep while using `Idempotency-Key` |
@@ -404,7 +410,7 @@ response = requests.post(
 | 422 | `"Idempotency key was already used with a different request body"` | `code: "IDEMPOTENCY_KEY_CONFLICT"`. The same `Idempotency-Key` was reused with a different body. Generate a fresh key per logical create |
 | 500 | `"Failed to create post group"` | Unexpected server error |
 
-> **Media-required platforms (Instagram, TikTok, YouTube, Pinterest):** when `scheduledTime` is set, `create-post` validates media presence and **rejects a media-less post with HTTP 400 `MEDIA_REQUIRED`** (the validator runs with an empty media list). Attach media first — pass `mediaUrls`, or use the draft flow. See [Posts with Media](#posts-with-media) and [Validation](../guides/validation.md). The 400 body shape:
+> **Publishable media-required platforms (Instagram, TikTok, YouTube):** when `scheduledTime` is set, `create-post` validates media presence and **rejects a media-less post with HTTP 400 `MEDIA_REQUIRED`** (the validator runs with an empty media list). Attach media first — pass `mediaUrls`, or use the draft flow. Pinterest is connect-only and cannot be published even if media validation passes. See [Posts with Media](#posts-with-media) and [Validation](../guides/validation.md). The 400 body shape:
 >
 > ```json
 > {
@@ -461,8 +467,8 @@ Some limit errors include additional context fields:
 |-------|-----------|-------------|
 | `scheduledTime` | `SCHEDULE_HORIZON_REACHED` | The requested scheduled time that exceeded the horizon |
 | `maxScheduledDate` | `SCHEDULE_HORIZON_REACHED` | The furthest date allowed by the current plan |
-| `scope` | `POST_LIMIT_REACHED`, `SCHEDULED_POST_LIMIT_REACHED` | Present when the limit is connection-scoped (e.g., `"connection"`). When connection-scoped, top-level `used` and `remaining` are `null` — per-connection values are in `blockedPlatforms` only. |
-| `blockedPlatforms` | `POST_LIMIT_REACHED`, `SCHEDULED_POST_LIMIT_REACHED` | Array of objects with `platformSelection`, `used`, and `remaining` fields. Present when scope is connection-level |
+| `limitScope` | `POST_LIMIT_REACHED` | `"account"` or `"connection"`, matching the plan's monthly-post scope |
+| `blockedPlatforms` | `POST_LIMIT_REACHED` | Per-connection `{ platformSelection, used, remaining }` entries; present only for a connection-scoped monthly-post rejection |
 | `overLimitBy` | `CONNECTIONS_OVER_LIMIT` | Number of connections over the plan limit |
 | `disallowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platform names not available on the current plan |
 | `allowedPlatforms` | `PLATFORM_NOT_AVAILABLE` | Array of platform names available on the current plan |
@@ -496,7 +502,7 @@ draft → scheduled → published
 
 > **Note:** Individual platform records (ScheduledPost) have their own statuses including `pending` and `processing`, which reflect per-platform delivery state. The post group `status` field above is a rollup and does not include `processing`. A separate `processingStatus` field on the post group tracks whether the post is currently being processed. Possible `processingStatus` values are: `pending`, `processing`, `finished`.
 
-> **Note:** The `processingStatus` field is available in the [get-post](get-post.md) response but is **not** included in [list-posts](list-posts.md) responses.
+> **Note:** `processingStatus` is internal and is not returned by get-post or list-posts.
 
 
 ---

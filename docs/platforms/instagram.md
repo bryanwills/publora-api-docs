@@ -4,7 +4,7 @@ Post to Instagram programmatically using the Publora REST API. A simpler alterna
 
 ## Instagram API Overview
 
-Publora provides a unified REST API for publishing image posts, carousels, Reels, and Stories to Instagram through the Instagram Graph API. A business or creator account is required. No need to manage OAuth flows, handle the Instagram Content Publishing API complexity, or set up a Facebook Developer app.
+Publora connects Instagram accounts through Instagram Login for Business and requests `instagram_business_basic` plus `instagram_business_content_publish`; personal accounts are unsupported. Whether Meta accepts a particular Creator account is determined by Meta, not Publora's code.
 
 ### Why Use Publora Instead of Instagram Graph API / Instagrapi?
 
@@ -29,14 +29,15 @@ Where `{accountId}` is your Instagram Business account ID assigned during connec
 
 ## Requirements
 
-- An **Instagram Business** account is recommended (personal accounts are not supported)
-- Creator accounts may also work, but Business is the recommended account type
+- A professional Instagram account accepted by Meta's Instagram Login for Business flow
 - Connected via Instagram OAuth through the Publora dashboard
 - API key from Publora
 
-> **Important:** Business accounts are recommended but Creator accounts also work with `instagram_business_*` scopes. Personal accounts are not supported.
+> Publora connects Instagram accounts through Instagram Login for Business and requests `instagram_business_basic` plus `instagram_business_content_publish`; personal accounts are unsupported. Whether Meta accepts a particular Creator account is determined by Meta, not Publora's code.
 
 ## API Limits
+
+<!-- limits tables below synced from @publora/platform-limits 1.0.0 (2026-03-11) — regenerate on bump -->
 
 These are critical limits specific to the Instagram Graph API (different from native app limits):
 
@@ -58,20 +59,20 @@ These are critical limits specific to the Instagram Graph API (different from na
 
 | Limit | Reels | Carousel Videos |
 |-------|-------|-----------------|
-| Max duration | **3 minutes (180 seconds)** via API (only 5-90s Reels eligible for Reels tab). Native app allows up to 15-20 minutes. | 60 seconds |
+| Max duration | **15 minutes (900 seconds)** for Reels; feed video supports up to 60 minutes (3600 seconds). | 60 seconds |
 | Min duration | 3 seconds | 3 seconds |
 | Max file size | 300 MB | 300 MB |
 | Formats | MP4, MOV | MP4, MOV |
 
 ### Rate Limits
 
-- **50 posts per 24 hours** (some accounts report a limit of 25)
+Instagram-side posting quotas are account-dependent, may change without notice, and are not a Publora numeric contract.
 
 ### Important API Restrictions
 
 The following features are **not available** via the Instagram Graph API:
 
-- Personal accounts (Business recommended, Creator may also work)
+- Personal accounts are unsupported; account eligibility is determined by Meta's Instagram Login for Business flow
 - Shopping tags
 - Branded content tags
 - Filters and effects
@@ -84,7 +85,7 @@ The following features are **not available** via the Instagram Graph API:
 |------|-----------|--------|
 | Text only | No | Instagram requires at least one image or video |
 | Images | Yes | JPEG, PNG, WebP (WebP auto-converted to JPEG), max 8 MB, 10 per carousel |
-| Videos (Reels) | Yes | MP4/MOV, max 3 minutes (180 seconds), max 300 MB |
+| Videos (Reels) | Yes | MP4/MOV, max 15 minutes (900 seconds), max 300 MB |
 | Videos (Stories) | Yes | MP4/MOV, requires `videoType: "STORIES"` setting |
 | Carousels | Yes | 2-10 items (API limit; native app allows 20) |
 
@@ -107,7 +108,7 @@ Instagram supports a `platformSettings` object to control video behavior:
 |---------|--------|---------|-------------|
 | `videoType` | `"REELS"`, `"STORIES"` | `"REELS"` | Determines how videos are published |
 | `coverUrl` | http(s) URL string | — | Custom cover image for Reels (alias: `cover_url`). Must resolve to a **JPEG image**. Two ways to set it: (1) [upload a file](../endpoints/upload-instagram-cover.md) (JPEG/PNG/WebP, up to 8 MB — Publora hosts it and converts to JPEG) and use the returned URL, or (2) pass your own **publicly accessible** JPEG URL, which Instagram fetches server-side when the Reel is created. When set, it takes precedence over frame-based cover selection (`videoTimestamp`). Send an empty string to clear. Non-JPEG or non-http(s) URLs are rejected with `400`. Settable on both `create-post` and `update-post`. Ignored for Stories and images. |
-| `videoTimestamp` | number (milliseconds) | — | Selects the video cover frame at the specified timestamp. **Important:** This must be set at the **top level** of the post group request body (not nested under `platformSettings.instagram`). The `thumbOffset` name under `platformSettings.instagram` has no effect. **Note:** This setting is only available via the dashboard `updatePostGroup` endpoint, not via the `create-post` API. For API-based cover control, use `coverUrl` instead. |
+| `videoTimestamp` | number (milliseconds) | — | Dashboard-only top-level field for frame selection; it is not accepted by the REST create/update contract. Sending `thumbOffset` under `platformSettings.instagram` returns `400 PLATFORM_SETTING_UNKNOWN`. API callers should use `coverUrl`. |
 
 ## Examples
 
@@ -130,7 +131,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Python (requests)**
@@ -152,7 +153,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **cURL**
@@ -165,7 +166,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
     "content": "Sunset views from the office rooftop. #startup #views",
     "platforms": ["instagram-11223344"]
   }'
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Node.js (axios)**
@@ -184,7 +185,7 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 > **Note:** Instagram requires media on every post. First create the post, then upload media using the [media upload workflow](../guides/media-uploads.md) with the returned `postGroupId`. For carousels, upload multiple files to the same `postGroupId`.
@@ -392,7 +393,7 @@ const response = await fetch('https://api.publora.com/api/v1/create-post', {
 
 const data = await response.json();
 console.log(data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Python (requests)**
@@ -419,7 +420,7 @@ response = requests.post(
 
 data = response.json()
 print(data)
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **cURL**
@@ -437,7 +438,7 @@ curl -X POST https://api.publora.com/api/v1/create-post \
       }
     }
   }'
-# Response: { "success": true, "postGroupId": "abc123..." }
+# Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 **Node.js (axios)**
@@ -461,19 +462,19 @@ const response = await axios.post('https://api.publora.com/api/v1/create-post', 
 });
 
 console.log(response.data);
-// Response: { "success": true, "postGroupId": "abc123..." }
+// Response: { "success": true, "postGroupId": "abc123...", "scheduledTime": null }
 ```
 
 ## Platform Quirks
 
 - **No text-only posts**: Instagram requires at least one image or video. Attempting to post text without media will return an error.
-- **Business account recommended**: Personal Instagram accounts cannot be used with the API. Business is recommended; Creator accounts may also work but are not fully tested.
+- Publora connects Instagram accounts through Instagram Login for Business and requests `instagram_business_basic` plus `instagram_business_content_publish`; personal accounts are unsupported. Whether Meta accepts a particular Creator account is determined by Meta, not Publora's code.
 - **Direct Instagram connection**: Publora connects directly to Instagram via Instagram Business Login. No Facebook Page is required.
 - **Carousel limits**: Carousels require between 2 and 10 media items. A single image is posted as a regular photo post, not a carousel.
 - **Reel is the default**: When posting a video, Publora defaults to publishing it as a Reel. Set `videoType: "STORIES"` to post as a Story instead.
 - **Custom Reels cover**: Set `platformSettings.instagram.coverUrl` to a publicly accessible JPEG URL to control the Reel's cover/thumbnail. Instagram downloads the image itself, so private or expiring URLs will fail at publish time. See [Platform-Specific Settings](#platform-specific-settings).
 - **Stories disappear**: Stories are ephemeral and will disappear after 24 hours. This is standard Instagram behavior.
-- **Image aspect ratios**: Instagram supports aspect ratios between 4:5 (portrait) and 1.91:1 (landscape). Images outside this range may be cropped.
+- **Image aspect ratios**: Instagram images must be between 4:5 and 1.91:1. Scheduling rejects files outside that range with `MEDIA_ASPECT_RATIO_INVALID`; Publora does not silently crop them.
 - **Caption hashtags**: Hashtags are included in the caption text. There is no separate hashtags field.
 
 ## Character Limits
