@@ -884,6 +884,69 @@ Reshare an existing LinkedIn post to your feed, optionally with commentary.
 
 ---
 
+## LinkedIn Mentionables Tool
+
+### linkedin_list_mentionables
+
+List the LinkedIn members you can @mention — Publora's per-user directory of native member ids captured from engagement (comments and reactions) on your connected company pages. Each entry includes a ready-to-paste `mention` token for post content or comment messages. **Paid plans only** — free plans receive a `403 UPGRADE_REQUIRED` error. Backed by [`GET /linkedin-mentionables`](../endpoints/linkedin-mentionables.md); see the [LinkedIn Mentions Guide](../guides/linkedin-mentions.md) for why native ids are required.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | No | Case-insensitive substring filter on the person's name |
+| `limit` | number | No | Maximum entries to return, 1–100 (default: 25) |
+
+Results are sorted by `lastSeenAt` descending (most recently engaged first).
+
+**Example prompts:**
+
+```text
+"Who can I mention on LinkedIn?"
+"Find the mention token for Daria"
+"List people who recently engaged with my company page"
+```
+
+**Python example:**
+
+```python
+async def list_mentionables():
+    headers = {"Authorization": "Bearer sk_YOUR_API_KEY"}
+
+    async with streamablehttp_client("https://mcp.publora.com", headers=headers) as (read, write, _):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("linkedin_list_mentionables", {
+                "q": "daria",
+                "limit": 10
+            })
+            print(result.content[0].text)
+```
+
+**Response example:**
+
+```json
+{
+  "success": true,
+  "people": [
+    {
+      "personId": "Dk968RHxiO",
+      "name": "Daria Bulaeva",
+      "profileUrl": "",
+      "profilePicture": "",
+      "source": "comment",
+      "lastSeenAt": "2026-07-16T10:00:00.000Z",
+      "mention": "@{urn:li:person:Dk968RHxiO|Daria Bulaeva}"
+    }
+  ]
+}
+```
+
+`source` is `comment` or `reaction` (the most recent engagement wins). `mention` is `null` when no usable name is stored. The directory fills automatically when company-page engagement is read — there is no way to add a person manually or by profile URL.
+
+---
+
 ## LinkedIn Feed Retrieval Tools (Coming Soon — Requires LinkedIn Approval)
 
 > **Status: DISABLED** - These tools are not yet available. They require the `r_member_social` permission, which is **RESTRICTED** and requires LinkedIn approval. The implementation is ready and will be enabled once LinkedIn approves the permission for Publora.
