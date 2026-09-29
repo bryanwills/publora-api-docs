@@ -396,7 +396,7 @@ The `sessionId` is returned for future use, but the SSE progress endpoint (`/pro
 
 ## Cleaning Up Abandoned Uploads
 
-If a `POST /get-upload-url` call succeeds but the subsequent `PUT` to the presigned S3 URL is cancelled or fails, the MediaFile record is persisted to the post group. An abandoned upload would otherwise leave a broken reference that blocks re-scheduling with `MEDIA_NOT_READY`.
+If a `POST /get-upload-url` call succeeds but the subsequent `PUT` to the presigned S3 URL is cancelled or fails, the MediaFile record is persisted to the post group. An abandoned upload would otherwise leave a broken reference that blocks re-scheduling with `503 MEDIA_UPLOAD_PENDING`, or `400 MEDIA_UPLOAD_MISSING` once `complete-media` was called and the file was marked failed. See [Media scheduling codes](../guides/error-codes.md#media-scheduling-codes).
 
 Two REST endpoints handle this by API key:
 
@@ -421,7 +421,7 @@ Response:
 }
 ```
 
-> Note: `complete-media` only probes an already-attached file — it does **not** attach media and does **not** demote a scheduled post. Only `get-upload-url` (attach) and `DELETE /media` (detach) trigger the demote-to-draft behavior.
+> Note: `complete-media` only probes an already-attached file — it does **not** attach media and does **not** demote a scheduled post. Attaching media (`get-upload-url`, [`attach-media`](./attach-media.md)) or removing it (`DELETE /media/:mediaId`, `DELETE /post/:postGroupId/media/:mediaId`) demotes a scheduled post to draft; `mediaUrls` on `update-post` keeps it scheduled and re-validates it instead. See `post.demoted` in [Webhooks](./webhooks.md).
 
 ## File URLs
 

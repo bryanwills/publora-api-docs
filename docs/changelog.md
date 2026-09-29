@@ -11,6 +11,15 @@ This page records externally relevant REST and MCP contract changes. Dates are d
 - **Change:** A `scheduledTime` at least five minutes in the past is scheduled to return `400 SCHEDULED_TIME_IN_PAST` starting on 2026-08-25. This calendar behavior applies only when production configuration does not explicitly override it with `SCHEDULED_TIME_STRICT`; an explicit flag wins in either direction.
 - **Migration action:** Always send a future ISO 8601 UTC time. During the warn-first period, inspect `warnings[].code === "SCHEDULED_TIME_COERCED"` and the returned `scheduledTime` to find callers that need correction.
 
+## 2026-09-29
+
+### Media URL errors: hosts that resolve to private addresses report `MEDIA_URL_BLOCKED_HOST` — publora.com #565
+
+- **Affected surface:** REST `create-post` and `update-post` (`mediaUrls`) and `POST /attach-media/{postGroupId}`; MCP `create_post`, `update_post` and `attach_media`.
+- **Tag:** Fix.
+- **Change:** When a media URL's host, or a redirect target, resolves to a private or reserved address, `mediaResults[].code` is now `MEDIA_URL_BLOCKED_HOST`. It was reported as `MEDIA_URL_FETCH_FAILED` before. The download was refused then and still is; only the code and message change. A DNS lookup that fails is still reported as `MEDIA_URL_FETCH_FAILED`, whether the domain does not exist or the host has no A or AAAA records. See [`mediaUrls` per-URL codes](guides/error-codes.md#mediaurls-per-url-codes).
+- **Migration action:** Clients that treated `MEDIA_URL_FETCH_FAILED` as retryable for such hosts should not retry `MEDIA_URL_BLOCKED_HOST`; it needs a publicly reachable URL.
+
 ## 2026-09-28
 
 ### ChatGPT file attachments — publora.com #539
